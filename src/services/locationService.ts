@@ -410,6 +410,14 @@ class LocationService {
         },
         (error) => {
           console.error('Error getting location:', error);
+          if (error.code === 3) {
+            alert('Location request timed out. Please check your internet or location settings.');
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
         }
       );
 
@@ -420,10 +428,13 @@ class LocationService {
         },
         (error) => {
           console.error('Error watching location:', error);
+          if (error.code === 3) {
+            alert('Location request timed out while watching location. Please check your internet or location settings.');
+          }
         },
         {
           enableHighAccuracy: true,
-          timeout: 5000,
+          timeout: 15000,
           maximumAge: 0
         }
       );
