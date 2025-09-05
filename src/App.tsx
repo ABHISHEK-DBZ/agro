@@ -11,19 +11,14 @@ import GovernmentSchemes from './pages/GovernmentSchemes';
 import Profile from './pages/Profile';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
-// ...existing code...
 import LiveDashboard from './components/LiveDashboard';
-
-// ...existing code...
-
-// ...existing code...
 
 function App() {
   console.log('🌾 Smart Krishi Sahayak App loading...');
   
   return (
     <ErrorBoundary>
-      <Router basename="/smart-krishi-sahayak">
+      <Router basename="/agro">
         <div className="min-h-screen bg-gray-50">
           <Navbar hideLogout={true} />
           <main className="container mx-auto px-4 py-8">
