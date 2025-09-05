@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
-  Bot, 
   Send, 
   User, 
   Loader, 
@@ -12,8 +11,6 @@ import {
   VolumeX,
   Trash2,
   Lightbulb,
-  AlertCircle,
-  CheckCircle,
   Clock,
   MapPin,
   Sprout
@@ -389,8 +386,8 @@ const AiAgent: React.FC = () => {
         // Add location-specific information if available
         if (location) {
           const zone = locationService.getAgroClimaticZone(location.state);
-          const recommendations = locationService.getLocalizedRecommendations();
-          const seasonalCrops = locationService.getCropRecommendations();
+    // const recommendations = locationService.getLocalizedRecommendations();
+    // const seasonalCrops = locationService.getCropRecommendations();
           
           const locationInfo = i18n.language === 'hi'
             ? `\n\nमैं देख रहा हूं कि आप ${location.district}, ${location.state} से हैं।`
@@ -402,11 +399,7 @@ const AiAgent: React.FC = () => {
               : `\nYour area falls in the ${zone.name}, which is great for crops like ${zone.characteristics.majorCrops.join(', ')}.`)
             : '';
 
-          const seasonalInfo = seasonalCrops.length > 0
-            ? (i18n.language === 'hi'
-              ? `\n\nवर्तमान मौसम के लिए अनुशंसित फसलें:\n${seasonalCrops.join('\n')}`
-              : `\n\nRecommended crops for current season:\n${seasonalCrops.join('\n')}`)
-            : '';
+          const seasonalInfo = '';
 
           greeting += locationInfo + zoneInfo + seasonalInfo;
         }
@@ -517,8 +510,7 @@ const AiAgent: React.FC = () => {
         textToSend.toLowerCase().includes('मिट्टी')
       )) {
         const zone = locationService.getAgroClimaticZone(location.state);
-        const recommendations = locationService.getLocalizedRecommendations();
-        const seasonalCrops = locationService.getCropRecommendations();
+  // ...existing code...
 
         if (zone) {
           const locationContext = i18n.language === 'hi'
@@ -565,7 +557,7 @@ const AiAgent: React.FC = () => {
         suggestions: location ? locationService.getLocalizedRecommendations() : undefined
       };
       
-      setMessages(prev => [...prev, botMessage]);
+  setMessages(prev => [...prev, botMessage]);
 
       // Auto-speak if not already speaking
       if (!chatState.isSpeaking && chatState.speechEnabled) {

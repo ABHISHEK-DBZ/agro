@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+// ...existing code...
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -16,9 +16,7 @@ import {
   Wifi,
   WifiOff,
   AlertTriangle,
-  Filter,
-  Download,
-  Share2,
+  // ...existing code...
   Eye,
   Star,
   Zap
@@ -26,7 +24,7 @@ import {
 import liveMarketService, { LiveMarketPrice, MarketAlert, MarketTrend } from '../services/liveMarketService';
 
 const LiveMarketPrices: React.FC = () => {
-  const { t } = useTranslation();
+  // ...existing code...
   
   // State management
   const [prices, setPrices] = useState<LiveMarketPrice[]>([]);

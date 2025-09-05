@@ -38,22 +38,7 @@ class DiseasePredictionService {
     'Tomato___healthy'
   ];
 
-  private recommendations: { [key: string]: string[] } = {
-    'Apple___Apple_scab': [
-      'Remove infected leaves and fruit',
-      'Apply fungicides at green tip stage',
-      'Maintain good air circulation through pruning',
-      'Use resistant varieties in future plantings'
-    ],
-    'Rice___Bacterial leaf blight': [
-      'Use balanced fertilization',
-      'Avoid excess nitrogen',
-      'Remove infected plants',
-      'Use copper-based bactericides',
-      'Plant resistant varieties'
-    ],
-    // Add more recommendations for other diseases
-  };
+  // Recommendations have been removed as they were unused.
 
   constructor() {
     this.initializeModel();

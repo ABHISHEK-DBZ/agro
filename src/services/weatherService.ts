@@ -89,7 +89,7 @@ class WeatherService {
     }
 
     try {
-      const [currentWeather, forecast, agricultural] = await Promise.all([
+    const [currentWeather] = await Promise.all([
         axios.get(
           `${this.apiUrl}/weather?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${this.apiKey}`
         ),

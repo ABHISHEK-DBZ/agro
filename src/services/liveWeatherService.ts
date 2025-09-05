@@ -332,7 +332,16 @@ class LiveWeatherService {
       hourly: forecast ? this.transformHourlyData(forecast.list.slice(0, 24)) : [],
       daily: forecast ? this.transformDailyData(forecast.list) : [],
       alerts: this.generateWeatherAlerts(current),
-      agricultural: this.calculateAgriculturalData(current),
+      agricultural: {
+        soilMoisture: 0,
+        soilTemperature: 0,
+        evapotranspiration: 0,
+        growingDegreeDay: 0,
+        frostRisk: false,
+        heatStress: false,
+        irrigationAdvice: '',
+        sprayingConditions: 'Not Recommended'
+      },
       airQuality: airQuality ? this.transformAirQualityData(airQuality.list[0]) : this.generateMockAirQuality()
     };
   }

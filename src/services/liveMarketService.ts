@@ -194,7 +194,7 @@ class LiveMarketService {
     }
   }
 
-  private async fetchRealMarketData(params: any): Promise<LiveMarketPrice[]> {
+  private async fetchRealMarketData(params: Record<string, unknown>): Promise<LiveMarketPrice[]> {
     try {
       // Example API call to Indian government data portal
       const response = await axios.get(`${this.apiUrl}/9ef84268-d588-465a-a308-a864a43d0070`, {
@@ -213,32 +213,32 @@ class LiveMarketService {
     }
   }
 
-  private transformApiData(records: any[]): LiveMarketPrice[] {
-    return records.map((record, index) => ({
-      id: `${record.market}_${record.commodity}_${index}`,
-      commodity: record.commodity || 'Unknown',
-      variety: record.variety || 'Common',
-      market: record.market || 'Unknown Market',
-      state: record.state || 'Unknown State',
-      district: record.district || 'Unknown District',
+  private transformApiData(records: Record<string, unknown>[]): LiveMarketPrice[] {
+    return records.map((record: any, index) => ({
+      id: `${record.market ?? 'UnknownMarket'}_${record.commodity ?? 'Unknown'}_${index}`,
+      commodity: String(record.commodity ?? 'Unknown'),
+      variety: String(record.variety ?? 'Common'),
+      market: String(record.market ?? 'Unknown Market'),
+      state: String(record.state ?? 'Unknown State'),
+      district: String(record.district ?? 'Unknown District'),
       price: {
-        min: parseFloat(record.min_price) || 0,
-        max: parseFloat(record.max_price) || 0,
-        modal: parseFloat(record.modal_price) || 0,
-        average: (parseFloat(record.min_price) + parseFloat(record.max_price)) / 2 || 0
+        min: parseFloat(String(record.min_price ?? '0')) || 0,
+        max: parseFloat(String(record.max_price ?? '0')) || 0,
+        modal: parseFloat(String(record.modal_price ?? '0')) || 0,
+        average: (parseFloat(String(record.min_price ?? '0')) + parseFloat(String(record.max_price ?? '0'))) / 2 || 0
       },
       unit: 'Quintal',
-      arrivalDate: record.arrival_date || new Date().toISOString().split('T')[0],
+      arrivalDate: String(record.arrival_date ?? new Date().toISOString().split('T')[0]),
       lastUpdated: new Date().toISOString(),
-      trend: this.calculateTrend(parseFloat(record.modal_price) || 0),
+      trend: this.calculateTrend(parseFloat(String(record.modal_price ?? '0')) || 0),
       volume: {
-        arrival: parseInt(record.arrivals) || 0,
-        sold: parseInt(record.arrivals) * 0.8 || 0,
-        unsold: parseInt(record.arrivals) * 0.2 || 0
+        arrival: parseInt(String(record.arrivals ?? '0')) || 0,
+        sold: parseInt(String(record.arrivals ?? '0')) * 0.8 || 0,
+        unsold: parseInt(String(record.arrivals ?? '0')) * 0.2 || 0
       },
-      quality: this.determineQuality(parseFloat(record.modal_price) || 0),
+      quality: this.determineQuality(parseFloat(String(record.modal_price ?? '0')) || 0),
       marketStatus: this.getMarketStatus(),
-      priceHistory: this.generatePriceHistory(parseFloat(record.modal_price) || 0)
+      priceHistory: this.generatePriceHistory(parseFloat(String(record.modal_price ?? '0')) || 0)
     }));
   }
 
@@ -262,7 +262,7 @@ class LiveMarketService {
     const mockData: LiveMarketPrice[] = [];
     const now = new Date();
 
-    commodities.forEach((commodity, i) => {
+  commodities.forEach((commodity: string) => {
       const basePrice = this.getBasePriceForCommodity(commodity);
       const priceVariation = (Math.random() - 0.5) * 0.2; // ±10% variation
       const currentPrice = Math.round(basePrice * (1 + priceVariation));
@@ -558,7 +558,7 @@ class LiveMarketService {
     return alerts;
   }
 
-  async getMarketInsights(commodity: string, userLocation?: { lat: number; lon: number }): Promise<MarketInsight> {
+  async getMarketInsights(commodity: string): Promise<MarketInsight> {
     const prices = await this.getLivePrices({ commodities: [commodity] });
     const trend = await this.getMarketTrend(commodity, 'monthly');
     
@@ -597,8 +597,7 @@ class LiveMarketService {
       .map(p => ({
         name: p.market,
         state: p.state,
-        price: p.price.modal,
-        distance: userLocation ? this.calculateDistance(userLocation, { lat: 0, lon: 0 }) : undefined
+        price: p.price.modal
       }));
     
     // Seasonal pattern (mock data)
@@ -612,27 +611,10 @@ class LiveMarketService {
       commodity,
       insights,
       recommendations,
-      bestTimeToSell: this.getBestTimeToSell(commodity, trend),
+      bestTimeToSell: 'Monitor market conditions',
       bestMarkets,
       seasonalPattern
     };
-  }
-
-  private getBestTimeToSell(commodity: string, trend: MarketTrend | null): string {
-    if (!trend) return 'Monitor market conditions';
-    
-    if (trend.analysis.trend === 'bullish') {
-      return 'Wait for 1-2 weeks - prices are rising';
-    } else if (trend.analysis.trend === 'bearish') {
-      return 'Sell immediately - prices are falling';
-    } else {
-      return 'Current time is good for selling';
-    }
-  }
-
-  private calculateDistance(point1: { lat: number; lon: number }, point2: { lat: number; lon: number }): number {
-    // Simplified distance calculation (mock)
-    return Math.round(Math.random() * 500 + 50); // 50-550 km
   }
 
   // Price comparison across markets
@@ -701,7 +683,7 @@ class LiveMarketService {
       
       upcoming.push({
         date: date.toISOString().split('T')[0],
-        status: day === 0 ? 'Closed' : 'Open' as any,
+  status: day === 0 ? 'Closed' : ('Open' as 'Open' | 'Closed' | 'Holiday'),
         note: day === 0 ? 'Sunday - Weekly holiday' : undefined
       });
     }

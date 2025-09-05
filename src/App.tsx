@@ -9,25 +9,14 @@ import AiAgent from './pages/AiAgent';
 import DiseaseDetection from './pages/DiseaseDetection';
 import GovernmentSchemes from './pages/GovernmentSchemes';
 import Profile from './pages/Profile';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import VerifyEmail from './pages/VerifyEmail';
-import Setup2FA from './pages/Setup2FA';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
+// ...existing code...
 import LiveDashboard from './components/LiveDashboard';
 
-const isAuthenticated = () => {
-  // DEBUG: Always return true to bypass authentication
-  return true;
-};
+// ...existing code...
 
-const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
-  return isAuthenticated() ? children : <Navigate to="/login" />;
-};
+// ...existing code...
 
 function App() {
   console.log('🌾 Smart Krishi Sahayak App loading...');
@@ -64,7 +53,7 @@ function App() {
               <Route path="/ai-agent" element={<AiAgent />} />
               {/* User Routes */}
               <Route path="/profile" element={<Profile />} />
-              <Route path="/setup-2fa" element={<Setup2FA />} />
+               {/* <Route path="/setup-2fa" element={<Setup2FA />} /> */}
               {/* Fallback Route */}
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </Routes>

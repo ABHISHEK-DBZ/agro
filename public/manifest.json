@@ -2,7 +2,7 @@
   "name": "Smart Krishi Sahayak",
   "short_name": "Krishi Sahayak",
   "description": "Agriculture Assistant app for Indian farmers with weather, crop info, and disease detection",
-  "start_url": "/smart-krishi-sahayak/",
+  "start_url": "/agro/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#16a34a",
@@ -47,7 +47,7 @@
   ],
   "categories": ["agriculture", "farming", "weather", "productivity"],
   "lang": "en",
-  "scope": "/smart-krishi-sahayak/",
+  "scope": "/agro/",
   "related_applications": [],
   "prefer_related_applications": false
 }

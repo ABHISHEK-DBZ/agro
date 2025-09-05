@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+// ...existing code...
 import {
   Activity,
   TrendingUp,
@@ -12,7 +12,7 @@ import {
   RefreshCw,
   Bell,
   MapPin,
-  Calendar,
+  // ...existing code...
   DollarSign,
   BarChart3,
   Thermometer,
@@ -39,7 +39,7 @@ const LiveDashboard: React.FC<LiveDashboardProps> = ({
   location, 
   commodities = ['Rice', 'Wheat', 'Cotton', 'Onion', 'Tomato'] 
 }) => {
-  const { t } = useTranslation();
+  // ...existing code...
   
   // State management
   const [weatherData, setWeatherData] = useState<LiveWeatherData | null>(null);
@@ -71,7 +71,7 @@ const LiveDashboard: React.FC<LiveDashboardProps> = ({
 
       // Fetch weather data
       if (currentLocation) {
-        const weather = await liveWeatherService.getWeatherData(currentLocation, true);
+  const weather = await liveWeatherService.getWeatherData({ ...currentLocation, country: 'India' }, true);
         if (weather) {
           setWeatherData(weather);
         }
@@ -123,7 +123,7 @@ const LiveDashboard: React.FC<LiveDashboardProps> = ({
 
       // Start live updates
       if (location) {
-        liveWeatherService.startLiveUpdates(location);
+  liveWeatherService.startLiveUpdates({ ...location, country: 'India' });
       }
       liveMarketService.startLiveUpdates(commodities);
 

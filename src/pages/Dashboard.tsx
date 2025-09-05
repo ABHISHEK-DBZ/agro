@@ -1,8 +1,5 @@
 import React from 'react';
-import AiAgent from './AiAgent';
-import LiveWeather from './LiveWeather';
-import LiveMarketPrices from './LiveMarketPrices';
-import Profile from './Profile';
+// ...existing code...
 import { Sprout, ListChecks, Wifi, TrendingUp, Bug, Bot } from 'lucide-react';
 
 

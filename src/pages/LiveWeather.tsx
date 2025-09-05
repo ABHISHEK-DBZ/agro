@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from 'react';
+// ...existing code...
 import { 
   Cloud, 
   Sun, 
@@ -15,16 +15,8 @@ import {
   Navigation,
   Star,
   CheckCircle,
-  CloudDrizzle,
-  CloudLightning,
-  CloudSnow,
-  Cloudy,
   Activity,
-  Zap,
-  Target,
-  BarChart3,
-  TrendingUp,
-  TrendingDown
+  Target
 } from 'lucide-react';
 import liveWeatherService, { LiveWeatherData } from '../services/liveWeatherService';
 
@@ -37,7 +29,7 @@ interface CityData {
 }
 
 const LiveWeather: React.FC = () => {
-  const { t } = useTranslation();
+  // ...existing code...
   const [weatherData, setWeatherData] = useState<LiveWeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -227,8 +219,8 @@ const LiveWeather: React.FC = () => {
   const toggleLiveMode = () => {
     if (!isLiveMode && coords) {
       // Start live updates
-      const location = { lat: coords.lat, lon: coords.lon, name: weatherData?.location.name || 'Current Location' };
-      liveWeatherService.startLiveUpdates(location);
+  const location = { lat: coords.lat, lon: coords.lon, name: weatherData?.location.name || 'Current Location', country: weatherData?.location.country || 'IN' };
+  liveWeatherService.startLiveUpdates(location);
       
       // Subscribe to updates
       const unsubscribe = liveWeatherService.subscribe((data) => {
@@ -277,12 +269,12 @@ const LiveWeather: React.FC = () => {
       case 'rain':
         return <CloudRain className={`text-blue-500 ${commonClasses}`} size={size} />;
       case 'thunderstorm':
-        return <CloudLightning className={`text-indigo-600 ${commonClasses}`} size={size} />;
+  return <CloudRain className={`text-indigo-600 ${commonClasses}`} size={size} />;
       case 'snow':
-        return <CloudSnow className={`text-blue-200 ${commonClasses}`} size={size} />;
+  return <Cloud className={`text-blue-200 ${commonClasses}`} size={size} />;
       case 'mist':
       case 'fog':
-        return <Cloudy className={`text-gray-400 opacity-70 ${commonClasses}`} size={size} />;
+  return <Cloud className={`text-gray-400 opacity-70 ${commonClasses}`} size={size} />;
       default:
         return <Cloud className={`text-gray-500 ${commonClasses}`} size={size} />;
     }
