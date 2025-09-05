@@ -283,7 +283,63 @@ const Profile: React.FC = () => {
                     <Shield className="mr-3 text-gray-500" /> {t('profile.account')}
                 </h2>
                 <div className="space-y-3">
-                    <button className="w-full text-left text-blue-600 hover:underline">{t('profile.changePassword')}</button>
+                    {/* Change Name Inline Form */}
+                    <details className="mb-2">
+                      <summary className="w-full text-left text-green-600 hover:underline cursor-pointer">Change Name</summary>
+                      <form className="mt-2" onSubmit={async e => {
+                        e.preventDefault();
+                        setLoading(true);
+                        setError(null);
+                        try {
+                          await axios.post(`${API_URL}/update-profile`, { name: editedProfile?.name });
+                          setProfile({ ...profile, name: editedProfile?.name || profile.name });
+                          setEditedProfile({ ...editedProfile, name: editedProfile?.name || profile.name });
+                          setError('Name updated successfully!');
+                        } catch {
+                          setError('Error updating name.');
+                        }
+                        setLoading(false);
+                      }}>
+                        <input
+                          type="text"
+                          className="w-full p-2 mb-2 border rounded bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          value={editedProfile?.name || ''}
+                          onChange={e => setEditedProfile({ ...editedProfile!, name: e.target.value })}
+                          required
+                        />
+                        <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700" disabled={loading}>Update Name</button>
+                      </form>
+                    </details>
+                    {/* Change Password Inline Form */}
+                    <details>
+                      <summary className="w-full text-left text-blue-600 hover:underline cursor-pointer">Change Password</summary>
+                      <form className="mt-2" onSubmit={async e => {
+                        e.preventDefault();
+                        setLoading(true);
+                        setError(null);
+                        const oldPassword = (document.getElementById('oldPassword') as HTMLInputElement)?.value;
+                        const newPassword = (document.getElementById('newPassword') as HTMLInputElement)?.value;
+                        const confirmNewPassword = (document.getElementById('confirmNewPassword') as HTMLInputElement)?.value;
+                        if (newPassword !== confirmNewPassword) {
+                          setError('New passwords do not match.');
+                          setLoading(false);
+                          return;
+                        }
+                        try {
+                          await axios.post(`${API_URL}/change-password`, { oldPassword, newPassword });
+                          setError('Password changed successfully!');
+                        } catch {
+                          setError('Error changing password.');
+                        }
+                        setLoading(false);
+                      }}>
+                        <input id="oldPassword" type="password" placeholder="Current password" className="w-full p-2 mb-2 border rounded bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100" required />
+                        <input id="newPassword" type="password" placeholder="New password" className="w-full p-2 mb-2 border rounded bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100" required />
+                        <input id="confirmNewPassword" type="password" placeholder="Confirm new password" className="w-full p-2 mb-2 border rounded bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100" required />
+                        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700" disabled={loading}>Change Password</button>
+                      </form>
+                    </details>
+                    {error && <p className="mt-2 text-center text-green-600 dark:text-green-400">{error}</p>}
                     <button className="w-full text-left text-red-600 hover:underline flex items-center">
                         <LogOut size={16} className="mr-2" /> {t('profile.logout')}
                     </button>

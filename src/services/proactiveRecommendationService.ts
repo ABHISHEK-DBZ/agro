@@ -81,7 +81,7 @@ class ProactiveRecommendationService {
     const recommendations: ProactiveRecommendation[] = [];
 
     // Temperature based recommendations
-    if (weather.current.temp > 35) {
+  if (weather.main.temp > 35) {
       recommendations.push({
         type: 'weather',
         priority: 'high',
@@ -98,7 +98,7 @@ class ProactiveRecommendationService {
     }
 
     // Humidity based recommendations
-    if (weather.current.humidity > 80) {
+  if (weather.main.humidity > 80) {
       recommendations.push({
         type: 'pest',
         priority: 'medium',
@@ -177,8 +177,8 @@ class ProactiveRecommendationService {
 
     // Check conditions favorable for pests/diseases
     const isHighRiskCondition = 
-      weather.current.temp > 25 && 
-      weather.current.humidity > 70;
+      weather.main.temp > 25 && 
+      weather.main.humidity > 70;
 
     if (isHighRiskCondition) {
       recommendations.push({

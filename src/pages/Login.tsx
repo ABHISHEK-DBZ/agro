@@ -1,3 +1,4 @@
+// ...existing code...
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -10,14 +11,14 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   // TODO: Use an AuthContext to set the token globally
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+  setError('');
     try {
       const response = await axios.post(`${API_URL}/login`, { email, password });
       localStorage.setItem('token', response.data.token); // Using localStorage for now

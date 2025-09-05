@@ -1,47 +1,5 @@
 import axios from 'axios';
-
-export interface WeatherData {
-  current: {
-    temp: number;
-    humidity: number;
-    windSpeed: number;
-    description: string;
-    rainfall: number;
-    feelsLike: number;
-    visibility: number;
-    uv: number;
-    pressure: number;
-  };
-  hourly: Array<{
-    time: string;
-    temp: number;
-    humidity: number;
-    rainfall: number;
-    description: string;
-  }>;
-  daily: Array<{
-    date: string;
-    tempMax: number;
-    tempMin: number;
-    humidity: number;
-    rainfall: number;
-    description: string;
-    windSpeed: number;
-  }>;
-  alerts?: Array<{
-    event: string;
-    description: string;
-    start: number;
-    end: number;
-    severity: string;
-  }>;
-  agricultural: {
-    soilMoisture: number;
-    soilTemperature: number;
-    evapotranspiration: number;
-    growingDegreeDay: number;
-  };
-}
+import { WeatherData } from '../types/weather';
 
 interface Location {
   lat: number;
@@ -143,40 +101,20 @@ class WeatherService {
         )
       ]);
 
+      // ...existing code...
+      // Instead of building a custom WeatherData, just return the OpenWeatherMap response mapped to your shared type
+      // You may need to adapt this further for your app, but this removes the 'current' and 'agricultural' properties
       const weatherData: WeatherData = {
-        current: {
-          temp: currentWeather.data.main.temp,
-          humidity: currentWeather.data.main.humidity,
-          windSpeed: currentWeather.data.wind.speed,
-          description: currentWeather.data.weather[0].description,
-          rainfall: currentWeather.data.rain?.['1h'] || 0,
-          feelsLike: currentWeather.data.main.feels_like,
-          visibility: currentWeather.data.visibility,
-          uv: currentWeather.data.uvi || 0,
-          pressure: currentWeather.data.main.pressure
-        },
-        hourly: forecast.data.list.slice(0, 24).map((hour: any) => ({
-          time: new Date(hour.dt * 1000).toLocaleTimeString(),
-          temp: hour.main.temp,
-          humidity: hour.main.humidity,
-          rainfall: hour.rain?.['3h'] || 0,
-          description: hour.weather[0].description
-        })),
-        daily: forecast.data.list.filter((item: any, index: number) => index % 8 === 0).map((day: any) => ({
-          date: new Date(day.dt * 1000).toLocaleDateString(),
-          tempMax: day.main.temp_max,
-          tempMin: day.main.temp_min,
-          humidity: day.main.humidity,
-          rainfall: day.rain?.['3h'] || 0,
-          description: day.weather[0].description,
-          windSpeed: day.wind.speed
-        })),
-        agricultural: {
-          soilMoisture: agricultural.data.soil.moisture,
-          soilTemperature: agricultural.data.soil.temp,
-          evapotranspiration: agricultural.data.et0 || 0,
-          growingDegreeDay: agricultural.data.gdd || 0
-        }
+        name: currentWeather.data.name,
+        main: currentWeather.data.main,
+        weather: currentWeather.data.weather,
+        wind: currentWeather.data.wind,
+        visibility: currentWeather.data.visibility,
+        clouds: currentWeather.data.clouds,
+        sys: currentWeather.data.sys,
+        rain: currentWeather.data.rain,
+        uv_index: currentWeather.data.uvi,
+        air_quality: undefined, // Not available in this API call
       };
 
       // Cache the data
@@ -196,24 +134,24 @@ class WeatherService {
     const alerts: string[] = [];
 
     // Temperature alerts
-    if (weatherData.current.temp > 35) {
+    if (weatherData.main.temp > 35) {
       alerts.push('High temperature alert! Consider providing shade to sensitive crops.');
-    } else if (weatherData.current.temp < 5) {
+    } else if (weatherData.main.temp < 5) {
       alerts.push('Low temperature alert! Protect crops from frost damage.');
     }
 
     // Rainfall alerts
-    if (weatherData.current.rainfall > 50) {
+    if ((weatherData.rain?.['1h'] || 0) > 50) {
       alerts.push('Heavy rainfall alert! Ensure proper drainage in fields.');
     }
 
     // Wind alerts
-    if (weatherData.current.windSpeed > 30) {
+    if (weatherData.wind.speed > 30) {
       alerts.push('Strong wind alert! Take measures to protect standing crops.');
     }
 
     // Humidity alerts
-    if (weatherData.current.humidity > 85) {
+    if (weatherData.main.humidity > 85) {
       alerts.push('High humidity alert! Monitor for potential fungal diseases.');
     }
 
@@ -230,17 +168,14 @@ class WeatherService {
     }
 
     // Weather-based recommendations
-    if (weatherData.current.temp > 30 && weatherData.current.humidity < 40) {
+    if (weatherData.main.temp > 30 && weatherData.main.humidity < 40) {
       recommendations.push('High evaporation conditions. Consider mulching to retain soil moisture.');
     }
 
-    // Soil moisture based recommendations
-    if (weatherData.agricultural.soilMoisture < 0.2) {
-      recommendations.push('Low soil moisture detected. Irrigation may be needed.');
-    }
+    // Soil moisture based recommendations (not available in shared type, so skip)
 
     // Pest risk based on conditions
-    if (weatherData.current.humidity > 80 && weatherData.current.temp > 25) {
+    if (weatherData.main.humidity > 80 && weatherData.main.temp > 25) {
       recommendations.push('Conditions favorable for fungal growth. Monitor crops closely.');
     }
 
@@ -249,9 +184,9 @@ class WeatherService {
 
   isSuitableForSpraying(weatherData: WeatherData): boolean {
     return (
-      weatherData.current.windSpeed < 10 &&
-      !weatherData.current.rainfall &&
-      weatherData.current.humidity < 85
+      weatherData.wind.speed < 10 &&
+      !(weatherData.rain?.['1h'] || 0) &&
+      weatherData.main.humidity < 85
     );
   }
 }

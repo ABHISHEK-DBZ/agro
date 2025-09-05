@@ -83,6 +83,66 @@ const authMiddleware = (req, res, next) => {
 
 
 // --- API Endpoints ---
+// --- Password Reset & Change Endpoints ---
+app.post('/api/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: 'Email required.' });
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ message: 'User not found.' });
+  // In production, generate a token and send email. Here, just respond OK.
+  res.json({ message: 'Password reset link sent to your email (mock).' });
+});
+
+app.post('/api/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  // In production, verify token. Here, just respond OK.
+  if (!password) return res.status(400).json({ message: 'Password required.' });
+  // Find user by token (mock: not implemented)
+  res.json({ message: 'Password reset successful (mock).' });
+});
+
+app.post('/api/change-password', authMiddleware, async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) return res.status(400).json({ message: 'Old and new password required.' });
+  const user = await User.findById(req.user.userId);
+  if (!user) return res.status(404).json({ message: 'User not found.' });
+  const isMatch = await bcrypt.compare(oldPassword, user.password);
+  if (!isMatch) return res.status(400).json({ message: 'Old password incorrect.' });
+  user.password = await bcrypt.hash(newPassword, 10);
+  await user.save();
+  res.json({ message: 'Password changed successfully.' });
+});
+
+// --- Email Verification Endpoint (stub) ---
+app.post('/api/verify-email', async (req, res) => {
+  // In production, verify token and mark email as verified
+  res.json({ message: 'Email verified (mock).' });
+});
+
+// --- 2FA Endpoints (stubs) ---
+app.post('/api/enable-2fa', authMiddleware, async (req, res) => {
+  // In production, generate secret and QR code
+  res.json({ message: '2FA enabled (mock).' });
+});
+app.post('/api/verify-2fa', authMiddleware, async (req, res) => {
+  // In production, verify code
+  res.json({ message: '2FA verified (mock).' });
+});
+app.get('/api/2fa-qr', authMiddleware, async (req, res) => {
+  // In production, return QR code image
+  res.json({ message: 'QR code (mock).' });
+});
+
+// --- Social Login Stubs ---
+app.get('/api/auth/google', (req, res) => {
+  res.json({ message: 'Google login not implemented (stub).' });
+});
+app.get('/api/auth/facebook', (req, res) => {
+  res.json({ message: 'Facebook login not implemented (stub).' });
+});
+app.get('/api/auth/github', (req, res) => {
+  res.json({ message: 'GitHub login not implemented (stub).' });
+});
 
 // -- Auth Endpoints --
 app.post('/api/auth/register', async (req, res) => {

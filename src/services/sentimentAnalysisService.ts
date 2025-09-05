@@ -153,8 +153,13 @@ class SentimentAnalysisService {
       return responses[language].neutral;
     }
 
-    return responses[language][sentiment.sentiment][sentiment.emotion as keyof typeof responses['en']['positive']] ||
-           responses[language].neutral;
+    const emotionKey = sentiment.emotion;
+    const sentimentGroup = responses[language][sentiment.sentiment];
+    if (typeof sentimentGroup === 'object' && emotionKey in sentimentGroup) {
+      // Type assertion: sentimentGroup is Record<string, string>
+      return (sentimentGroup as Record<string, string>)[emotionKey];
+    }
+    return responses[language].neutral;
   }
 }
 

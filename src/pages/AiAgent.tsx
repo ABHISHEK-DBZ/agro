@@ -60,7 +60,7 @@ const QuickSuggestions: React.FC<{ onSelect: (suggestion: string) => void }> = (
   
   const categories: CategoryProps[] = [
     {
-      icon: "�",
+      icon: "🌱",
       title: t('aiagent.categories.cropManagement'),
       questions: i18n.language === 'hi' ? [
         "मेरी मिट्टी के लिए कौन सी फसल उपयुक्त है?",
@@ -102,7 +102,7 @@ const QuickSuggestions: React.FC<{ onSelect: (suggestion: string) => void }> = (
       color: "from-yellow-500 to-yellow-600"
     },
     {
-      icon: "�",
+      icon: "💧",
       title: t('aiagent.categories.irrigation'),
       questions: i18n.language === 'hi' ? [
         "गेहूं को कितना पानी चाहिए?",
@@ -158,7 +158,7 @@ const QuickSuggestions: React.FC<{ onSelect: (suggestion: string) => void }> = (
       color: "from-indigo-500 to-indigo-600"
     },
     {
-      icon: "�",
+      icon: "🧑‍🌾",
       title: t('aiagent.categories.organicFarming'),
       questions: i18n.language === 'hi' ? [
         "जैविक खेती कैसे शुरू करें?",
@@ -215,14 +215,14 @@ const MessageComponent: React.FC<{
 }> = ({ message, onSpeak, isSpeechSupported }) => {
   const getCategoryIcon = (category?: string) => {
     switch (category) {
-      case 'cropManagement': return '�';
+      case 'cropManagement': return '🌱';
       case 'pestControl': return '🐛';
       case 'soilHealth': return '🧪';
-      case 'irrigation': return '�';
+      case 'irrigation': return '💧';
       case 'weatherImpact': return '🌦';
       case 'marketPrices': return '💰';
       case 'governmentSchemes': return '🏛';
-      case 'organicFarming': return '�';
+      case 'organicFarming': return '🧑‍🌾';
       default: return '🌾';
     }
   };

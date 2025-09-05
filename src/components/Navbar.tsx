@@ -1,26 +1,32 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
   Sprout,
   Languages,
   ChevronDown,
   Home,
-  Cloud,
   Bug,
   TrendingUp,
   FileText,
   Bot,
   User,
-  Activity,
-  Zap,
   BarChart3,
   Wifi
 } from 'lucide-react';
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  hideLogout?: boolean;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ hideLogout }) => {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -56,17 +62,15 @@ const Navbar: React.FC = () => {
   };
 
   const navItems = [
-    { path: '/dashboard', icon: Home, label: t('navigation.dashboard') || 'Dashboard' },
-    { path: '/live-dashboard', icon: Activity, label: 'Live Dashboard', isNew: true },
-    { path: '/weather', icon: Cloud, label: t('navigation.weather') || 'Weather' },
-    { path: '/live-weather', icon: Wifi, label: 'Live Weather', isNew: true },
-    { path: '/crop-info', icon: Sprout, label: t('navigation.crops') || 'Crops' },
-    { path: '/disease-detection', icon: Bug, label: t('navigation.diseases') || 'Diseases' },
-    { path: '/mandi-prices', icon: TrendingUp, label: t('navigation.prices') || 'Prices' },
-    { path: '/live-market', icon: BarChart3, label: 'Live Market', isNew: true },
-    { path: '/government-schemes', icon: FileText, label: t('navigation.schemes') || 'Schemes' },
-    { path: '/agent', icon: Bot, label: t('navigation.agent') || 'AI Agent' },
-    { path: '/profile', icon: User, label: t('navigation.profile') || 'Profile' },
+  { path: '/dashboard', icon: Home, label: t('navigation.dashboard') || 'Dashboard' },
+  { path: '/live-weather', icon: Wifi, label: 'Live Weather', isNew: true },
+  { path: '/crop-info', icon: Sprout, label: t('navigation.crops') || 'Crops' },
+  { path: '/disease-detection', icon: Bug, label: t('navigation.diseases') || 'Diseases' },
+  { path: '/mandi-prices', icon: TrendingUp, label: t('navigation.prices') || 'Prices' },
+  { path: '/live-market', icon: BarChart3, label: 'Live Market', isNew: true },
+  { path: '/government-schemes', icon: FileText, label: t('navigation.schemes') || 'Schemes' },
+  { path: '/agent', icon: Bot, label: t('navigation.agent') || 'AI Agent' },
+  { path: '/profile', icon: User, label: t('navigation.profile') || 'Profile' },
   ];
 
   return (
@@ -92,15 +96,14 @@ const Navbar: React.FC = () => {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-              
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`group relative flex items-center space-x-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  className={`group flex items-center px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
                     isActive 
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg transform scale-105' 
-                      : 'text-gray-700 hover:text-green-700 hover:bg-green-50/80 hover:shadow-md hover:scale-102'
+                      ? 'bg-gradient-to-b from-green-500 to-emerald-600 text-white shadow-lg transform scale-105' 
+                      : 'text-gray-600 hover:text-green-700 hover:bg-white/60 hover:shadow-md'
                   }`}
                 >
                   <div className={`p-1 rounded-lg transition-all duration-300 ${
@@ -108,13 +111,24 @@ const Navbar: React.FC = () => {
                   }`}>
                     <Icon className="h-4 w-4" />
                   </div>
-                  <span>{item.label}</span>
-                  {isActive && (
-                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-md"></div>
-                  )}
+                  <>
+                    <span className="ml-2">{item.label}</span>
+                    {isActive && (
+                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-md"></div>
+                    )}
+                  </>
                 </Link>
               );
             })}
+            {/* Logout Button */}
+            {!hideLogout && (
+              <button
+                className="ml-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            )}
           </div>
 
           {/* Enhanced Language Dropdown - Fixed for mobile */}

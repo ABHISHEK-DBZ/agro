@@ -189,7 +189,9 @@ class DiseasePredictionService {
 
       // Clean up
       tensor.dispose();
-      predictions.dispose();
+      if (typeof (predictions as any).dispose === 'function') {
+        (predictions as any).dispose();
+      }
       URL.revokeObjectURL(img.src);
 
       return {
