@@ -58,7 +58,8 @@
   "scope": "/agro/",
   "scope_extensions": [
     {
-      "origin": "https://abhishek-dbz.github.io"
+      "origin": "https://abhishek-dbz.github.io",
+      "type": "web"
     }
   ],
   "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",

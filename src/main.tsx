@@ -10,6 +10,13 @@ const container = document.getElementById('root');
 if (container) {
   try {
     console.log('🔧 Creating React root...');
+    
+    // Hide the loading screen
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+      loadingScreen.style.display = 'none';
+    }
+    
     const root = ReactDOM.createRoot(container);
     root.render(<App />);
     console.log('✅ Smart Krishi Sahayak loaded successfully!');
