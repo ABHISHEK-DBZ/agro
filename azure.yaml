@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/refs/heads/main/schemas/v1.0/azure.yaml.json
+
+name: smart-krishi-sahayak
+metadata:
+  template: smart-krishi-sahayak@0.0.0-beta
+infra:
+  provider: bicep
+services:
+  smart-krishi-sahayak-frontend:
+    project: ./src
+    host: staticwebapp
+    language: ts

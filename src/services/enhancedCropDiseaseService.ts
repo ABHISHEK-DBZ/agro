@@ -1,5 +1,3 @@
-import { AdvancedDetectionResult } from './advancedDiseaseDetectionService';
-
 interface CropCharacteristics {
   name: string;
   hindiName: string;
@@ -224,7 +222,6 @@ class EnhancedCropDiseaseService {
       // Disease detection based on identified crop
       const diseaseDetection = await this.detectDiseaseForCrop(
         cropDetection.crop, 
-        imageFile, 
         imageAnalysis
       );
 
@@ -334,8 +331,6 @@ class EnhancedCropDiseaseService {
     // Sample every 100th pixel for performance
     for (let i = 0; i < data.length; i += 400) {
       const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
       
       // Simple edge detection
       if (i + 400 < data.length) {
@@ -467,7 +462,6 @@ class EnhancedCropDiseaseService {
 
   private async detectDiseaseForCrop(
     crop: CropCharacteristics, 
-    file: File, 
     imageAnalysis: any
   ): Promise<DiseaseInfo | null> {
     if (!crop.diseases || crop.diseases.length === 0) {

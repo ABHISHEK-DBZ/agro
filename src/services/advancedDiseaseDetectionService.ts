@@ -1,4 +1,3 @@
-import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-webgl';
 
 export interface AdvancedDetectionResult {
@@ -20,7 +19,6 @@ export interface AdvancedDetectionResult {
 }
 
 class AdvancedDiseaseDetectionService {
-  private model: tf.LayersModel | null = null;
   private isInitialized: boolean = false;
 
   constructor() {

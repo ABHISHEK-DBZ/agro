@@ -90,7 +90,7 @@ class WeatherService {
 
     try {
     // Fast parallel API calls for better performance
-    const [currentWeatherResponse, forecastResponse] = await Promise.all([
+    const [currentWeatherResponse] = await Promise.all([
         axios.get(
           `${this.apiUrl}/weather?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${this.apiKey}`,
           { timeout: 5000 } // 5 second timeout for faster response

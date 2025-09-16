@@ -8,9 +8,6 @@ import {
   CheckCircle,
   Info,
   Shield,
-  Wind,
-  Droplets,
-  Thermometer,
   Leaf,
   Eye
 } from 'lucide-react';
@@ -344,73 +341,6 @@ const DiseaseDetection: React.FC = () => {
       
       img.src = URL.createObjectURL(file);
     });
-  };
-
-  // Improved disease analysis with strict plant validation
-  const analyzeDisease = (file: File, isPlantImage: boolean): Disease | null => {
-    // First check if it's actually a plant image
-    if (!isPlantImage) {
-      return null; // Don't analyze non-plant images
-    }
-    
-    const fileName = file.name.toLowerCase();
-    const diseases = getAllDiseases();
-    
-    // More sophisticated matching based on multiple factors
-    let bestMatch: Disease | null = null;
-    let highestScore = 0;
-    
-    diseases.forEach(disease => {
-      let score = 0;
-      
-      // Filename-based matching for plant types
-      if (fileName.includes('rice') || fileName.includes('चावल') || fileName.includes('धान')) {
-        if (disease.crop === 'Rice') score += 50;
-      } else if (fileName.includes('wheat') || fileName.includes('गेहूं')) {
-        if (disease.crop === 'Wheat') score += 50;
-      } else if (fileName.includes('cotton') || fileName.includes('कपास')) {
-        if (disease.crop === 'Cotton') score += 50;
-      }
-      
-      // Plant-related keywords boost
-      const plantKeywords = ['leaf', 'plant', 'crop', 'diseased', 'पत्ता', 'पौधा', 'फसल', 'बीमारी'];
-      const hasPlantKeyword = plantKeywords.some(keyword => fileName.includes(keyword));
-      if (hasPlantKeyword) {
-        score += 20;
-      }
-      
-      // Reduce score for non-plant keywords
-      const nonPlantKeywords = ['watch', 'phone', 'device', 'metal', 'घड़ी', 'फोन'];
-      const hasNonPlantKeyword = nonPlantKeywords.some(keyword => fileName.includes(keyword));
-      if (hasNonPlantKeyword) {
-        score -= 100; // Heavily penalize non-plant keywords
-      }
-      
-      // Add some controlled randomization to simulate AI analysis
-      score += Math.random() * 25;
-      
-      // Only consider diseases with reasonable scores
-      if (score > 30 && score > highestScore) {
-        highestScore = score;
-        bestMatch = disease;
-      }
-    });
-    
-    // Set confidence based on score and plant validation
-    let confidencePercent = 0;
-    if (bestMatch && highestScore > 50) {
-      confidencePercent = Math.min(Math.max(highestScore * 0.8, 45), 85);
-    } else if (bestMatch) {
-      confidencePercent = Math.min(Math.max(highestScore * 0.6, 25), 60);
-    }
-    
-    setConfidence(confidencePercent);
-    
-    return bestMatch;
-  };
-
-  const getAllDiseases = (): Disease[] => {
-    return diseases;
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

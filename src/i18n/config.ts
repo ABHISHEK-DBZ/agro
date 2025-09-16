@@ -65,7 +65,7 @@ i18n
     
     // Missing key handling for better debugging
     saveMissing: false,
-    missingKeyHandler: (lng, ns, key) => {
+    missingKeyHandler: (lng, _ns, key) => {
       console.warn(`Missing translation key: ${key} for language: ${lng}`);
     }
   });
