@@ -15,7 +15,7 @@ import {
   MapPin,
   Sprout
 } from 'lucide-react';
-import advancedAiService from '../services/advancedAiService';
+import geminiAiService from '../services/geminiAiService';
 import { locationService } from '../services/locationService';
 
 // Extend the Window interface for speech recognition
@@ -55,33 +55,158 @@ interface CategoryProps {
 const QuickSuggestions: React.FC<{ onSelect: (suggestion: string) => void }> = ({ onSelect }) => {
   const { i18n, t } = useTranslation();
   
+  // Debug translation function
+  console.log('🎯 AiAgent Language Debug:', {
+    currentLanguage: i18n.language,
+    title: t('aiagent.title'),
+    cropManagement: t('aiagent.categories.cropManagement'),
+    availableResources: Object.keys(i18n.getResourceBundle(i18n.language, 'translation') || {}),
+    sampleTranslation: i18n.getResourceBundle(i18n.language, 'translation')?.aiagent
+  });
+  
+  // Get localized questions based on current language
+  const getLocalizedQuestions = (category: string) => {
+    const questionSets: Record<string, Record<string, string[]>> = {
+      crop: {
+        hi: [
+          "मेरी मिट्टी के लिए कौन सी फसल उपयुक्त है?",
+          "गेहूं के बाद कौन सी फसल लें?",
+          "अभी कौन सी फसल फायदेमंद है?"
+        ],
+        mr: [
+          "माझ्या मातीसाठी कोणते पीक योग्य आहे?",
+          "गहूनंतर कोणते पीक घ्यावे?",
+          "आता कोणते पीक फायदेशीर आहे?"
+        ],
+        gu: [
+          "મારી માટી માટે કયો પાક યોગ્ય છે?",
+          "ઘઉં પછી કયો પાક લેવો?",
+          "હવે કયો પાક ફાયદાકારક છે?"
+        ],
+        ta: [
+          "என் மண்ணுக்கு எந்த பயிர் ஏற்றது?",
+          "கோதுமைக்கு பிறகு எந்த பயிர் போடலாம்?",
+          "இப்போது எந்த பயிர் லாபகரமானது?"
+        ],
+        te: [
+          "నా మట్టికి ఏ పంట అనుకూలం?",
+          "గోధుమల తర్వాత ఏ పంట వేయాలి?",
+          "ఇప్పుడు ఏ పంట లాభదాయకం?"
+        ],
+        pa: [
+          "ਮੇਰੀ ਮਿੱਟੀ ਲਈ ਕਿਹੜੀ ਫਸਲ ਢੁਕਵੀਂ ਹੈ?",
+          "ਕਣਕ ਤੋਂ ਬਾਅਦ ਕਿਹੜੀ ਫਸਲ ਲਓ?",
+          "ਹੁਣ ਕਿਹੜੀ ਫਸਲ ਫਾਇਦੇਮੰਦ ਹੈ?"
+        ],
+        bn: [
+          "আমার মাটির জন্য কোন ফসল উপযুক্ত?",
+          "গমের পর কোন ফসল নেব?",
+          "এখন কোন ফসল লাভজনক?"
+        ],
+        kn: [
+          "ನನ್ನ ಮಣ್ಣಿಗೆ ಯಾವ ಬೆಳೆ ಸೂಕ್ತ?",
+          "ಗೋಧಿ ನಂತರ ಯಾವ ಬೆಳೆ ತೆಗೆದುಕೊಳ್ಳಬೇಕು?",
+          "ಈಗ ಯಾವ ಬೆಳೆ ಲಾಭದಾಯಕ?"
+        ],
+        ml: [
+          "എന്റെ മണ്ണിന് ഏത് വിളയാണ് യോജിച്ചത്?",
+          "ഗോതമ്പിന് ശേഷം ഏത് വിള എടുക്കണം?",
+          "ഇപ്പോൾ ഏത് വിള ലാഭകരമാണ്?"
+        ],
+        or: [
+          "ମୋ ମାଟି ପାଇଁ କେଉଁ ଫସଲ ଉପଯୁକ୍ତ?",
+          "ଗହମ ପରେ କେଉଁ ଫସଲ ନେବ?",
+          "ବର୍ତ୍ତମାନ କେଉଁ ଫସଲ ଲାଭଜନକ?"
+        ],
+        ur: [
+          "میری مٹی کے لیے کون سی فصل موزوں ہے؟",
+          "گندم کے بعد کون سی فصل لیں؟",
+          "اب کون سی فصل فائدہ مند ہے؟"
+        ],
+        en: [
+          "Which crop suits my soil type?",
+          "What to plant after wheat harvest?",
+          "Best crop rotation practices?"
+        ]
+      },
+      pest: {
+        hi: [
+          "टमाटर में कीड़े लग गए हैं कैसे छुटकारा पाएं?",
+          "कपास की फसल में रोग दिख रहा है क्या करें?",
+          "प्राकृतिक कीटनाशक कैसे बनाएं?"
+        ],
+        mr: [
+          "टोमॅटोमध्ये कीड लागली आहे कसा छुटकारा मिळवावा?",
+          "कापसाच्या पिकात रोग दिसत आहे काय करावे?",
+          "नैसर्गिक कीटकनाशक कसे बनवावे?"
+        ],
+        gu: [
+          "ટામેટાંમાં કીડા લાગ્યા છે કેવી રીતે છુટકારો મેળવવો?",
+          "કપાસની ખેતીમાં રોગ દેખાય છે શું કરવું?",
+          "કુદરતી જંતુનાશક કેવી રીતે બનાવવું?"
+        ],
+        ta: [
+          "தக்காளியில் பூச்சிகள் தாக்கியுள்ளன எப்படி கட்டுப்படுத்துவது?",
+          "பருத்தி பயிரில் நோய் தென்படுகிறது என்ன செய்வது?",
+          "இயற்கை பூச்சிக்கொல்லி எப்படி தயாரிப்பது?"
+        ],
+        te: [
+          "టమాటాలో పురుగులు వచ్చాయి ఎలా తొలగించాలి?",
+          "పత్తి పంటలో వ్యాధి కనిపిస్తోంది ఏమి చేయాలి?",
+          "సహజ పురుగుమందు ఎలా తయారు చేయాలి?"
+        ],
+        pa: [
+          "ਟਮਾਟਰ ਵਿੱਚ ਕੀੜੇ ਲੱਗ ਗਏ ਹਨ ਕਿਵੇਂ ਛੁਟਕਾਰਾ ਪਾਈਏ?",
+          "ਕਪਾਹ ਦੀ ਫਸਲ ਵਿੱਚ ਰੋਗ ਦਿਖ ਰਿਹਾ ਹੈ ਕੀ ਕਰੀਏ?",
+          "ਕੁਦਰਤੀ ਕੀੜੇਮਾਰ ਕਿਵੇਂ ਬਣਾਈਏ?"
+        ],
+        bn: [
+          "টমেটোতে পোকা লেগেছে কিভাবে দূর করব?",
+          "তুলার ফসলে রোগ দেখা দিয়েছে কী করব?",
+          "প্রাকৃতিক কীটনাশক কিভাবে তৈরি করব?"
+        ],
+        kn: [
+          "ಟೊಮೇಟೊದಲ್ಲಿ ಕೀಟಗಳು ಬಂದಿವೆ ಹೇಗೆ ತೊಡೆದುಹಾಕುವುದು?",
+          "ಹತ್ತಿ ಬೆಳೆಯಲ್ಲಿ ರೋಗ ಕಾಣುತ್ತಿದೆ ಏನು ಮಾಡಬೇಕು?",
+          "ನೈಸರ್ಗಿಕ ಕೀಟನಾಶಕ ಹೇಗೆ ತಯಾರಿಸುವುದು?"
+        ],
+        ml: [
+          "തക്കാളിയിൽ കീടങ്ങൾ വന്നിട്ടുണ്ട് എങ്ങനെ നീക്കം ചെയ്യും?",
+          "പഞ്ഞി വിളയിൽ രോഗം കാണുന്നു എന്തു ചെയ്യണം?",
+          "പ്രകൃതിദത്ത കീടനാശിനി എങ്ങനെ ഉണ്ടാക്കാം?"
+        ],
+        or: [
+          "ଟମାଟୋରେ କୀଟ ଲାଗିଛି କିପରି ଦୂର କରିବ?",
+          "କପା ଫସଲରେ ରୋଗ ଦେଖାଯାଉଛି କଣ କରିବ?",
+          "ପ୍ରାକୃତିକ କୀଟନାଶକ କିପରି ତିଆରି କରିବ?"
+        ],
+        ur: [
+          "ٹماٹر میں کیڑے لگ گئے ہیں کیسے چھٹکارا پائیں؟",
+          "کپاس کی فصل میں بیماری نظر آ رہی ہے کیا کریں؟",
+          "قدرتی کیڑے مار کیسے بنائیں؟"
+        ],
+        en: [
+          "How to control pests in tomatoes?",
+          "Cotton crop disease management?",
+          "Natural pesticide preparation?"
+        ]
+      }
+    };
+    
+    return questionSets[category]?.[i18n.language] || questionSets[category]?.en || [];
+  };
+  
   const categories: CategoryProps[] = [
     {
       icon: "🌱",
       title: t('aiagent.categories.cropManagement'),
-      questions: i18n.language === 'hi' ? [
-        "मेरी मिट्टी के लिए कौन सी फसल उपयुक्त है?",
-        "गेहूं के बाद कौन सी फसल लें?",
-        "अभी कौन सी फसल फायदेमंद है?"
-      ] : [
-        "Which crop suits my soil type?",
-        "What to plant after wheat harvest?",
-        "Best crop rotation practices?"
-      ],
+      questions: getLocalizedQuestions('crop'),
       color: "from-green-500 to-green-600"
     },
     {
       icon: "🐛",
       title: t('aiagent.categories.pestControl'),
-      questions: i18n.language === 'hi' ? [
-        "कपास के पत्ते पीले क्यों हो रहे हैं?",
-        "सफेद मक्खी के लिए क्या करें?",
-        "फंगल इन्फेक्शन का जैविक इलाज?"
-      ] : [
-        "How to control cotton pests?",
-        "Natural remedies for plant diseases",
-        "Identifying crop diseases"
-      ],
+      questions: getLocalizedQuestions('pest'),
       color: "from-red-500 to-red-600"
     },
     {
@@ -381,7 +506,7 @@ const AiAgent: React.FC = () => {
     const initializeChat = async () => {
       try {
         const location = locationService.getCurrentLocation();
-        let greeting = await advancedAiService.getAgricultureResponse("", i18n.language);
+        let greeting = await geminiAiService.getAgricultureResponse("", i18n.language, location);
         
         // Add location-specific information if available
         if (location) {
@@ -398,19 +523,17 @@ const AiAgent: React.FC = () => {
               ? `\nआपका क्षेत्र ${zone.name} में आता है, जहाँ ${zone.characteristics.majorCrops.join(', ')} जैसी फसलें अच्छी होती हैं।`
               : `\nYour area falls in the ${zone.name}, which is great for crops like ${zone.characteristics.majorCrops.join(', ')}.`)
             : '';
-
-          const seasonalInfo = '';
-
-          greeting += locationInfo + zoneInfo + seasonalInfo;
+            
+          greeting.text += locationInfo + zoneInfo;
         }
 
         const initialMessage: Message = {
           id: Date.now().toString(),
-          text: greeting,
+          text: greeting.text,
           isUser: false,
           timestamp: new Date(),
-          category: 'general',
-          suggestions: location ? locationService.getLocalizedRecommendations() : undefined
+          category: greeting.category || 'general',
+          suggestions: greeting.suggestions || (location ? locationService.getLocalizedRecommendations() : undefined)
         };
         setMessages([initialMessage]);
       } catch (error) {
@@ -498,7 +621,7 @@ const AiAgent: React.FC = () => {
 
     try {
       const location = locationService.getCurrentLocation();
-      let response = await advancedAiService.getAgricultureResponse(textToSend, i18n.language);
+      let response = await geminiAiService.getAgricultureResponse(textToSend, i18n.language, location);
       
       // Enhance response with location-specific information
       if (location && (
@@ -517,22 +640,22 @@ const AiAgent: React.FC = () => {
             ? `\n\nआपके क्षेत्र ${location.district}, ${location.state} के लिए विशेष जानकारी:\n`
             : `\n\nSpecific information for your area ${location.district}, ${location.state}:\n`;
 
-          response += locationContext;
+          response.text += locationContext;
 
           if (textToSend.toLowerCase().includes('crop') || textToSend.toLowerCase().includes('फसल')) {
-            response += i18n.language === 'hi'
+            response.text += i18n.language === 'hi'
               ? `• इस क्षेत्र की प्रमुख फसलें: ${zone.characteristics.majorCrops.join(', ')}\n`
               : `• Major crops for this region: ${zone.characteristics.majorCrops.join(', ')}\n`;
           }
 
           if (textToSend.toLowerCase().includes('weather') || textToSend.toLowerCase().includes('मौसम')) {
-            response += i18n.language === 'hi'
+            response.text += i18n.language === 'hi'
               ? `• सामान्य वर्षा: ${zone.characteristics.rainfall}\n• तापमान: ${zone.characteristics.temperature}\n`
               : `• Typical rainfall: ${zone.characteristics.rainfall}\n• Temperature: ${zone.characteristics.temperature}\n`;
           }
 
           if (textToSend.toLowerCase().includes('soil') || textToSend.toLowerCase().includes('मिट्टी')) {
-            response += i18n.language === 'hi'
+            response.text += i18n.language === 'hi'
               ? `• मिट्टी के प्रकार: ${zone.characteristics.soilTypes.join(', ')}\n`
               : `• Soil types: ${zone.characteristics.soilTypes.join(', ')}\n`;
 
@@ -540,7 +663,7 @@ const AiAgent: React.FC = () => {
             const soilType = zone.characteristics.soilTypes[0]?.toLowerCase();
             const soilInfo = locationService.getSoilType(soilType);
             if (soilInfo) {
-              response += i18n.language === 'hi'
+              response.text += i18n.language === 'hi'
                 ? `\nमिट्टी प्रबंधन सुझाव:\n${soilInfo.management.map(tip => `• ${tip}`).join('\n')}`
                 : `\nSoil management tips:\n${soilInfo.management.map(tip => `• ${tip}`).join('\n')}`;
             }
@@ -550,18 +673,19 @@ const AiAgent: React.FC = () => {
       
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: response,
+        text: response.text,
         isUser: false,
         timestamp: new Date(),
-        category: 'general',
-        suggestions: location ? locationService.getLocalizedRecommendations() : undefined
+        category: response.category || 'general',
+        confidence: response.confidence,
+        suggestions: response.suggestions || (location ? locationService.getLocalizedRecommendations() : undefined)
       };
       
   setMessages(prev => [...prev, botMessage]);
 
       // Auto-speak if not already speaking
       if (!chatState.isSpeaking && chatState.speechEnabled) {
-        speakText(response);
+        speakText(response.text);
       }
 
     } catch (error) {
@@ -586,7 +710,8 @@ const AiAgent: React.FC = () => {
 
   const clearConversation = () => {
     setMessages([]);
-    // Advanced service will manage its own context
+    // Clear Gemini AI service history
+    geminiAiService.clearHistory();
   };
 
   const isVoiceSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;

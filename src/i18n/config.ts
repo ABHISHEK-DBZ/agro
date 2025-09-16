@@ -36,7 +36,7 @@ i18n
     resources,
     lng: localStorage.getItem('language') || 'hi', // Default to Hindi for Indian farmers
     fallbackLng: ['hi', 'en'], // Try Hindi first, then English
-    debug: false, // Disable debug for production
+    debug: true, // Enable debug to see what's happening
     
     interpolation: {
       escapeValue: false,
@@ -55,11 +55,10 @@ i18n
       order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
       excludeCacheFor: ['cimode'], // language to not persist on localStorage
-      checkWhitelist: true
     },
     
-    // Whitelist supported languages to prevent errors
-    whitelist: ['en', 'hi', 'mr', 'gu', 'ta', 'te', 'pa', 'bn', 'kn', 'ml', 'or', 'ur'],
+    // Supported languages list (fixed property name)
+    supportedLngs: ['en', 'hi', 'mr', 'gu', 'ta', 'te', 'pa', 'bn', 'kn', 'ml', 'or', 'ur'],
     
     // Load path for dynamic loading if needed
     load: 'languageOnly',

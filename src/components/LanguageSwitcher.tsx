@@ -5,6 +5,11 @@ import { Languages } from 'lucide-react';
 const LanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
 
+  // Debug current language setup
+  console.log('🌐 Current language:', i18n.language);
+  console.log('📚 Available languages:', Object.keys(i18n.options.resources || {}));
+  console.log('💾 Stored language:', localStorage.getItem('language'));
+
   const languages = [
     { code: 'en', name: 'English', nativeName: 'English' },
     { code: 'hi', name: 'Hindi', nativeName: 'हिंदी' },
@@ -21,14 +26,22 @@ const LanguageSwitcher: React.FC = () => {
   ];
 
   const handleLanguageChange = (languageCode: string) => {
+    console.log(`🌐 Changing language from ${i18n.language} to ${languageCode}`);
+    console.log('📚 Available resources:', Object.keys(i18n.options.resources || {}));
+    console.log('🎯 Target language bundle:', i18n.getResourceBundle(languageCode, 'translation'));
+    
     i18n.changeLanguage(languageCode).then(() => {
+      console.log(`✅ Language changed successfully to: ${languageCode}`);
+      console.log('✨ New i18n.language:', i18n.language);
+      console.log('📝 Sample translation check:', i18n.t('ai.title', { lng: languageCode }));
+      
       // Store the selected language in localStorage for persistence
       localStorage.setItem('language', languageCode);
       
-      // Force a page reload to ensure all components update properly
-      window.location.reload();
+      // Test if page actually needs reload
+      console.log('🔄 Skipping page reload - testing dynamic change...');
     }).catch((error) => {
-      console.error('Language change failed:', error);
+      console.error('❌ Language change failed:', error);
     });
   };
 
