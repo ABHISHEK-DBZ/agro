@@ -13,7 +13,7 @@ class WeatherService {
   private readonly apiKey: string;
   private readonly apiUrl: string;
   private cachedWeatherData: Map<string, { data: WeatherData; timestamp: number }>;
-  private readonly cacheExpiry = 1800000; // 30 minutes
+  private readonly cacheExpiry = 600000; // Reduced to 10 minutes for faster updates
 
   constructor() {
     this.apiKey = import.meta.env.VITE_WEATHER_API_KEY || '';
@@ -89,32 +89,30 @@ class WeatherService {
     }
 
     try {
-    const [currentWeather] = await Promise.all([
+    // Fast parallel API calls for better performance
+    const [currentWeatherResponse, forecastResponse] = await Promise.all([
         axios.get(
-          `${this.apiUrl}/weather?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${this.apiKey}`
+          `${this.apiUrl}/weather?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${this.apiKey}`,
+          { timeout: 5000 } // 5 second timeout for faster response
         ),
         axios.get(
-          `${this.apiUrl}/forecast?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${this.apiKey}`
-        ),
-        axios.get(
-          `${this.apiUrl}/agro/1.0/weather?lat=${location.lat}&lon=${location.lon}&appid=${this.apiKey}`
+          `${this.apiUrl}/forecast?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${this.apiKey}`,
+          { timeout: 5000 } // 5 second timeout for faster response
         )
       ]);
 
-      // ...existing code...
-      // Instead of building a custom WeatherData, just return the OpenWeatherMap response mapped to your shared type
-      // You may need to adapt this further for your app, but this removes the 'current' and 'agricultural' properties
+      // Optimized weather data mapping for faster processing
       const weatherData: WeatherData = {
-        name: currentWeather.data.name,
-        main: currentWeather.data.main,
-        weather: currentWeather.data.weather,
-        wind: currentWeather.data.wind,
-        visibility: currentWeather.data.visibility,
-        clouds: currentWeather.data.clouds,
-        sys: currentWeather.data.sys,
-        rain: currentWeather.data.rain,
-        uv_index: currentWeather.data.uvi,
-        air_quality: undefined, // Not available in this API call
+        name: currentWeatherResponse.data.name,
+        main: currentWeatherResponse.data.main,
+        weather: currentWeatherResponse.data.weather,
+        wind: currentWeatherResponse.data.wind,
+        visibility: currentWeatherResponse.data.visibility,
+        clouds: currentWeatherResponse.data.clouds,
+        sys: currentWeatherResponse.data.sys,
+        rain: currentWeatherResponse.data.rain,
+        uv_index: currentWeatherResponse.data.uvi || 0,
+        air_quality: undefined, // Skip heavy API call for faster loading
       };
 
       // Cache the data

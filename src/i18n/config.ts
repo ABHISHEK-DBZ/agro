@@ -14,6 +14,7 @@ import mlTranslations from './locales/ml.json';
 import orTranslations from './locales/or.json';
 import urTranslations from './locales/ur.json';
 
+// Enhanced language configuration with proper fallbacks
 const resources = {
   en: { translation: enTranslations },
   hi: { translation: hiTranslations },
@@ -33,14 +34,40 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en', // Set to English first for faster loading
-    fallbackLng: 'en',
+    lng: localStorage.getItem('language') || 'hi', // Default to Hindi for Indian farmers
+    fallbackLng: ['hi', 'en'], // Try Hindi first, then English
     debug: false, // Disable debug for production
+    
     interpolation: {
       escapeValue: false,
     },
+    
     react: {
       useSuspense: false // Disable suspense to prevent loading issues
+    },
+    
+    // Namespace configuration for better organization
+    defaultNS: 'translation',
+    ns: ['translation'],
+    
+    // Detection options
+    detection: {
+      order: ['localStorage', 'navigator', 'htmlTag'],
+      caches: ['localStorage'],
+      excludeCacheFor: ['cimode'], // language to not persist on localStorage
+      checkWhitelist: true
+    },
+    
+    // Whitelist supported languages to prevent errors
+    whitelist: ['en', 'hi', 'mr', 'gu', 'ta', 'te', 'pa', 'bn', 'kn', 'ml', 'or', 'ur'],
+    
+    // Load path for dynamic loading if needed
+    load: 'languageOnly',
+    
+    // Missing key handling for better debugging
+    saveMissing: false,
+    missingKeyHandler: (lng, ns, key) => {
+      console.warn(`Missing translation key: ${key} for language: ${lng}`);
     }
   });
 

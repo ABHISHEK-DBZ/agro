@@ -163,9 +163,9 @@ class DiseaseDetectionService {
         img = await this.loadImageUrl(imageData);
       }
 
-      // Convert image to tensor
+      // Convert image to tensor with higher resolution for better accuracy
       const tensor = tf.browser.fromPixels(img)
-        .resizeNearestNeighbor([224, 224]) // Resize to model input size
+        .resizeNearestNeighbor([512, 512]) // Increased from 224x224 to 512x512 for much better accuracy
         .toFloat()
         .expandDims();
 

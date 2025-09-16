@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
   Sprout,
-  Languages,
   ChevronDown,
   Home,
   Bug,
@@ -14,51 +13,19 @@ import {
   BarChart3,
   Wifi
 } from 'lucide-react';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface NavbarProps {
   hideLogout?: boolean;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ hideLogout }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
-  };
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowLanguageDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const languages = [
-    { code: 'en', name: 'English', nativeName: 'English' },
-    { code: 'hi', name: 'Hindi', nativeName: 'हिंदी' },
-    { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
-    { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
-    { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
-    { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
-    { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ' },
-  ];
-
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
-
-  const changeLanguage = (langCode: string) => {
-    i18n.changeLanguage(langCode);
-    setShowLanguageDropdown(false);
   };
 
   const navItems = [
@@ -131,42 +98,8 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout }) => {
             )}
           </div>
 
-          {/* Enhanced Language Dropdown - Fixed for mobile */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-              className="group flex items-center space-x-2 px-3 py-2 lg:px-4 lg:py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm lg:text-base"
-            >
-              <div className="p-1 bg-white/20 rounded-lg">
-                <Languages className="h-3 w-3 lg:h-4 lg:w-4" />
-              </div>
-              <span className="font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-16 lg:max-w-none">
-                {currentLanguage.nativeName}
-              </span>
-              <ChevronDown className={`h-3 w-3 transition-transform duration-300 ${showLanguageDropdown ? 'rotate-180' : ''} hidden sm:block`} />
-            </button>
-
-            {showLanguageDropdown && (
-              <div className="absolute right-0 mt-3 w-48 lg:w-56 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 overflow-hidden animate-slide-in-up z-50">
-                <div className="p-2">
-                  {languages.map((language) => (
-                    <button
-                      key={language.code}
-                      onClick={() => changeLanguage(language.code)}
-                      className={`w-full flex items-center justify-between px-3 py-2 lg:px-4 lg:py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
-                        i18n.language === language.code 
-                          ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md' 
-                          : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
-                      }`}
-                    >
-                      <span className="truncate">{language.nativeName}</span>
-                      <span className="text-xs opacity-70 ml-2 hidden sm:inline">({language.name})</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Enhanced Language Switcher */}
+          <LanguageSwitcher />
         </div>
       </div>
 
