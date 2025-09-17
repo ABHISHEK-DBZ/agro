@@ -199,6 +199,92 @@ class EnhancedCropDiseaseService {
           }
         }
       ]
+    },
+    {
+      name: 'Tomato',
+      hindiName: 'टमाटर',
+      leafShape: ['compound', 'serrated', 'pointed'],
+      leafColor: ['bright-green', 'yellow-green'],
+      keywords: ['tomato', 'टमाटर', 'tamatar', 'टामेटर'],
+      colorProfile: {
+        primaryGreen: [50, 205, 50],
+        secondaryColors: [[124, 252, 0], [34, 139, 34]]
+      },
+      diseases: [
+        {
+          id: 'tomato_blight',
+          name: 'Tomato Blight',
+          hindiName: 'टमाटर झुलसा',
+          symptoms: [
+            'Dark spots on leaves and stems',
+            'Yellow halos around spots',
+            'Rapid leaf wilting'
+          ],
+          hindiSymptoms: [
+            'पत्तियों और तनों पर काले धब्बे',
+            'धब्बों के चारों ओर पीले छल्ले',
+            'पत्तियों का तेज़ी से मुरझाना'
+          ],
+          treatment: [
+            'Apply Chlorothalonil fungicide',
+            'Remove affected parts immediately',
+            'Improve air circulation'
+          ],
+          hindiTreatment: [
+            'क्लोरोथालोनिल फंगिसाइड लगाएं',
+            'प्रभावित हिस्से तुरंत हटाएं',
+            'हवा के संचार में सुधार करें'
+          ],
+          confidence: 82,
+          visualIndicators: {
+            colors: [[105, 105, 105], [169, 169, 169], [255, 255, 0]],
+            patterns: ['spots', 'halos', 'wilting']
+          }
+        }
+      ]
+    },
+    {
+      name: 'Maize',
+      hindiName: 'मक्का',
+      leafShape: ['long', 'broad', 'parallel-veined'],
+      leafColor: ['bright-green', 'yellow-green'],
+      keywords: ['maize', 'मक्का', 'makka', 'corn', 'भुट्टा'],
+      colorProfile: {
+        primaryGreen: [124, 252, 0],
+        secondaryColors: [[50, 205, 50], [34, 139, 34]]
+      },
+      diseases: [
+        {
+          id: 'maize_leaf_blight',
+          name: 'Maize Leaf Blight',
+          hindiName: 'मक्का पत्ती झुलसा',
+          symptoms: [
+            'Long oval lesions on leaves',
+            'Tan colored spots with dark borders',
+            'Premature leaf death'
+          ],
+          hindiSymptoms: [
+            'पत्तियों पर लंबे अंडाकार घाव',
+            'काले किनारों के साथ भूरे रंग के धब्बे',
+            'पत्तियों की समय से पहले मृत्यु'
+          ],
+          treatment: [
+            'Use resistant varieties',
+            'Apply Propiconazole fungicide',
+            'Maintain proper plant spacing'
+          ],
+          hindiTreatment: [
+            'प्रतिरोधी किस्में उगाएं',
+            'प्रोपिकोनाज़ोल फंगिसाइड लगाएं',
+            'उचित पौधे की दूरी बनाए रखें'
+          ],
+          confidence: 80,
+          visualIndicators: {
+            colors: [[210, 180, 140], [139, 69, 19], [160, 82, 45]],
+            patterns: ['lesions', 'oval-spots', 'browning']
+          }
+        }
+      ]
     }
   ];
 
@@ -383,17 +469,25 @@ class EnhancedCropDiseaseService {
     for (const crop of this.crops) {
       let score = 0;
 
-      // Filename keyword matching (40% weight)
+      // Filename keyword matching (30% weight) - reduced dependency on filename
       crop.keywords.forEach(keyword => {
-        if (fileName.includes(keyword)) {
-          score += 40;
+        if (fileName.includes(keyword.toLowerCase())) {
+          score += 30;
         }
       });
 
-      // Color profile matching (35% weight)
+      // Generic plant keywords boost (10% weight)
+      const genericPlantTerms = ['plant', 'leaf', 'crop', 'disease', 'पौधा', 'पत्ता', 'फसल', 'बीमारी'];
+      genericPlantTerms.forEach(term => {
+        if (fileName.includes(term.toLowerCase())) {
+          score += 10;
+        }
+      });
+
+      // Color profile matching (40% weight) - increased importance
       if (imageAnalysis.colorProfile) {
         const colorMatch = this.calculateColorProfileMatch(crop, imageAnalysis.colorProfile);
-        score += colorMatch * 35;
+        score += colorMatch * 40;
       }
 
       // Image quality bonus (15% weight)
@@ -418,9 +512,11 @@ class EnhancedCropDiseaseService {
 
     const confidence = Math.min(Math.max(highestScore, 25), 95);
 
+    // More lenient crop detection - return best match even with lower confidence
+    // if no strong match found, default to common crops for better user experience
     return {
-      crop: confidence > 40 ? bestMatch : null,
-      confidence
+      crop: confidence > 25 ? bestMatch : (bestMatch || this.crops[0]), // Default to first crop if no match
+      confidence: Math.max(confidence, 30) // Minimum confidence of 30%
     };
   }
 
@@ -433,27 +529,39 @@ class EnhancedCropDiseaseService {
                       (imageColors.yellowGreen || 0) + 
                       (imageColors.blueGreen || 0);
 
-    // Different crops have different green profiles
+    // More lenient matching - any green plant gets some score
+    if (totalGreen > 10) matchScore += 0.3; // Basic green threshold
+
+    // Different crops have different green profiles - more flexible thresholds
     switch (crop.name) {
       case 'Rice':
-        if (imageColors.lightGreen > 15) matchScore += 0.4;
-        if (imageColors.yellowGreen > 8) matchScore += 0.3;
-        if (totalGreen > 25) matchScore += 0.3;
+        if (imageColors.lightGreen > 8) matchScore += 0.3;
+        if (imageColors.yellowGreen > 5) matchScore += 0.2;
+        if (totalGreen > 15) matchScore += 0.2;
         break;
       case 'Wheat':
-        if (imageColors.blueGreen > 10) matchScore += 0.4;
-        if (imageColors.yellowGreen > 12) matchScore += 0.3;
-        if (totalGreen > 20) matchScore += 0.3;
+        if (imageColors.blueGreen > 5) matchScore += 0.3;
+        if (imageColors.yellowGreen > 7) matchScore += 0.2;
+        if (totalGreen > 12) matchScore += 0.2;
         break;
       case 'Cotton':
-        if (imageColors.darkGreen > 12) matchScore += 0.4;
-        if (imageColors.lightGreen > 10) matchScore += 0.3;
-        if (totalGreen > 22) matchScore += 0.3;
+        if (imageColors.darkGreen > 7) matchScore += 0.3;
+        if (imageColors.lightGreen > 6) matchScore += 0.2;
+        if (totalGreen > 13) matchScore += 0.2;
         break;
       case 'Tomato':
-        if (imageColors.darkGreen > 15) matchScore += 0.4;
         if (imageColors.lightGreen > 8) matchScore += 0.3;
-        if (totalGreen > 20) matchScore += 0.3;
+        if (imageColors.darkGreen > 6) matchScore += 0.2;
+        if (totalGreen > 14) matchScore += 0.2;
+        break;
+      case 'Maize':
+        if (imageColors.yellowGreen > 8) matchScore += 0.3;
+        if (imageColors.lightGreen > 10) matchScore += 0.2;
+        if (totalGreen > 18) matchScore += 0.2;
+        break;
+      default:
+        // Generic plant matching for unknown crops
+        if (totalGreen > 10) matchScore += 0.5;
         break;
     }
 
