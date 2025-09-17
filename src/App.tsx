@@ -16,9 +16,12 @@ import LiveDashboard from './components/LiveDashboard';
 function App() {
   console.log('🌾 Smart Krishi Sahayak App loading...');
   
+  // Use basename only in production (GitHub Pages)
+  const basename = process.env.NODE_ENV === 'production' ? '/agro' : '';
+  
   return (
     <ErrorBoundary>
-      <Router basename="/agro">
+      <Router basename={basename}>
         <div className="min-h-screen bg-gray-50">
           <Navbar hideLogout={true} />
           <main className="container mx-auto px-4 py-8">
