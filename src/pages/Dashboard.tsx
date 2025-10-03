@@ -28,39 +28,47 @@ const guideSteps = [
 
 const Dashboard: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-100 to-emerald-100 p-0">
-      {/* Hero Section */}
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 p-0">
+      {/* Enhanced Hero Section */}
       <div className="max-w-5xl mx-auto py-10 px-4 text-center">
         <div className="flex flex-col items-center justify-center mb-6">
           <div className="p-4 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg mb-2">
             <Sprout className="h-12 w-12 text-white" />
           </div>
-          <h1 className="text-4xl lg:text-5xl font-extrabold text-green-700 mb-2">🌾 Smart Krishi Sahayak</h1>
-          <h2 className="text-xl text-green-900 font-semibold mb-2">स्मार्ट कृषि सहायक</h2>
-          <p className="text-lg text-green-800 mb-4">India's smartest agriculture assistant for farmers</p>
+          <h1 className="text-4xl lg:text-5xl font-extrabold high-contrast-text mb-2">🌾 Smart Krishi Sahayak</h1>
+          <h2 className="text-xl text-contrast font-semibold mb-2">स्मार्ट कृषि सहायक</h2>
+          <p className="text-lg text-contrast-light mb-4 font-medium">India's smartest agriculture assistant for farmers</p>
         </div>
       </div>
 
-      {/* Quick Access Cards */}
+      {/* Enhanced Quick Access Cards */}
       <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 px-4">
-        <a href="/live-weather" className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:bg-green-50 transition">
-          <Wifi className="h-8 w-8 text-blue-500 mb-2" />
-          <span className="font-bold text-green-700 mb-1">Live Weather</span>
-          <span className="text-xs text-gray-500">Current weather updates</span>
+        <a href="/live-weather" className="enhanced-card p-6 flex flex-col items-center hover:bg-blue-50 smooth-transition group">
+          <div className="p-3 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 shadow-lg mb-3 group-hover:scale-110 smooth-transition">
+            <Wifi className="h-6 w-6 text-white" />
+          </div>
+          <span className="font-bold text-contrast mb-1">Live Weather</span>
+          <span className="text-xs text-contrast-light text-center">Current weather updates</span>
         </a>
-        <a href="/mandi-prices" className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:bg-green-50 transition">
-          <TrendingUp className="h-8 w-8 text-green-600 mb-2" />
-          <span className="font-bold text-green-700 mb-1">Mandi Prices</span>
-          <span className="text-xs text-gray-500">Latest market rates</span>
+        <a href="/mandi-prices" className="enhanced-card p-6 flex flex-col items-center hover:bg-green-50 smooth-transition group">
+          <div className="p-3 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg mb-3 group-hover:scale-110 smooth-transition">
+            <TrendingUp className="h-6 w-6 text-white" />
+          </div>
+          <span className="font-bold text-contrast mb-1">Mandi Prices</span>
+          <span className="text-xs text-contrast-light text-center">Latest market rates</span>
         </a>
-        <a href="/crop-info" className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:bg-green-50 transition">
-          <Sprout className="h-8 w-8 text-emerald-500 mb-2" />
-          <span className="font-bold text-green-700 mb-1">Crop Info</span>
-          <span className="text-xs text-gray-500">Indian crop details</span>
+        <a href="/crop-info" className="enhanced-card p-6 flex flex-col items-center hover:bg-emerald-50 smooth-transition group">
+          <div className="p-3 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg mb-3 group-hover:scale-110 smooth-transition">
+            <Sprout className="h-6 w-6 text-white" />
+          </div>
+          <span className="font-bold text-contrast mb-1">Crop Info</span>
+          <span className="text-xs text-contrast-light text-center">Indian crop details</span>
         </a>
-        <a href="/disease-detection" className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:bg-green-50 transition">
-          <Bug className="h-8 w-8 text-red-500 mb-2" />
-          <span className="font-bold text-green-700 mb-1">Disease Detection</span>
+        <a href="/disease-detection" className="enhanced-card p-6 flex flex-col items-center hover:bg-red-50 smooth-transition group">
+          <div className="p-3 rounded-full bg-gradient-to-br from-red-500 to-pink-600 shadow-lg mb-3 group-hover:scale-110 smooth-transition">
+            <Bug className="h-6 w-6 text-white" />
+          </div>
+          <span className="font-bold text-contrast mb-1">Disease Detection</span>
           <span className="text-xs text-gray-500">Detect crop diseases</span>
         </a>
         <a href="/agent" className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:bg-green-50 transition sm:col-span-2 lg:col-span-4">

@@ -1,3 +1,4 @@
+// Gemini AI Service - v2.4 - Added REST API fallback with Gemini 2.0
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
 interface GeminiResponse {
@@ -15,7 +16,7 @@ class GeminiAiService {
 
   constructor() {
     // Gemini API Key from environment variable
-    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyAzINXlPpCs6NnXyQJzmDsk0pzWV40dhwk';
+    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCD0pag3zk23HMc_lqCsDD4zxs16txxJVQ';
     
     if (!API_KEY || API_KEY === 'your_api_key_here') {
       console.warn('⚠️ Gemini API key not properly configured');
@@ -23,9 +24,9 @@ class GeminiAiService {
     
     this.genAI = new GoogleGenerativeAI(API_KEY);
     
-    // Primary model - Gemini 1.5 Flash
+    // Primary model - Gemini 2.5 Flash (latest)
     this.primaryModel = this.genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash-exp',
       systemInstruction: "You are an expert agricultural advisor for Indian farmers called 'Smart Krishi Sahayak AI'. Provide helpful, practical advice about farming, crops, weather, soil, pests, government schemes, and organic farming. Always respond in the user's preferred language (Hindi or English) with simple, actionable guidance suited to Indian agricultural conditions.",
       safetySettings: [
         {
@@ -39,9 +40,9 @@ class GeminiAiService {
       ],
     });
 
-    // Fallback model - Gemini Pro (if available)
+    // Fallback model - Gemini Pro
     this.fallbackModel = this.genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-pro',
+      model: 'gemini-pro',
       systemInstruction: "You are an expert agricultural advisor for Indian farmers called 'Smart Krishi Sahayak AI'. Provide helpful, practical advice about farming, crops, weather, soil, pests, government schemes, and organic farming. Always respond in the user's preferred language (Hindi or English) with simple, actionable guidance suited to Indian agricultural conditions.",
     });
   }
@@ -115,6 +116,45 @@ class GeminiAiService {
     return suggestions[category]?.[language] || suggestions['cropManagement'][language] || [];
   }
 
+  // Direct REST API call as ultimate fallback
+  private async generateWithRestAPI(prompt: string): Promise<string> {
+    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCD0pag3zk23HMc_lqCsDD4zxs16txxJVQ';
+    
+    try {
+      console.log('🌐 Trying direct REST API call...');
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          systemInstruction: {
+            parts: [{
+              text: "You are an expert agricultural advisor for Indian farmers called 'Smart Krishi Sahayak AI'. Provide helpful, practical advice about farming, crops, weather, soil, pests, government schemes, and organic farming. Always respond in the user's preferred language (Hindi or English) with simple, actionable guidance suited to Indian agricultural conditions."
+            }]
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.candidates[0]?.content?.parts[0]?.text || 'Sorry, I could not generate a response.';
+      
+    } catch (error) {
+      console.error('REST API call failed:', error);
+      throw error;
+    }
+  }
+
   private async generateWithRetry(prompt: string, maxRetries: number): Promise<string> {
     let lastError: any;
     
@@ -131,8 +171,9 @@ class GeminiAiService {
         lastError = error;
         console.warn(`⚠️ Attempt ${attempt} failed:`, error.message);
         
-        // If it's a 503 (overloaded) error, try fallback model
-        if (error.message.includes('503') || error.message.includes('overloaded')) {
+        // If it's a 404, 503 (overloaded) error, or model not found, try fallback model
+        if (error.message.includes('503') || error.message.includes('overloaded') || 
+            error.message.includes('404') || error.message.includes('not found')) {
           try {
             console.log(`🔄 Trying fallback model...`);
             const fallbackResult = await this.fallbackModel.generateContent(prompt);
@@ -150,6 +191,14 @@ class GeminiAiService {
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       }
+    }
+    
+    // Ultimate fallback: Try direct REST API call
+    try {
+      console.log('🔄 Attempting direct REST API as final fallback...');
+      return await this.generateWithRestAPI(prompt);
+    } catch (restError: any) {
+      console.warn('⚠️ REST API fallback also failed:', restError.message);
     }
     
     // If all retries failed, throw the last error

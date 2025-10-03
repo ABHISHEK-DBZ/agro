@@ -1,38 +1,50 @@
-/* Custom input styles for auth forms */
+/* Enhanced input styles for better visibility */
 .auth-input {
-  border: 2px solid #dcfce7;
-  background: #f0fdf4;
-  color: #14532d;
+  border: 2px solid #16a34a;
+  background: #ffffff;
+  color: #0f172a;
   border-radius: 12px;
   padding: 14px 18px;
   font-size: 1rem;
+  font-weight: 500;
   margin-bottom: 1rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(22,163,74,0.1);
 }
 .auth-input:focus {
   border-color: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34,197,94,0.12);
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.15), 0 4px 12px rgba(22,163,74,0.2);
+  outline: none;
 }
-/* Enhanced Dropdown Styles for Crop Season Filter */
+.auth-input::placeholder {
+  color: #64748b;
+  font-weight: 400;
+}
+/* Enhanced Dropdown Styles for Better Visibility */
 .season-dropdown {
   font-size: 1.1rem;
-  color: #14532d;
-  background: #fff;
+  color: #0f172a;
+  font-weight: 500;
+  background: #ffffff;
   border: 2px solid #16a34a;
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(22,163,74,0.08);
-  padding: 10px 18px;
+  box-shadow: 0 4px 12px rgba(22,163,74,0.12);
+  padding: 12px 20px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 .season-dropdown:focus {
   border-color: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34,197,94,0.15);
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.15), 0 6px 16px rgba(22,163,74,0.2);
+  transform: translateY(-1px);
 }
 .season-dropdown option {
   font-size: 1rem;
-  color: #14532d;
-  background: #f0fdf4;
+  color: #0f172a;
+  background: #ffffff;
+  padding: 8px 12px;
+  font-weight: 500;
 }
 /* Theme Toggle Styles */
 .theme-toggle {
@@ -924,6 +936,112 @@ html {
 
 .crop-card {
   background: linear-gradient(135deg, #eab308 0%, #ca8a04 50%, #a16207 100%);
+}
+
+/* Enhanced UI Components for Better Visibility */
+.enhanced-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(22, 163, 74, 0.1);
+  transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(22, 163, 74, 0.15);
+  border-color: rgba(22, 163, 74, 0.3);
+}
+
+/* Scrollbar Hide Utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fade In Animation for Dropdowns */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.text-contrast {
+  color: #0f172a !important;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.text-contrast-light {
+  color: #374151 !important;
+  font-weight: 500;
+}
+
+.enhanced-button {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.enhanced-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.4);
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+}
+
+.enhanced-input {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(22, 163, 74, 0.3);
+  color: #0f172a;
+  font-weight: 500;
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+}
+
+.enhanced-input:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+  background: #ffffff;
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.high-contrast-text {
+  color: #111827 !important;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
+}
+
+.elevated-shadow {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .disease-card {

@@ -1,10 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Get base path based on deployment platform
+const getBasePath = () => {
+  // GitHub Pages
+  if (process.env.GITHUB_PAGES) return '/smart-krishi-sahayak/'
+  // Vercel, Netlify, Surge, Railway - use root
+  if (process.env.VERCEL || process.env.NETLIFY || process.env.NODE_ENV === 'production') return '/'
+  // Development
+  return '/'
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: process.env.NODE_ENV === 'production' ? '/agro/' : '/',
+  base: getBasePath(),
   server: {
     port: 3000,
     open: true

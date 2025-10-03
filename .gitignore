@@ -57,3 +57,4 @@ Desktop.ini
 # API Keys (important for security)
 .env
 config/keys.js
+.vercel

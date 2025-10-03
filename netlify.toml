@@ -1,0 +1,35 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  VITE_APP_BASE_URL = "https://smart-krishi-sahayak.netlify.app"
+  NETLIFY = "true"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    cache-control = "max-age=31536000"
+    content-type = "application/javascript; charset=utf-8"
+
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    cache-control = "max-age=31536000"
+    content-type = "application/javascript; charset=utf-8"
+
+[[headers]]
+  for = "*.css"
+  [headers.values]
+    cache-control = "max-age=31536000"
+    content-type = "text/css; charset=utf-8"
+
+[[headers]]
+  for = "*.json"
+  [headers.values]
+    content-type = "application/json; charset=utf-8"

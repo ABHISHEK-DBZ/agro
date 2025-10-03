@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import geminiAiService from '../services/geminiAiService';
 import { locationService } from '../services/locationService';
+import enhancedFarmingAI from '../services/enhancedFarmingAI';
 
 // Extend the Window interface for speech recognition
 declare global {
@@ -506,13 +507,29 @@ const AiAgent: React.FC = () => {
     const initializeChat = async () => {
       try {
         const location = locationService.getCurrentLocation();
-        let greeting = await geminiAiService.getAgricultureResponse("", i18n.language, location);
+        const farmingQuery = {
+          id: `greeting-${Date.now()}`,
+          query: i18n.language === 'hi' 
+            ? "नमस्ते! मैं कृषि में सहायता चाहता हूं।" 
+            : "Hello! I need help with farming.",
+          hindiQuery: "नमस्ते! मैं कृषि में सहायता चाहता हूं।",
+          language: i18n.language as 'en' | 'hi',
+          location: location ? {
+            state: location.state,
+            district: location.district,
+            climate: 'temperate'
+          } : undefined,
+          category: 'general' as any,
+          userId: 'user-1',
+          timestamp: new Date(),
+          urgency: 'low' as any
+        };
+        
+        let greeting = await enhancedFarmingAI.processFarmingQuery(farmingQuery);
         
         // Add location-specific information if available
         if (location) {
           const zone = locationService.getAgroClimaticZone(location.state);
-    // const recommendations = locationService.getLocalizedRecommendations();
-    // const seasonalCrops = locationService.getCropRecommendations();
           
           const locationInfo = i18n.language === 'hi'
             ? `\n\nमैं देख रहा हूं कि आप ${location.district}, ${location.state} से हैं।`
@@ -524,19 +541,22 @@ const AiAgent: React.FC = () => {
               : `\nYour area falls in the ${zone.name}, which is great for crops like ${zone.characteristics.majorCrops.join(', ')}.`)
             : '';
             
-          greeting.text += locationInfo + zoneInfo;
+          greeting.answer += locationInfo + zoneInfo;
         }
 
         const initialMessage: Message = {
           id: Date.now().toString(),
-          text: greeting.text,
+          text: i18n.language === 'hi' ? greeting.hindiAnswer : greeting.answer,
           isUser: false,
           timestamp: new Date(),
-          category: greeting.category || 'general',
-          suggestions: greeting.suggestions || (location ? locationService.getLocalizedRecommendations() : undefined)
+          category: 'general',
+          suggestions: i18n.language === 'hi' 
+            ? greeting.hindiFollowUpQuestions 
+            : greeting.followUpQuestions || (location ? locationService.getLocalizedRecommendations() : undefined)
         };
         setMessages([initialMessage]);
       } catch (error) {
+        console.error('Enhanced AI initialization error:', error);
         // Fallback greeting
         const fallbackGreeting = i18n.language === 'hi' 
           ? "नमस्ते! मैं आपका उन्नत AI कृषि सहायक हूं। मैं फसलों, मौसम, बीमारियों और सरकारी योजनाओं के बारे में विस्तृत जानकारी दे सकता हूं।"
@@ -621,7 +641,24 @@ const AiAgent: React.FC = () => {
 
     try {
       const location = locationService.getCurrentLocation();
-      let response = await geminiAiService.getAgricultureResponse(textToSend, i18n.language, location);
+      
+      // Create farming query for enhanced AI
+      const farmingQuery = {
+        id: `query-${Date.now()}`,
+        query: textToSend,
+        hindiQuery: textToSend, // In real app, translate if needed
+        category: 'general' as any, // Will be auto-detected by AI
+        location: location ? {
+          state: location.state,
+          district: location.district,
+          climate: 'temperate'
+        } : undefined,
+        userId: 'user-1',
+        timestamp: new Date(),
+        urgency: 'medium' as any
+      };
+      
+      let response = await enhancedFarmingAI.processFarmingQuery(farmingQuery);
       
       // Enhance response with location-specific information
       if (location && (
@@ -633,39 +670,63 @@ const AiAgent: React.FC = () => {
         textToSend.toLowerCase().includes('मिट्टी')
       )) {
         const zone = locationService.getAgroClimaticZone(location.state);
-  // ...existing code...
 
         if (zone) {
           const locationContext = i18n.language === 'hi'
             ? `\n\nआपके क्षेत्र ${location.district}, ${location.state} के लिए विशेष जानकारी:\n`
             : `\n\nSpecific information for your area ${location.district}, ${location.state}:\n`;
 
-          response.text += locationContext;
+          const currentAnswer = i18n.language === 'hi' ? response.hindiAnswer : response.answer;
+          const updatedAnswer = currentAnswer + locationContext;
 
           if (textToSend.toLowerCase().includes('crop') || textToSend.toLowerCase().includes('फसल')) {
-            response.text += i18n.language === 'hi'
+            const cropInfo = i18n.language === 'hi'
               ? `• इस क्षेत्र की प्रमुख फसलें: ${zone.characteristics.majorCrops.join(', ')}\n`
               : `• Major crops for this region: ${zone.characteristics.majorCrops.join(', ')}\n`;
+            
+            if (i18n.language === 'hi') {
+              response.hindiAnswer = updatedAnswer + cropInfo;
+            } else {
+              response.answer = updatedAnswer + cropInfo;
+            }
           }
 
           if (textToSend.toLowerCase().includes('weather') || textToSend.toLowerCase().includes('मौसम')) {
-            response.text += i18n.language === 'hi'
+            const weatherInfo = i18n.language === 'hi'
               ? `• सामान्य वर्षा: ${zone.characteristics.rainfall}\n• तापमान: ${zone.characteristics.temperature}\n`
               : `• Typical rainfall: ${zone.characteristics.rainfall}\n• Temperature: ${zone.characteristics.temperature}\n`;
+            
+            if (i18n.language === 'hi') {
+              response.hindiAnswer = updatedAnswer + weatherInfo;
+            } else {
+              response.answer = updatedAnswer + weatherInfo;
+            }
           }
 
           if (textToSend.toLowerCase().includes('soil') || textToSend.toLowerCase().includes('मिट्टी')) {
-            response.text += i18n.language === 'hi'
+            const soilInfo = i18n.language === 'hi'
               ? `• मिट्टी के प्रकार: ${zone.characteristics.soilTypes.join(', ')}\n`
               : `• Soil types: ${zone.characteristics.soilTypes.join(', ')}\n`;
+            
+            if (i18n.language === 'hi') {
+              response.hindiAnswer = updatedAnswer + soilInfo;
+            } else {
+              response.answer = updatedAnswer + soilInfo;
+            }
 
             // Add soil-specific recommendations
             const soilType = zone.characteristics.soilTypes[0]?.toLowerCase();
-            const soilInfo = locationService.getSoilType(soilType);
-            if (soilInfo) {
-              response.text += i18n.language === 'hi'
-                ? `\nमिट्टी प्रबंधन सुझाव:\n${soilInfo.management.map(tip => `• ${tip}`).join('\n')}`
-                : `\nSoil management tips:\n${soilInfo.management.map(tip => `• ${tip}`).join('\n')}`;
+            const soilTypeInfo = locationService.getSoilType(soilType);
+            if (soilTypeInfo) {
+              const managementTips = i18n.language === 'hi'
+                ? `\nमिट्टी प्रबंधन सुझाव:\n${soilTypeInfo.management.map(tip => `• ${tip}`).join('\n')}`
+                : `\nSoil management tips:\n${soilTypeInfo.management.map(tip => `• ${tip}`).join('\n')}`;
+              
+              if (i18n.language === 'hi') {
+                response.hindiAnswer += managementTips;
+              } else {
+                response.answer += managementTips;
+              }
             }
           }
         }
@@ -673,36 +734,61 @@ const AiAgent: React.FC = () => {
       
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: response.text,
+        text: i18n.language === 'hi' ? response.hindiAnswer : response.answer,
         isUser: false,
         timestamp: new Date(),
-        category: response.category || 'general',
+        category: 'general',
         confidence: response.confidence,
-        suggestions: response.suggestions || (location ? locationService.getLocalizedRecommendations() : undefined)
+        suggestions: i18n.language === 'hi' 
+          ? response.hindiFollowUpQuestions 
+          : response.followUpQuestions || (location ? locationService.getLocalizedRecommendations() : undefined)
       };
       
-  setMessages(prev => [...prev, botMessage]);
+      setMessages(prev => [...prev, botMessage]);
 
       // Auto-speak if not already speaking
       if (!chatState.isSpeaking && chatState.speechEnabled) {
-        speakText(response.text);
+        speakText(i18n.language === 'hi' ? response.hindiAnswer : response.answer);
       }
 
     } catch (error) {
-      const errorText = i18n.language === 'hi' 
-        ? "माफ करें, मुझे अभी समस्या हो रही है। कृपया फिर से कोशिश करें।"
-        : "Sorry, I'm having trouble right now. Please try again.";
-      
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: errorText,
-        isUser: false,
-        timestamp: new Date(),
-        category: 'error'
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-      console.error("Error fetching AI response:", error);
+      console.error("Error with enhanced AI:", error);
+      // Fallback to basic gemini service
+      try {
+        const location = locationService.getCurrentLocation();
+        let fallbackResponse = await geminiAiService.getAgricultureResponse(textToSend, i18n.language, location);
+        
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: fallbackResponse.text,
+          isUser: false,
+          timestamp: new Date(),
+          category: fallbackResponse.category || 'general',
+          confidence: fallbackResponse.confidence,
+          suggestions: fallbackResponse.suggestions
+        };
+        
+        setMessages(prev => [...prev, botMessage]);
+        
+        if (!chatState.isSpeaking && chatState.speechEnabled) {
+          speakText(fallbackResponse.text);
+        }
+      } catch (fallbackError) {
+        const errorText = i18n.language === 'hi' 
+          ? "माफ करें, मुझे अभी समस्या हो रही है। कृपया फिर से कोशिश करें।"
+          : "Sorry, I'm having trouble right now. Please try again.";
+        
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: errorText,
+          isUser: false,
+          timestamp: new Date(),
+          category: 'error'
+        };
+        
+        setMessages(prev => [...prev, errorMessage]);
+        console.error("Fallback error:", fallbackError);
+      }
     } finally {
       setChatState(prev => ({ ...prev, isLoading: false }));
     }
@@ -710,8 +796,9 @@ const AiAgent: React.FC = () => {
 
   const clearConversation = () => {
     setMessages([]);
-    // Clear Gemini AI service history
+    // Clear both Gemini AI service and Enhanced Farming AI history
     geminiAiService.clearHistory();
+    // Enhanced Farming AI doesn't have persistent history, it's stateless
   };
 
   const isVoiceSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
@@ -775,16 +862,16 @@ const AiAgent: React.FC = () => {
           <QuickSuggestions onSelect={handleSend} />
         )}
 
-        {/* AI Status */}
-        <div className="bg-white/60 backdrop-blur-sm border border-white/30 rounded-xl p-4 shadow-sm mb-4">
+        {/* Enhanced AI Status */}
+        <div className="enhanced-card p-4 shadow-sm mb-4">
           <div className="flex items-center">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
               <BrainCircuit className="text-green-600 mr-2" size={20} />
               <div>
-                <h3 className="font-semibold text-green-800">Advanced AI Agriculture Assistant</h3>
-                <p className="text-green-700 text-sm">
-                  Powered by GPT with specialized agriculture knowledge base
+                <h3 className="font-semibold text-contrast">Advanced AI Agriculture Assistant</h3>
+                <p className="text-contrast-light text-sm font-medium">
+                  Powered by Gemini AI with specialized agriculture knowledge base
                 </p>
               </div>
             </div>
@@ -928,7 +1015,7 @@ const AiAgent: React.FC = () => {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             placeholder={t('aiagent.placeholder') + ' (Advanced AI)'}
-              className="ai-input-field bg-white text-gray-800 placeholder-gray-400"
+            className="ai-input-field bg-white text-gray-800 placeholder-gray-400 border-2 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-lg px-4 py-3 shadow-sm"
             disabled={chatState.isLoading}
           />
           
@@ -950,7 +1037,7 @@ const AiAgent: React.FC = () => {
           <button
             onClick={() => handleSend()}
             disabled={input.trim() === '' || chatState.isLoading}
-            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl p-2 disabled:from-orange-300 disabled:to-orange-400 disabled:cursor-not-allowed hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="enhanced-button rounded-xl p-2 disabled:opacity-50 disabled:cursor-not-allowed smooth-transition"
           >
             <Send size={20} />
           </button>

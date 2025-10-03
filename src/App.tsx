@@ -9,6 +9,8 @@ import AiAgent from './pages/AiAgent';
 import DiseaseDetection from './pages/DiseaseDetection';
 import GovernmentSchemes from './pages/GovernmentSchemes';
 import Profile from './pages/Profile';
+import CommunityDashboard from './pages/CommunityDashboard';
+import DailyTrackingLog from './pages/DailyTrackingLog';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import LiveDashboard from './components/LiveDashboard';
@@ -52,6 +54,9 @@ function App() {
               {/* AI and Tools Routes */}
               <Route path="/agent" element={<AiAgent />} />
               <Route path="/ai-agent" element={<AiAgent />} />
+              {/* Community and Tracking Routes */}
+              <Route path="/community" element={<CommunityDashboard />} />
+              <Route path="/daily-tracking" element={<DailyTrackingLog />} />
               {/* User Routes */}
               <Route path="/profile" element={<Profile />} />
                {/* <Route path="/setup-2fa" element={<Setup2FA />} /> */}
