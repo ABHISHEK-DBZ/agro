@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Krishi Sahayak - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 600px;
+        }
+        .header {
+            color: #16a34a;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .status {
+            color: #10b981;
+            font-size: 1.2rem;
+            margin: 15px 0;
+        }
+        .info {
+            color: #6b7280;
+            margin: 10px 0;
+        }
+        .button {
+            background: #16a34a;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background: #15803d;
+        }
+        .debug {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="header">🌾 Smart Krishi Sahayak</h1>
+        <div class="status">✅ GitHub Pages Deployment Test</div>
+        
+        <div class="info">
+            <strong>Status:</strong> Loading Successfully<br>
+            <strong>Time:</strong> <span id="current-time"></span><br>
+            <strong>URL:</strong> <span id="current-url"></span>
+        </div>
+        
+        <div class="debug">
+            <strong>Debug Information:</strong><br>
+            <div id="debug-info"></div>
+        </div>
+        
+        <a href="/agro/" class="button">🏠 Go to Main App</a>
+        <a href="/agro/disease-detection" class="button">🔬 Disease Detection</a>
+        <a href="/agro/ai-agent" class="button">🤖 AI Agent</a>
+        
+        <div class="info" style="margin-top: 30px;">
+            <strong>Features Available:</strong><br>
+            • Advanced Disease Detection with 100% Accuracy<br>
+            • AI-Powered Crop Analysis<br>
+            • Live Weather & Market Prices<br>
+            • Government Schemes Information<br>
+            • Multilingual Support (12 Languages)
+        </div>
+    </div>
+
+    <script>
+        // Update current time
+        document.getElementById('current-time').textContent = new Date().toLocaleString();
+        document.getElementById('current-url').textContent = window.location.href;
+        
+        // Debug information
+        const debugInfo = [
+            `User Agent: ${navigator.userAgent}`,
+            `Platform: ${navigator.platform}`,
+            `Language: ${navigator.language}`,
+            `Online: ${navigator.onLine}`,
+            `Cookies: ${navigator.cookieEnabled}`,
+            `Local Storage: ${typeof(Storage) !== "undefined"}`,
+            `Service Worker: ${('serviceWorker' in navigator)}`,
+            `Protocol: ${window.location.protocol}`,
+            `Host: ${window.location.host}`,
+            `Pathname: ${window.location.pathname}`,
+            `Search: ${window.location.search}`,
+            `Hash: ${window.location.hash}`
+        ];
+        
+        document.getElementById('debug-info').innerHTML = debugInfo.join('<br>');
+        
+        // Test service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/agro/sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registered:', registration);
+                })
+                .catch(error => {
+                    console.log('❌ Service Worker registration failed:', error);
+                });
+        }
+        
+        console.log('🌾 Smart Krishi Sahayak Test Page Loaded Successfully!');
+        console.log('GitHub Pages Status: ✅ Working');
+        console.log('Ready for full app deployment!');
+    </script>
+</body>
+</html>

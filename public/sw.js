@@ -1,10 +1,10 @@
 // Service Worker for offline functionality
-const CACHE_NAME = 'smart-krishi-sahayak-v1';
+const CACHE_NAME = 'smart-krishi-sahayak-v2';
 const urlsToCache = [
-  '/smart-krishi-sahayak/',
-  '/smart-krishi-sahayak/index.html',
-  '/smart-krishi-sahayak/static/js/bundle.js',
-  '/smart-krishi-sahayak/static/css/main.css',
+  '/agro/',
+  '/agro/index.html',
+  '/agro/vite.svg',
+  '/agro/manifest.json',
   'https://img.icons8.com/color/192/wheat.png'
 ];
 

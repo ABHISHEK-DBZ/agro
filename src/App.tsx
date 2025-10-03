@@ -15,6 +15,9 @@ import LiveDashboard from './components/LiveDashboard';
 
 function App() {
   console.log('🌾 Smart Krishi Sahayak App loading...');
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('Current URL:', window.location.href);
+  console.log('Base path:', process.env.NODE_ENV === 'production' ? '/agro' : '');
   
   // Use basename only in production (GitHub Pages)
   const basename = process.env.NODE_ENV === 'production' ? '/agro' : '';
