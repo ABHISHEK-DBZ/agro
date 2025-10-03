@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Service Test - Smart Krishi Sahayak</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; background: #22c55e; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #16a34a; }
+        .loading { opacity: 0.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌾 Smart Krishi Sahayak - AI Service Test</h1>
+        <div id="results"></div>
+        
+        <h2>Manual Tests</h2>
+        <button onclick="testEnglishQuery()">Test English Query</button>
+        <button onclick="testHindiQuery()">Test Hindi Query</button>
+        <button onclick="testAdvancedAI()">Test Advanced AI</button>
+        
+        <div id="manual-results"></div>
+    </div>
+
+    <script type="module">
+        const resultsDiv = document.getElementById('results');
+        const manualResultsDiv = document.getElementById('manual-results');
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        function addManualResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            manualResultsDiv.appendChild(div);
+        }
+
+        // Initial tests
+        async function runInitialTests() {
+            addResult('🔍 Starting AI Service Tests...', 'info');
+            
+            // Check environment
+            const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+            if (apiKey && apiKey !== 'your_openai_api_key_here' && apiKey.length > 10) {
+                addResult('✅ OpenAI API Key found and configured', 'success');
+            } else {
+                addResult('⚠️ OpenAI API Key not found or invalid', 'error');
+            }
+
+            try {
+                // Test AI Service
+                const { default: aiService } = await import('../services/aiService.ts');
+                addResult('✅ AI Service imported successfully', 'success');
+                
+                const isConfigured = aiService.isConfigured();
+                if (isConfigured) {
+                    addResult('✅ AI Service is properly configured', 'success');
+                } else {
+                    addResult('⚠️ AI Service not configured - will use fallback responses', 'error');
+                }
+
+                // Test Advanced AI Service
+                const { default: advancedAiService } = await import('../services/advancedAiService.ts');
+                addResult('✅ Advanced AI Service imported successfully', 'success');
+
+            } catch (error) {
+                addResult('❌ Error importing AI services: ' + error.message, 'error');
+            }
+        }
+
+        // Manual test functions
+        window.testEnglishQuery = async function() {
+            addManualResult('🧠 Testing English Query...', 'info');
+            try {
+                const { default: aiService } = await import('../services/aiService.ts');
+                const response = await aiService.getAgricultureResponse('What is the best fertilizer for tomato plants?', 'en');
+                addManualResult('🇺🇸 English Response: ' + response, 'success');
+            } catch (error) {
+                addManualResult('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        window.testHindiQuery = async function() {
+            addManualResult('🧠 Testing Hindi Query...', 'info');
+            try {
+                const { default: aiService } = await import('../services/aiService.ts');
+                const response = await aiService.getAgricultureResponse('टमाटर के लिए सबसे अच्छी खाद कौन सी है?', 'hi');
+                addManualResult('🇮🇳 Hindi Response: ' + response, 'success');
+            } catch (error) {
+                addManualResult('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        window.testAdvancedAI = async function() {
+            addManualResult('🚀 Testing Advanced AI...', 'info');
+            try {
+                const { default: advancedAiService } = await import('../services/advancedAiService.ts');
+                const response = await advancedAiService.getResponse('मेरी गेहूं की फसल में पीले धब्बे दिख रहे हैं। क्या करूं?', 'hi');
+                addManualResult('🌾 Advanced AI Response: ' + response, 'success');
+            } catch (error) {
+                addManualResult('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // Run initial tests
+        runInitialTests();
+    </script>
+</body>
+</html>
