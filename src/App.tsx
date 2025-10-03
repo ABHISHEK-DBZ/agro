@@ -19,10 +19,22 @@ function App() {
   console.log('🌾 Smart Krishi Sahayak App loading...');
   console.log('Environment:', process.env.NODE_ENV);
   console.log('Current URL:', window.location.href);
-  console.log('Base path:', process.env.NODE_ENV === 'production' ? '/agro' : '');
   
-  // Use basename only in production (GitHub Pages)
-  const basename = process.env.NODE_ENV === 'production' ? '/agro' : '';
+  // Get base path based on deployment platform
+  const getBasePath = () => {
+    const hostname = window.location.hostname;
+    
+    // GitHub Pages
+    if (hostname.includes('github.io')) {
+      return '/smart-krishi-sahayak';
+    }
+    
+    // All other platforms (Vercel, Netlify, Firebase, Surge, Railway) use root
+    return '';
+  };
+  
+  const basename = getBasePath();
+  console.log('Base path:', basename);
   
   return (
     <ErrorBoundary>

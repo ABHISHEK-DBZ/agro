@@ -5,9 +5,7 @@ import react from '@vitejs/plugin-react'
 const getBasePath = () => {
   // GitHub Pages
   if (process.env.GITHUB_PAGES) return '/smart-krishi-sahayak/'
-  // Vercel, Netlify, Surge, Railway - use root
-  if (process.env.VERCEL || process.env.NETLIFY || process.env.NODE_ENV === 'production') return '/'
-  // Development
+  // Firebase, Vercel, Netlify, Surge, Railway - use root
   return '/'
 }
 
