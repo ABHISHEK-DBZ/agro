@@ -16,6 +16,7 @@
     "deploy:netlify": "npm run build && netlify deploy --prod --dir=dist",
     "deploy:firebase": "npm run build && firebase deploy",
     "deploy:surge": "npm run build && surge dist smart-krishi-sahayak.surge.sh",
+    "deploy:azure": "npm run build && echo 'Manual Azure deployment: Upload dist folder to Azure Static Web Apps'",
     "build:github": "cross-env GITHUB_PAGES=true npm run build",
     "build:vercel": "cross-env VERCEL=true npm run build",
     "build:netlify": "cross-env NETLIFY=true npm run build",

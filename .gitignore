@@ -58,3 +58,6 @@ Desktop.ini
 .env
 config/keys.js
 .vercel
+
+# Local Netlify folder
+.netlify
