@@ -5,7 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "echo 'Backend build completed - using existing files'",
+    "test": "echo 'No tests specified'"
   },
   "keywords": [],
   "author": "",

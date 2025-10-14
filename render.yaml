@@ -1,0 +1,32 @@
+services:
+  # Backend API Service
+  - type: web
+    name: smart-krishi-sahayak-api
+    runtime: node
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        value: mongodb+srv://admin:password@cluster0.mongodb.net/smart-krishi-sahayak?retryWrites=true&w=majority
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OPENWEATHER_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        value: AIzaSyCD0pag3zk23HMc_lqCsDD4zxs16txxJVQ
+
+  # Frontend Static Site
+  - type: web
+    name: smart-krishi-sahayak-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    publishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://smart-krishi-sahayak-api.onrender.com/api
+      - key: VITE_GEMINI_API_KEY
+        value: AIzaSyCD0pag3zk23HMc_lqCsDD4zxs16txxJVQ

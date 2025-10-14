@@ -65,6 +65,16 @@ const Scheme = mongoose.model('Scheme', schemeSchema);
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    service: 'Smart Krishi Sahayak Backend',
+    version: '1.0.0'
+  });
+});
+
 // --- Authentication Middleware ---
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
