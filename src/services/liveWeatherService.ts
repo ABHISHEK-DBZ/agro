@@ -96,18 +96,15 @@ interface Location {
 }
 
 class LiveWeatherService {
-  private readonly weatherApiKey: string;
   private readonly weatherApiUrl: string;
-  private readonly geocodingApiKey: string;
   private cachedWeatherData: Map<string, { data: LiveWeatherData; timestamp: number }>;
   private readonly cacheExpiry: number;
   private refreshInterval: NodeJS.Timeout | null = null;
   private subscribers: Array<(data: LiveWeatherData) => void> = [];
 
   constructor() {
-    this.weatherApiKey = import.meta.env.VITE_WEATHER_API_KEY || 'demo_key';
-    this.weatherApiUrl = import.meta.env.VITE_WEATHER_API_URL || 'https://api.openweathermap.org/data/2.5';
-    this.geocodingApiKey = import.meta.env.VITE_GEOCODING_API_KEY || 'demo_key';
+    // Using Open-Meteo API - Free and reliable weather API
+    this.weatherApiUrl = 'https://api.open-meteo.com/v1';
     this.cachedWeatherData = new Map();
     this.cacheExpiry = parseInt(import.meta.env.VITE_WEATHER_REFRESH_INTERVAL) || 300000; // 5 minutes default
   }
@@ -153,22 +150,20 @@ class LiveWeatherService {
 
   async getLocationByName(cityName: string): Promise<Location | null> {
     try {
-      // Try OpenWeatherMap Geocoding API first
-      if (this.weatherApiKey !== 'demo_key') {
-        const response = await axios.get(
-          `http://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(cityName)},IN&limit=1&appid=${this.weatherApiKey}`
-        );
+      // Use Open-Meteo Geocoding API (free)
+      const response = await axios.get(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=en&format=json`
+      );
 
-        if (response.data && response.data.length > 0) {
-          const location = response.data[0];
-          return {
-            lat: location.lat,
-            lon: location.lon,
-            name: location.name,
-            state: location.state,
-            country: location.country
-          };
-        }
+      if (response.data && response.data.results && response.data.results.length > 0) {
+        const location = response.data.results[0];
+        return {
+          lat: location.latitude,
+          lon: location.longitude,
+          name: location.name,
+          state: location.admin1 || '',
+          country: location.country || 'IN'
+        };
       }
 
       // Fallback to mock data for demo
@@ -203,22 +198,21 @@ class LiveWeatherService {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
-            if (this.geocodingApiKey !== 'demo_key') {
-              const response = await axios.get(
-                `http://api.openweathermap.org/geo/1.0/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&limit=1&appid=${this.weatherApiKey}`
-              );
+            // Use Open-Meteo reverse geocoding
+            const response = await axios.get(
+              `https://geocoding-api.open-meteo.com/v1/search?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&count=1&language=en&format=json`
+            );
 
-              if (response.data && response.data.length > 0) {
-                const location = response.data[0];
-                resolve({
-                  lat: position.coords.latitude,
-                  lon: position.coords.longitude,
-                  name: location.name,
-                  state: location.state,
-                  country: location.country
-                });
-                return;
-              }
+            if (response.data && response.data.results && response.data.results.length > 0) {
+              const location = response.data.results[0];
+              resolve({
+                lat: position.coords.latitude,
+                lon: position.coords.longitude,
+                name: location.name,
+                state: location.admin1,
+                country: location.country || 'IN'
+              });
+              return;
             }
 
             // Fallback to coordinates only
@@ -253,39 +247,78 @@ class LiveWeatherService {
     }
 
     try {
-      let weatherData: LiveWeatherData;
-
-      if (this.weatherApiKey !== 'demo_key') {
-        // Real API calls
-        const [currentWeather, forecast, airQuality] = await Promise.allSettled([
-          axios.get(`${this.weatherApiUrl}/weather?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${this.weatherApiKey}`),
-          axios.get(`${this.weatherApiUrl}/forecast?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${this.weatherApiKey}`),
-          axios.get(`${this.weatherApiUrl}/air_pollution?lat=${location.lat}&lon=${location.lon}&appid=${this.weatherApiKey}`)
-        ]);
-
-        if (currentWeather.status === 'fulfilled') {
-          const current = currentWeather.value.data;
-          const forecastData = forecast.status === 'fulfilled' ? forecast.value.data : null;
-          const airData = airQuality.status === 'fulfilled' ? airQuality.value.data : null;
-
-          weatherData = this.transformApiData(current, forecastData, airData, location);
-        } else {
-          throw new Error('Failed to fetch weather data');
-        }
-      } else {
-        // Generate realistic mock data
-        weatherData = this.generateMockWeatherData(location);
-      }
-
-      // Cache the data
-      this.cachedWeatherData.set(cacheKey, {
-        data: weatherData,
-        timestamp: Date.now()
+      // Use Open-Meteo API - comprehensive and free weather API
+      const weatherParams = new URLSearchParams({
+        latitude: location.lat.toString(),
+        longitude: location.lon.toString(),
+        current: [
+          'temperature_2m',
+          'relative_humidity_2m', 
+          'apparent_temperature',
+          'precipitation',
+          'rain',
+          'showers',
+          'snowfall',
+          'weather_code',
+          'cloud_cover',
+          'pressure_msl',
+          'surface_pressure',
+          'wind_speed_10m',
+          'wind_direction_10m',
+          'wind_gusts_10m',
+          'uv_index',
+          'visibility'
+        ].join(','),
+        hourly: [
+          'temperature_2m',
+          'relative_humidity_2m',
+          'precipitation_probability',
+          'precipitation',
+          'rain',
+          'weather_code',
+          'pressure_msl',
+          'cloud_cover',
+          'wind_speed_10m',
+          'wind_direction_10m',
+          'uv_index'
+        ].join(','),
+        daily: [
+          'weather_code',
+          'temperature_2m_max',
+          'temperature_2m_min',
+          'apparent_temperature_max',
+          'apparent_temperature_min',
+          'sunrise',
+          'sunset',
+          'uv_index_max',
+          'precipitation_sum',
+          'rain_sum',
+          'precipitation_probability_max',
+          'wind_speed_10m_max',
+          'wind_gusts_10m_max',
+          'wind_direction_10m_dominant'
+        ].join(','),
+        timezone: 'Asia/Kolkata',
+        forecast_days: '7'
       });
 
-      return weatherData;
+      const weatherResponse = await axios.get(`${this.weatherApiUrl}/forecast?${weatherParams}`);
+      
+      if (weatherResponse.data) {
+        const weatherData = this.transformOpenMeteoData(weatherResponse.data, location);
+        
+        // Cache the data
+        this.cachedWeatherData.set(cacheKey, {
+          data: weatherData,
+          timestamp: Date.now()
+        });
+
+        return weatherData;
+      } else {
+        throw new Error('No weather data received');
+      }
     } catch (error) {
-      console.error('Error fetching weather data:', error);
+      console.error('Error fetching weather data from Open-Meteo:', error);
       
       // Return cached data if available, otherwise generate mock data
       if (cachedData) {
@@ -296,9 +329,43 @@ class LiveWeatherService {
     }
   }
 
-  private transformApiData(current: any, forecast: any, airQuality: any, location: Location): LiveWeatherData {
+  private transformOpenMeteoData(data: any, location: Location): LiveWeatherData {
     const now = new Date();
+    const current = data.current;
+    const hourly = data.hourly;
+    const daily = data.daily;
     
+    // Weather code to description mapping for Open-Meteo
+    const getWeatherDescription = (code: number): { description: string; condition: string; icon: string } => {
+      const weatherCodes: { [key: number]: { description: string; condition: string; icon: string } } = {
+        0: { description: 'Clear sky', condition: 'Clear', icon: '01d' },
+        1: { description: 'Mainly clear', condition: 'Clear', icon: '01d' },
+        2: { description: 'Partly cloudy', condition: 'Clouds', icon: '02d' },
+        3: { description: 'Overcast', condition: 'Clouds', icon: '03d' },
+        45: { description: 'Fog', condition: 'Fog', icon: '50d' },
+        48: { description: 'Depositing rime fog', condition: 'Fog', icon: '50d' },
+        51: { description: 'Light drizzle', condition: 'Drizzle', icon: '09d' },
+        53: { description: 'Moderate drizzle', condition: 'Drizzle', icon: '09d' },
+        55: { description: 'Dense drizzle', condition: 'Drizzle', icon: '09d' },
+        61: { description: 'Slight rain', condition: 'Rain', icon: '10d' },
+        63: { description: 'Moderate rain', condition: 'Rain', icon: '10d' },
+        65: { description: 'Heavy rain', condition: 'Rain', icon: '10d' },
+        71: { description: 'Slight snow', condition: 'Snow', icon: '13d' },
+        73: { description: 'Moderate snow', condition: 'Snow', icon: '13d' },
+        75: { description: 'Heavy snow', condition: 'Snow', icon: '13d' },
+        95: { description: 'Thunderstorm', condition: 'Thunderstorm', icon: '11d' },
+        96: { description: 'Thunderstorm with hail', condition: 'Thunderstorm', icon: '11d' },
+        99: { description: 'Thunderstorm with heavy hail', condition: 'Thunderstorm', icon: '11d' }
+      };
+      
+      return weatherCodes[code] || { description: 'Unknown', condition: 'Clear', icon: '01d' };
+    };
+
+    const currentWeather = getWeatherDescription(current.weather_code);
+    const windSpeed = current.wind_speed_10m || 0;
+    const temperature = current.temperature_2m || 20;
+    const humidity = current.relative_humidity_2m || 60;
+
     return {
       location: {
         name: location.name,
@@ -306,110 +373,202 @@ class LiveWeatherService {
         region: location.state || '',
         lat: location.lat,
         lon: location.lon,
-        timezone: 'Asia/Kolkata',
+        timezone: data.timezone || 'Asia/Kolkata',
         localtime: now.toISOString()
       },
       current: {
-        temp: Math.round(current.main.temp),
-        humidity: current.main.humidity,
-        windSpeed: current.wind.speed * 3.6, // Convert m/s to km/h
-        windDirection: current.wind.deg || 0,
-        windDegree: current.wind.deg || 0,
-        description: current.weather[0].description,
-        condition: current.weather[0].main,
-        icon: current.weather[0].icon,
-        rainfall: current.rain?.['1h'] || 0,
-        feelsLike: Math.round(current.main.feels_like),
-        visibility: current.visibility / 1000, // Convert to km
-        uv: 0, // Not available in free tier
-        pressure: current.main.pressure,
-        cloudCover: current.clouds.all,
-        dewPoint: this.calculateDewPoint(current.main.temp, current.main.humidity),
-        heatIndex: this.calculateHeatIndex(current.main.temp, current.main.humidity),
-        windChill: this.calculateWindChill(current.main.temp, current.wind.speed * 3.6),
-        gustSpeed: current.wind.gust ? current.wind.gust * 3.6 : current.wind.speed * 3.6
+        temp: Math.round(temperature),
+        humidity: Math.round(humidity),
+        windSpeed: Math.round(windSpeed),
+        windDirection: current.wind_direction_10m || 0,
+        windDegree: current.wind_direction_10m || 0,
+        description: currentWeather.description,
+        condition: currentWeather.condition,
+        icon: currentWeather.icon,
+        rainfall: current.precipitation || 0,
+        feelsLike: Math.round(current.apparent_temperature || temperature),
+        visibility: (current.visibility || 10000) / 1000, // Convert to km
+        uv: current.uv_index || 0,
+        pressure: current.pressure_msl || current.surface_pressure || 1013,
+        cloudCover: current.cloud_cover || 0,
+        dewPoint: this.calculateDewPoint(temperature, humidity),
+        heatIndex: this.calculateHeatIndex(temperature, humidity),
+        windChill: this.calculateWindChill(temperature, windSpeed),
+        gustSpeed: current.wind_gusts_10m || windSpeed
       },
-      hourly: forecast ? this.transformHourlyData(forecast.list.slice(0, 24)) : [],
-      daily: forecast ? this.transformDailyData(forecast.list) : [],
-      alerts: this.generateWeatherAlerts(current),
-      agricultural: {
-        soilMoisture: 0,
-        soilTemperature: 0,
-        evapotranspiration: 0,
-        growingDegreeDay: 0,
-        frostRisk: false,
-        heatStress: false,
-        irrigationAdvice: '',
-        sprayingConditions: 'Not Recommended'
-      },
-      airQuality: airQuality ? this.transformAirQualityData(airQuality.list[0]) : this.generateMockAirQuality()
+      hourly: this.transformOpenMeteoHourlyData(hourly),
+      daily: this.transformOpenMeteoDailyData(daily),
+      alerts: this.generateOpenMeteoAlerts(current),
+      agricultural: this.generateAgriculturalDataFromOpenMeteo(current),
+      airQuality: this.generateMockAirQuality() // Open-Meteo doesn't provide air quality in free tier
     };
   }
 
-  private transformHourlyData(hourlyList: any[]): LiveWeatherData['hourly'] {
-    return hourlyList.map(hour => ({
-      time: new Date(hour.dt * 1000).toISOString(),
-      temp: Math.round(hour.main.temp),
-      humidity: hour.main.humidity,
-      rainfall: hour.rain?.['3h'] || 0,
-      description: hour.weather[0].description,
-      icon: hour.weather[0].icon,
-      windSpeed: hour.wind.speed * 3.6,
-      pressure: hour.main.pressure,
-      cloudCover: hour.clouds.all,
-      chanceOfRain: hour.pop * 100 // Probability of precipitation
-    }));
+  private transformOpenMeteoHourlyData(hourly: any): LiveWeatherData['hourly'] {
+    const hours = [];
+    const maxHours = Math.min(24, hourly.time?.length || 0);
+    
+    for (let i = 0; i < maxHours; i++) {
+      const weatherCode = hourly.weather_code?.[i] || 0;
+      const weatherInfo = this.getOpenMeteoWeatherInfo(weatherCode);
+      
+      hours.push({
+        time: hourly.time[i],
+        temp: Math.round(hourly.temperature_2m?.[i] || 20),
+        humidity: Math.round(hourly.relative_humidity_2m?.[i] || 60),
+        rainfall: hourly.precipitation?.[i] || 0,
+        description: weatherInfo.description,
+        icon: weatherInfo.icon,
+        windSpeed: Math.round(hourly.wind_speed_10m?.[i] || 0),
+        pressure: Math.round(hourly.pressure_msl?.[i] || 1013),
+        cloudCover: Math.round(hourly.cloud_cover?.[i] || 0),
+        chanceOfRain: Math.round(hourly.precipitation_probability?.[i] || 0)
+      });
+    }
+    
+    return hours;
   }
 
-  private transformDailyData(forecastList: any[]): LiveWeatherData['daily'] {
-    const dailyData: { [key: string]: any[] } = {};
+  private transformOpenMeteoDailyData(daily: any): LiveWeatherData['daily'] {
+    const days = [];
+    const maxDays = Math.min(7, daily.time?.length || 0);
     
-    // Group by date
-    forecastList.forEach(item => {
-      const date = new Date(item.dt * 1000).toDateString();
-      if (!dailyData[date]) dailyData[date] = [];
-      dailyData[date].push(item);
-    });
-
-    return Object.entries(dailyData).slice(0, 7).map(([date, items]) => {
-      const temps = items.map(item => item.main.temp);
-      const humidities = items.map(item => item.main.humidity);
-      const rainfalls = items.map(item => item.rain?.['3h'] || 0);
-      const windSpeeds = items.map(item => item.wind.speed * 3.6);
-
-      return {
-        date: new Date(date).toISOString().split('T')[0],
-        tempMax: Math.round(Math.max(...temps)),
-        tempMin: Math.round(Math.min(...temps)),
-        humidity: Math.round(humidities.reduce((a, b) => a + b, 0) / humidities.length),
-        rainfall: rainfalls.reduce((a, b) => a + b, 0),
-        description: items[0].weather[0].description,
-        icon: items[0].weather[0].icon,
-        windSpeed: windSpeeds.reduce((a, b) => a + b, 0) / windSpeeds.length,
-        sunrise: '06:30', // Mock data
-        sunset: '18:30', // Mock data
-        moonPhase: 'New Moon', // Mock data
-        chanceOfRain: Math.max(...items.map(item => item.pop * 100))
-      };
-    });
+    for (let i = 0; i < maxDays; i++) {
+      const weatherCode = daily.weather_code?.[i] || 0;
+      const weatherInfo = this.getOpenMeteoWeatherInfo(weatherCode);
+      
+      days.push({
+        date: daily.time[i],
+        tempMax: Math.round(daily.temperature_2m_max?.[i] || 25),
+        tempMin: Math.round(daily.temperature_2m_min?.[i] || 15),
+        humidity: 60, // Not available in daily data
+        rainfall: daily.precipitation_sum?.[i] || 0,
+        description: weatherInfo.description,
+        icon: weatherInfo.icon,
+        windSpeed: Math.round(daily.wind_speed_10m_max?.[i] || 0),
+        sunrise: daily.sunrise?.[i] || '06:30',
+        sunset: daily.sunset?.[i] || '18:30',
+        moonPhase: this.getMoonPhase(new Date(daily.time[i])),
+        chanceOfRain: Math.round(daily.precipitation_probability_max?.[i] || 0)
+      });
+    }
+    
+    return days;
   }
 
-  private transformAirQualityData(airData: any): LiveWeatherData['airQuality'] {
-    const aqi = airData.main.aqi;
-    const components = airData.components;
+  private getOpenMeteoWeatherInfo(code: number): { description: string; condition: string; icon: string } {
+    const weatherCodes: { [key: number]: { description: string; condition: string; icon: string } } = {
+      0: { description: 'Clear sky', condition: 'Clear', icon: '01d' },
+      1: { description: 'Mainly clear', condition: 'Clear', icon: '01d' },
+      2: { description: 'Partly cloudy', condition: 'Clouds', icon: '02d' },
+      3: { description: 'Overcast', condition: 'Clouds', icon: '03d' },
+      45: { description: 'Fog', condition: 'Fog', icon: '50d' },
+      48: { description: 'Depositing rime fog', condition: 'Fog', icon: '50d' },
+      51: { description: 'Light drizzle', condition: 'Drizzle', icon: '09d' },
+      53: { description: 'Moderate drizzle', condition: 'Drizzle', icon: '09d' },
+      55: { description: 'Dense drizzle', condition: 'Drizzle', icon: '09d' },
+      61: { description: 'Slight rain', condition: 'Rain', icon: '10d' },
+      63: { description: 'Moderate rain', condition: 'Rain', icon: '10d' },
+      65: { description: 'Heavy rain', condition: 'Rain', icon: '10d' },
+      71: { description: 'Slight snow', condition: 'Snow', icon: '13d' },
+      73: { description: 'Moderate snow', condition: 'Snow', icon: '13d' },
+      75: { description: 'Heavy snow', condition: 'Snow', icon: '13d' },
+      95: { description: 'Thunderstorm', condition: 'Thunderstorm', icon: '11d' },
+      96: { description: 'Thunderstorm with hail', condition: 'Thunderstorm', icon: '11d' },
+      99: { description: 'Thunderstorm with heavy hail', condition: 'Thunderstorm', icon: '11d' }
+    };
     
-    const qualityLevels = ['Good', 'Moderate', 'Unhealthy for Sensitive Groups', 'Unhealthy', 'Very Unhealthy', 'Hazardous'];
+    return weatherCodes[code] || { description: 'Unknown', condition: 'Clear', icon: '01d' };
+  }
+
+  private generateAgriculturalDataFromOpenMeteo(current: any): LiveWeatherData['agricultural'] {
+    const temp = current.temperature_2m || 20;
+    const humidity = current.relative_humidity_2m || 60;
+    const windSpeed = current.wind_speed_10m || 0;
+    const precipitation = current.precipitation || 0;
+    
+    // Estimate soil parameters based on weather
+    const soilMoisture = Math.min(1, 0.3 + (precipitation / 10) + (humidity / 200));
+    const soilTemp = temp - 2 + Math.random() * 2;
     
     return {
-      aqi: aqi,
-      pm25: components.pm2_5,
-      pm10: components.pm10,
-      co: components.co,
-      no2: components.no2,
-      so2: components.so2,
-      o3: components.o3,
-      quality: qualityLevels[Math.min(aqi - 1, 5)] as any
+      soilMoisture: soilMoisture,
+      soilTemperature: soilTemp,
+      evapotranspiration: Math.max(0, (temp - 10) * 0.1 + (windSpeed * 0.05)),
+      growingDegreeDay: Math.max(0, temp - 10),
+      frostRisk: temp < 5,
+      heatStress: temp > 35,
+      irrigationAdvice: soilMoisture < 0.3 ? 'Irrigation needed' : soilMoisture > 0.7 ? 'Adequate moisture' : 'Monitor soil moisture',
+      sprayingConditions: this.calculateSprayingConditions(temp, humidity, windSpeed)
     };
+  }
+
+  private generateOpenMeteoAlerts(current: any): LiveWeatherData['alerts'] {
+    const alerts = [];
+    const now = Date.now() / 1000;
+    const temp = current.temperature_2m || 20;
+    const windSpeed = current.wind_speed_10m || 0;
+    const precipitation = current.precipitation || 0;
+    
+    // Temperature alerts
+    if (temp > 35) {
+      alerts.push({
+        event: 'High Temperature Alert',
+        description: `Temperature ${temp.toFixed(1)}°C exceeds 35°C. Provide shade to sensitive crops and increase irrigation.`,
+        start: now,
+        end: now + 86400,
+        severity: 'Moderate' as const,
+        urgency: 'Expected' as const,
+        certainty: 'Observed' as const
+      });
+    }
+    
+    if (temp < 5) {
+      alerts.push({
+        event: 'Frost Warning',
+        description: `Temperature ${temp.toFixed(1)}°C below 5°C. Protect crops from frost damage.`,
+        start: now,
+        end: now + 43200,
+        severity: 'Severe' as const,
+        urgency: 'Immediate' as const,
+        certainty: 'Likely' as const
+      });
+    }
+    
+    // Wind alerts
+    if (windSpeed > 30) {
+      alerts.push({
+        event: 'Strong Wind Warning',
+        description: `Wind speed ${windSpeed.toFixed(1)} km/h exceeds 30 km/h. Secure crops and delay spraying operations.`,
+        start: now,
+        end: now + 21600,
+        severity: 'Moderate' as const,
+        urgency: 'Expected' as const,
+        certainty: 'Observed' as const
+      });
+    }
+    
+    // Rainfall alerts
+    if (precipitation > 10) {
+      alerts.push({
+        event: 'Heavy Rain Alert',
+        description: `Heavy rainfall ${precipitation.toFixed(1)}mm detected. Ensure proper field drainage.`,
+        start: now,
+        end: now + 10800,
+        severity: 'Moderate' as const,
+        urgency: 'Immediate' as const,
+        certainty: 'Observed' as const
+      });
+    }
+    
+    return alerts;
+  }
+
+  private getMoonPhase(date: Date): string {
+    const phases = ['New Moon', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous', 'Full Moon', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent'];
+    const dayOfMonth = date.getDate();
+    const phaseIndex = Math.floor((dayOfMonth / 30) * 8) % 8;
+    return phases[phaseIndex];
   }
 
   private generateMockWeatherData(location: Location): LiveWeatherData {
@@ -627,64 +786,6 @@ class LiveWeatherService {
     if (score >= 2) return 'Fair';
     if (score >= 1) return 'Poor';
     return 'Not Recommended';
-  }
-
-  private generateWeatherAlerts(current: any): LiveWeatherData['alerts'] {
-    const alerts = [];
-    const now = Date.now() / 1000;
-    
-    // Temperature alerts
-    if (current.main.temp > 35) {
-      alerts.push({
-        event: 'High Temperature Alert',
-        description: 'Temperature exceeds 35°C. Provide shade to sensitive crops and increase irrigation.',
-        start: now,
-        end: now + 86400,
-        severity: 'Moderate' as const,
-        urgency: 'Expected' as const,
-        certainty: 'Observed' as const
-      });
-    }
-    
-    if (current.main.temp < 5) {
-      alerts.push({
-        event: 'Frost Warning',
-        description: 'Temperature below 5°C. Protect crops from frost damage.',
-        start: now,
-        end: now + 43200,
-        severity: 'Severe' as const,
-        urgency: 'Immediate' as const,
-        certainty: 'Likely' as const
-      });
-    }
-    
-    // Wind alerts
-    if (current.wind.speed * 3.6 > 30) {
-      alerts.push({
-        event: 'Strong Wind Warning',
-        description: 'Wind speed exceeds 30 km/h. Secure crops and delay spraying operations.',
-        start: now,
-        end: now + 21600,
-        severity: 'Moderate' as const,
-        urgency: 'Expected' as const,
-        certainty: 'Observed' as const
-      });
-    }
-    
-    // Rainfall alerts
-    if (current.rain?.['1h'] > 10) {
-      alerts.push({
-        event: 'Heavy Rain Alert',
-        description: 'Heavy rainfall detected. Ensure proper field drainage.',
-        start: now,
-        end: now + 10800,
-        severity: 'Moderate' as const,
-        urgency: 'Immediate' as const,
-        certainty: 'Observed' as const
-      });
-    }
-    
-    return alerts;
   }
 
   // Agricultural recommendations based on weather

@@ -115,6 +115,7 @@ const LiveWeather: React.FC = () => {
 
     setSearchLoading(true);
     try {
+      // First try API search
       const location = await liveWeatherService.getLocationByName(query);
       if (location) {
         const cities = [{
@@ -128,12 +129,17 @@ const LiveWeather: React.FC = () => {
         setSearchResults(cities);
         setShowSearchResults(true);
       } else {
-        // Fallback: filter popular cities
+        // Fallback: filter popular cities if API fails
         const filteredCities = popularCities.filter(city =>
           city.name.toLowerCase().includes(query.toLowerCase())
         );
         setSearchResults(filteredCities);
-        setShowSearchResults(true);
+        setShowSearchResults(filteredCities.length > 0);
+        
+        // If no popular cities match, show message
+        if (filteredCities.length === 0) {
+          console.log('No cities found for:', query);
+        }
       }
     } catch (error) {
       console.error('Error searching cities:', error);
@@ -142,7 +148,7 @@ const LiveWeather: React.FC = () => {
         city.name.toLowerCase().includes(query.toLowerCase())
       );
       setSearchResults(filteredCities);
-      setShowSearchResults(true);
+      setShowSearchResults(filteredCities.length > 0);
     } finally {
       setSearchLoading(false);
     }
@@ -153,12 +159,21 @@ const LiveWeather: React.FC = () => {
     const query = e.target.value;
     setSearchQuery(query);
     
-    // Debounce search
-    setTimeout(() => {
-      if (query === searchQuery) {
+    // Debounce search - fix the timing issue
+    if (query.trim()) {
+      const timeoutId = setTimeout(() => {
         searchCities(query);
+      }, 500);
+      
+      // Clear previous timeout
+      if ((window as any).searchTimeout) {
+        clearTimeout((window as any).searchTimeout);
       }
-    }, 300);
+      (window as any).searchTimeout = timeoutId;
+    } else {
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }
   };
 
   // Select location
@@ -199,9 +214,11 @@ const LiveWeather: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('Fetching weather data for:', location); // Debug log
       const weatherData = await liveWeatherService.getWeatherData(location, forceRefresh);
       
       if (weatherData) {
+        console.log('Weather data received:', weatherData); // Debug log
         setWeatherData(weatherData);
         setLastUpdated(new Date());
       } else {
@@ -362,10 +379,11 @@ const LiveWeather: React.FC = () => {
             </div>
             <input
               type="text"
-              placeholder="Search for a city..."
+              placeholder="Search for a city... / शहर खोजें..."
               value={searchQuery}
               onChange={handleSearchInput}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+              autoComplete="off"
             />
             {searchLoading && (
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -380,14 +398,17 @@ const LiveWeather: React.FC = () => {
               <div className="absolute top-0 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                 {searchResults.map((city, index) => (
                   <div
-                    key={index}
+                    key={`${city.lat}-${city.lon}-${index}`}
                     onClick={() => selectLocation(city)}
                     className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center justify-between"
                   >
                     <div>
-                      <div className="font-medium text-gray-900">{city.name}</div>
+                      <div className="font-medium text-gray-900">{city.name || 'Unknown City'}</div>
                       {city.state && (
-                        <div className="text-sm text-gray-500">{city.state}, {city.country}</div>
+                        <div className="text-sm text-gray-500">{city.state}, {city.country || 'IN'}</div>
+                      )}
+                      {!city.state && (
+                        <div className="text-sm text-gray-500">{city.country || 'IN'}</div>
                       )}
                     </div>
                     <button
@@ -508,13 +529,13 @@ const LiveWeather: React.FC = () => {
                 <div>
                   <div className="flex items-center mb-2">
                     <MapPin className="mr-2" size={20} />
-                    <span className="text-xl font-semibold">{weatherData.location.name}</span>
+                    <span className="text-xl font-semibold">{weatherData.location.name || 'Unknown Location'}</span>
                   </div>
-                  <div className="text-5xl font-bold mb-2">{weatherData.current.temp}°C</div>
-                  <div className="text-green-100 capitalize">{weatherData.current.description}</div>
+                  <div className="text-5xl font-bold mb-2">{weatherData.current.temp || 0}°C</div>
+                  <div className="text-green-100 capitalize">{weatherData.current.description || 'No data'}</div>
                 </div>
                 <div className="text-center">
-                  {getWeatherIcon(weatherData.current.condition)}
+                  {getWeatherIcon(weatherData.current.condition || 'clear')}
                 </div>
               </div>
             </div>
@@ -523,42 +544,42 @@ const LiveWeather: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-green-50 p-4 rounded-lg text-center">
                 <Droplets className="mx-auto mb-2 text-blue-500" size={24} />
-                <div className="text-xl font-bold">{weatherData.current.humidity}%</div>
+                <div className="text-xl font-bold">{weatherData.current.humidity || 0}%</div>
                 <div className="text-sm text-gray-600">Humidity</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg text-center">
                 <Wind className="mx-auto mb-2 text-gray-500" size={24} />
-                <div className="text-xl font-bold">{weatherData.current.windSpeed.toFixed(1)} km/h</div>
+                <div className="text-xl font-bold">{(weatherData.current.windSpeed || 0).toFixed(1)} km/h</div>
                 <div className="text-sm text-gray-600">Wind Speed</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg text-center">
                 <Eye className="mx-auto mb-2 text-purple-500" size={24} />
-                <div className="text-xl font-bold">{weatherData.current.visibility.toFixed(1)} km</div>
+                <div className="text-xl font-bold">{(weatherData.current.visibility || 0).toFixed(1)} km</div>
                 <div className="text-sm text-gray-600">Visibility</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg text-center">
                 <Thermometer className="mx-auto mb-2 text-orange-500" size={24} />
-                <div className="text-xl font-bold">{weatherData.current.feelsLike}°C</div>
+                <div className="text-xl font-bold">{weatherData.current.feelsLike || 0}°C</div>
                 <div className="text-sm text-gray-600">Feels Like</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg text-center">
                 <div className="text-2xl mb-2">🌡️</div>
-                <div className="text-xl font-bold">{weatherData.current.pressure} hPa</div>
+                <div className="text-xl font-bold">{weatherData.current.pressure || 0} hPa</div>
                 <div className="text-sm text-gray-600">Pressure</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg text-center">
                 <div className="text-2xl mb-2">☀️</div>
-                <div className="text-xl font-bold">{weatherData.current.uv}</div>
+                <div className="text-xl font-bold">{weatherData.current.uv || 0}</div>
                 <div className="text-sm text-gray-600">UV Index</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg text-center">
                 <div className="text-2xl mb-2">💧</div>
-                <div className="text-xl font-bold">{weatherData.current.dewPoint}°C</div>
+                <div className="text-xl font-bold">{weatherData.current.dewPoint || 0}°C</div>
                 <div className="text-sm text-gray-600">Dew Point</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg text-center">
                 <div className="text-2xl mb-2">☁️</div>
-                <div className="text-xl font-bold">{weatherData.current.cloudCover}%</div>
+                <div className="text-xl font-bold">{weatherData.current.cloudCover || 0}%</div>
                 <div className="text-sm text-gray-600">Cloud Cover</div>
               </div>
             </div>
@@ -576,17 +597,17 @@ const LiveWeather: React.FC = () => {
                     {new Date(hour.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </div>
                   <div className="mb-2">
-                    {getWeatherIcon(hour.description, 32)}
+                    {getWeatherIcon(hour.description || 'clear', 32)}
                   </div>
-                  <div className="font-bold text-lg">{hour.temp}°C</div>
-                  <div className="text-xs text-gray-500 mt-1">{hour.humidity}%</div>
-                  {hour.rainfall > 0 && (
+                  <div className="font-bold text-lg">{hour.temp || 0}°C</div>
+                  <div className="text-xs text-gray-500 mt-1">{hour.humidity || 0}%</div>
+                  {(hour.rainfall || 0) > 0 && (
                     <div className="text-xs text-blue-500 mt-1">
-                      {hour.rainfall.toFixed(1)}mm
+                      {(hour.rainfall || 0).toFixed(1)}mm
                     </div>
                   )}
                   <div className="text-xs text-gray-500 mt-1">
-                    {hour.chanceOfRain}% rain
+                    {hour.chanceOfRain || 0}% rain
                   </div>
                 </div>
               ))}
@@ -703,22 +724,22 @@ const LiveWeather: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-brown-50 p-4 rounded-lg text-center border">
                 <div className="text-2xl mb-2">💧</div>
-                <div className="text-xl font-bold">{(weatherData.agricultural.soilMoisture * 100).toFixed(1)}%</div>
+                <div className="text-xl font-bold">{((weatherData.agricultural.soilMoisture || 0) * 100).toFixed(1)}%</div>
                 <div className="text-sm text-gray-600">Soil Moisture</div>
               </div>
               <div className="bg-red-50 p-4 rounded-lg text-center border">
                 <div className="text-2xl mb-2">🌡️</div>
-                <div className="text-xl font-bold">{weatherData.agricultural.soilTemperature.toFixed(1)}°C</div>
+                <div className="text-xl font-bold">{(weatherData.agricultural.soilTemperature || 0).toFixed(1)}°C</div>
                 <div className="text-sm text-gray-600">Soil Temperature</div>
               </div>
               <div className="bg-blue-50 p-4 rounded-lg text-center border">
                 <div className="text-2xl mb-2">💨</div>
-                <div className="text-xl font-bold">{weatherData.agricultural.evapotranspiration.toFixed(1)} mm</div>
+                <div className="text-xl font-bold">{(weatherData.agricultural.evapotranspiration || 0).toFixed(1)} mm</div>
                 <div className="text-sm text-gray-600">Evapotranspiration</div>
               </div>
               <div className="bg-green-50 p-4 rounded-lg text-center border">
                 <div className="text-2xl mb-2">📈</div>
-                <div className="text-xl font-bold">{weatherData.agricultural.growingDegreeDay.toFixed(1)}</div>
+                <div className="text-xl font-bold">{(weatherData.agricultural.growingDegreeDay || 0).toFixed(1)}</div>
                 <div className="text-sm text-gray-600">Growing Degree Day</div>
               </div>
             </div>
@@ -775,7 +796,7 @@ const LiveWeather: React.FC = () => {
                   <Droplets className="text-blue-500 mr-2" size={16} />
                   <span className="font-medium">Irrigation Advice:</span>
                 </div>
-                <p className="text-gray-700">{weatherData.agricultural.irrigationAdvice}</p>
+                <p className="text-gray-700">{weatherData.agricultural.irrigationAdvice || 'Monitor soil moisture and irrigate as needed.'}</p>
               </div>
 
               {/* Live Recommendations */}
@@ -815,33 +836,33 @@ const LiveWeather: React.FC = () => {
               </div>
               
               <div className="text-center mb-6">
-                <div className="text-4xl font-bold text-gray-800 mb-2">{weatherData.airQuality.aqi}</div>
+                <div className="text-4xl font-bold text-gray-800 mb-2">{weatherData.airQuality.aqi || 0}</div>
                 <div className="text-gray-600">AQI Value</div>
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="font-bold text-lg">{weatherData.airQuality.pm25}</div>
+                  <div className="font-bold text-lg">{weatherData.airQuality.pm25 || 0}</div>
                   <div className="text-sm text-gray-600">PM2.5 (μg/m³)</div>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="font-bold text-lg">{weatherData.airQuality.pm10}</div>
+                  <div className="font-bold text-lg">{weatherData.airQuality.pm10 || 0}</div>
                   <div className="text-sm text-gray-600">PM10 (μg/m³)</div>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="font-bold text-lg">{weatherData.airQuality.co}</div>
+                  <div className="font-bold text-lg">{weatherData.airQuality.co || 0}</div>
                   <div className="text-sm text-gray-600">CO (μg/m³)</div>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="font-bold text-lg">{weatherData.airQuality.no2}</div>
+                  <div className="font-bold text-lg">{weatherData.airQuality.no2 || 0}</div>
                   <div className="text-sm text-gray-600">NO₂ (μg/m³)</div>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="font-bold text-lg">{weatherData.airQuality.so2}</div>
+                  <div className="font-bold text-lg">{weatherData.airQuality.so2 || 0}</div>
                   <div className="text-sm text-gray-600">SO₂ (μg/m³)</div>
                 </div>
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <div className="font-bold text-lg">{weatherData.airQuality.o3}</div>
+                  <div className="font-bold text-lg">{weatherData.airQuality.o3 || 0}</div>
                   <div className="text-sm text-gray-600">O₃ (μg/m³)</div>
                 </div>
               </div>
