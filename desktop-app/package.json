@@ -2,11 +2,54 @@
   "name": "smart-krishi-sahayak-desktop",
   "version": "1.0.0",
   "main": "main.js",
-  "description": "Standalone desktop app for Smart Krishi Sahayak",
+  "description": "Desktop app for Smart Krishi Sahayak - Agriculture Assistant",
+  "author": "ABHISHEK-DBZ",
+  "license": "MIT",
+  "homepage": "https://claimbot-chi.vercel.app",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --publish=never"
+  },
+  "build": {
+    "appId": "com.abhishekdbz.smartkrishisahayak",
+    "productName": "Smart Krishi Sahayak",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "devDependencies": {
-    "electron": "^30.0.0"
+    "electron": "^30.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.4"
   }
 }
