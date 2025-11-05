@@ -35,10 +35,10 @@
   </head>
   <body>
     <div id="root">
-      <div id="loading-screen" style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; font-family: Arial, sans-serif; background: #f9fafb;">
+      <div id="loading-screen" style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; font-family: Arial, sans-serif; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;">
         <div style="text-align: center;">
           <h1 style="color: #16a34a; margin-bottom: 15px; font-size: 2rem;">🌾 Smart Krishi Sahayak</h1>
-          <p style="color: #6b7280; margin-bottom: 25px; font-size: 1.1rem;">Loading full agriculture application...</p>
+          <p style="color: #6b7280; margin-bottom: 25px; font-size: 1.1rem;">Loading agriculture application...</p>
           <div style="width: 50px; height: 50px; border: 4px solid #e5e7eb; border-top: 4px solid #16a34a; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
         </div>
       </div>
@@ -47,10 +47,18 @@
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-        body { 
+        html, body { 
           margin: 0; 
           padding: 0; 
+          width: 100%;
+          height: 100%;
+          overflow-x: hidden;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+        #root {
+          width: 100%;
+          min-height: 100vh;
+          position: relative;
         }
       </style>
     </div>

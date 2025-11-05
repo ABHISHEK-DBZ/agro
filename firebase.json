@@ -23,5 +23,14 @@
         ]
       }
     ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9098
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4001
+    }
   }
 }

@@ -1,0 +1,76 @@
+{
+  "expo": {
+    "name": "Smart Krishi Sahayak",
+    "slug": "smart-krishi-sahayak",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#16a34a"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.abhishekdbz.smartkrishisahayak",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Smart Krishi Sahayak needs camera access to detect crop diseases and capture field photos.",
+        "NSLocationWhenInUseUsageDescription": "Smart Krishi Sahayak needs location access to provide local weather data and agricultural information.",
+        "NSMicrophoneUsageDescription": "Smart Krishi Sahayak needs microphone access for voice commands and agricultural assistance.",
+        "CFBundleDisplayName": "Smart Krishi Sahayak",
+        "CFBundleName": "Smart Krishi Sahayak"
+      },
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#16a34a"
+      },
+      "package": "com.abhishekdbz.smartkrishisahayak",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-location"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "smart-krishi-sahayak-2024"
+      }
+    },
+    "owner": "abhishekdbz",
+    "description": "Smart agriculture assistant app for Indian farmers. Provides weather updates, crop information, disease detection, market prices, and government schemes. / भारतीय किसानों के लिए स्मार्ट कृषि सहायक ऐप।",
+    "keywords": [
+      "agriculture",
+      "farming", 
+      "krishisahayak",
+      "weather",
+      "crops",
+      "disease-detection",
+      "market-prices",
+      "government-schemes",
+      "indian-agriculture"
+    ],
+    "primaryColor": "#16a34a",
+    "privacy": "public",
+    "scheme": "smartkrishisahayak"
+  }
+}

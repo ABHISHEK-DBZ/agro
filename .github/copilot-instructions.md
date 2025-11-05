@@ -1,6 +1,6 @@
 <!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
 
-# Smart Krishi Sahayak - Copilot Instructions
+# Smart Krishi Sahayak - Instructions
 
 This is a React TypeScript application for agriculture assistance. When working on this project, please follow these guidelines:
 

@@ -5,7 +5,7 @@ export class ModernGeminiService {
   private apiKey: string;
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCD0pag3zk23HMc_lqCsDD4zxs16txxJVQ';
+    this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyB2zUc0WHNGyontEzkFjvBcetPlrXlk1PY';
   }
 
   async generateContent(prompt: string): Promise<string> {

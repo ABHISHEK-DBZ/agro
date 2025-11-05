@@ -11,8 +11,16 @@ const getBasePath = () => {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      // Enable automatic JSX runtime (no need to import React in every file)
+      jsxRuntime: 'automatic'
+    })
+  ],
   base: getBasePath(),
+  define: {
+    global: 'globalThis',
+  },
   server: {
     port: 3000,
     open: true

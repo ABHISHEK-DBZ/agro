@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <h1>Krishi Sahayak Icon Generator</h1>
+    <canvas id="canvas" style="border: 1px solid #ccc; margin: 10px;"></canvas>
+    <br>
+    <button onclick="generateIcons()">Generate All Icons</button>
+    <div id="downloads" style="margin-top: 20px;"></div>
+
+    <script>
+        const sizes = [48, 72, 96, 144, 192, 512];
+        let currentSizeIndex = 0;
+
+        function generateIcons() {
+            currentSizeIndex = 0;
+            generateNextIcon();
+        }
+
+        function generateNextIcon() {
+            if (currentSizeIndex >= sizes.length) {
+                document.getElementById('downloads').innerHTML += '<p style="color: green; font-weight: bold;">All icons generated! Right-click each image and save to the public/icons/ folder.</p>';
+                return;
+            }
+
+            const size = sizes[currentSizeIndex];
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = size;
+            canvas.height = size;
+
+            // Create agriculture-themed icon
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#22c55e');
+            gradient.addColorStop(1, '#16a34a');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Add rounded corners for modern look
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.1);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Draw wheat stalks
+            ctx.strokeStyle = '#ffffff';
+            ctx.fillStyle = '#ffffff';
+            ctx.lineWidth = size * 0.01;
+
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const scale = size / 512;
+
+            // Left stalk
+            ctx.beginPath();
+            ctx.moveTo(centerX - 80 * scale, centerY - 100 * scale);
+            ctx.lineTo(centerX - 80 * scale, centerY + 80 * scale);
+            ctx.lineWidth = size * 0.012;
+            ctx.stroke();
+
+            // Wheat grains on left stalk
+            for (let i = 0; i < 6; i++) {
+                ctx.beginPath();
+                ctx.ellipse(
+                    centerX - 80 * scale + (i % 2 === 0 ? -8 : 8) * scale,
+                    centerY - (80 - i * 20) * scale,
+                    8 * scale, 4 * scale, 0, 0, 2 * Math.PI
+                );
+                ctx.fill();
+            }
+
+            // Center stalk (larger)
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - 120 * scale);
+            ctx.lineTo(centerX, centerY + 80 * scale);
+            ctx.lineWidth = size * 0.016;
+            ctx.stroke();
+
+            // Wheat grains on center stalk
+            for (let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                ctx.ellipse(
+                    centerX + (i % 2 === 0 ? -8 : 8) * scale,
+                    centerY - (100 - i * 20) * scale,
+                    10 * scale, 5 * scale, 0, 0, 2 * Math.PI
+                );
+                ctx.fill();
+            }
+
+            // Right stalk
+            ctx.beginPath();
+            ctx.moveTo(centerX + 80 * scale, centerY - 100 * scale);
+            ctx.lineTo(centerX + 80 * scale, centerY + 80 * scale);
+            ctx.lineWidth = size * 0.012;
+            ctx.stroke();
+
+            // Wheat grains on right stalk
+            for (let i = 0; i < 6; i++) {
+                ctx.beginPath();
+                ctx.ellipse(
+                    centerX + 80 * scale + (i % 2 === 0 ? -8 : 8) * scale,
+                    centerY - (80 - i * 20) * scale,
+                    8 * scale, 4 * scale, 0, 0, 2 * Math.PI
+                );
+                ctx.fill();
+            }
+
+            // Draw sun
+            ctx.fillStyle = '#fbbf24';
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = size * 0.006;
+            ctx.beginPath();
+            ctx.arc(centerX - 120 * scale, centerY - 120 * scale, 30 * scale, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            // Ground line
+            ctx.strokeStyle = '#8b5cf6';
+            ctx.lineWidth = size * 0.012;
+            ctx.beginPath();
+            ctx.moveTo(centerX - 200 * scale, centerY + 80 * scale);
+            ctx.lineTo(centerX + 200 * scale, centerY + 80 * scale);
+            ctx.stroke();
+
+            // Convert to data URL and create download link
+            const dataURL = canvas.toDataURL('image/png');
+            const filename = `icon-${size}x${size}.png`;
+            
+            const img = document.createElement('img');
+            img.src = dataURL;
+            img.style.width = '64px';
+            img.style.height = '64px';
+            img.style.margin = '5px';
+            img.style.border = '1px solid #ccc';
+            img.title = filename;
+            
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = filename;
+            link.appendChild(img);
+            link.style.display = 'inline-block';
+            
+            const label = document.createElement('div');
+            label.textContent = filename;
+            label.style.textAlign = 'center';
+            label.style.fontSize = '12px';
+            
+            const container = document.createElement('div');
+            container.style.display = 'inline-block';
+            container.style.margin = '10px';
+            container.appendChild(link);
+            container.appendChild(label);
+            
+            document.getElementById('downloads').appendChild(container);
+
+            currentSizeIndex++;
+            setTimeout(generateNextIcon, 100);
+        }
+
+        // Auto-generate on page load
+        window.onload = function() {
+            setTimeout(generateIcons, 500);
+        };
+    </script>
+</body>
+</html>

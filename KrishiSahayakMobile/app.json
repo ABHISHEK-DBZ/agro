@@ -1,0 +1,67 @@
+{
+  "expo": {
+    "name": "Smart Krishi Sahayak",
+    "slug": "smart-krishi-sahayak",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#16a34a"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.abhishekdbz.smartkrishisahayak",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Smart Krishi Sahayak needs camera access to detect crop diseases and capture field photos for analysis.",
+        "NSLocationWhenInUseUsageDescription": "Smart Krishi Sahayak needs location access to provide accurate local weather data and location-specific agricultural information.",
+        "NSMicrophoneUsageDescription": "Smart Krishi Sahayak needs microphone access for voice commands and agricultural assistance features.",
+        "CFBundleDisplayName": "Smart Krishi Sahayak",
+        "CFBundleName": "Smart Krishi Sahayak"
+      },
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#16a34a"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.abhishekdbz.smartkrishisahayak",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-location"
+    ],
+    "description": "Smart agriculture assistant app for Indian farmers. Provides weather updates, crop information, disease detection, market prices, and government schemes. भारतीय किसानों के लिए स्मार्ट कृषि सहायक ऐप।",
+    "primaryColor": "#16a34a",
+    "scheme": "smartkrishisahayak",
+    "extra": {
+      "eas": {
+        "projectId": "562f5329-ffa8-4b99-bbca-85e80db40801"
+      }
+    },
+    "owner": "abhishekjhadbz"
+  }
+}

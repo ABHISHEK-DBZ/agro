@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Authentication Test - Smart Krishi Sahayak</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f9f0;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>🌾 Smart Krishi Sahayak - Authentication Test</h1>
+    
+    <div class="test-section">
+        <h2>🔧 Environment Configuration Test</h2>
+        <div id="env-test"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔥 Firebase Configuration Test</h2>
+        <div id="firebase-test"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📱 PWA Manifest Test</h2>
+        <div id="manifest-test"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎨 Icon Files Test</h2>
+        <div id="icon-test"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔄 Navigation Test</h2>
+        <div>
+            <a href="/" style="margin: 10px; padding: 10px; background: #16a34a; color: white; text-decoration: none; border-radius: 4px;">🏠 Home</a>
+            <a href="/login" style="margin: 10px; padding: 10px; background: #3b82f6; color: white; text-decoration: none; border-radius: 4px;">🔑 Login</a>
+            <a href="/register" style="margin: 10px; padding: 10px; background: #8b5cf6; color: white; text-decoration: none; border-radius: 4px;">📝 Register</a>
+        </div>
+    </div>
+
+    <script>
+        // Test environment variables
+        function testEnvironment() {
+            const envTest = document.getElementById('env-test');
+            const hasFirebaseKey = !!import.meta.env.VITE_FIREBASE_API_KEY;
+            const hasProjectId = !!import.meta.env.VITE_FIREBASE_PROJECT_ID;
+            
+            if (hasFirebaseKey && hasProjectId) {
+                envTest.innerHTML = '<div class="status success">✅ Firebase environment variables are configured</div>';
+            } else {
+                envTest.innerHTML = '<div class="status error">❌ Missing Firebase environment variables</div>';
+            }
+        }
+
+        // Test Firebase configuration
+        function testFirebase() {
+            const firebaseTest = document.getElementById('firebase-test');
+            try {
+                // Try to import Firebase (this will fail if not properly configured)
+                import('/src/config/firebase.ts').then((firebase) => {
+                    firebaseTest.innerHTML = '<div class="status success">✅ Firebase configuration loaded successfully</div>';
+                }).catch((error) => {
+                    firebaseTest.innerHTML = `<div class="status error">❌ Firebase error: ${error.message}</div>`;
+                });
+            } catch (error) {
+                firebaseTest.innerHTML = `<div class="status error">❌ Firebase import error: ${error.message}</div>`;
+            }
+        }
+
+        // Test PWA manifest
+        function testManifest() {
+            const manifestTest = document.getElementById('manifest-test');
+            fetch('/manifest.json')
+                .then(response => response.json())
+                .then(manifest => {
+                    const hasIcons = manifest.icons && manifest.icons.length > 0;
+                    if (hasIcons) {
+                        manifestTest.innerHTML = '<div class="status success">✅ PWA manifest loaded with icons</div>';
+                    } else {
+                        manifestTest.innerHTML = '<div class="status error">❌ PWA manifest missing icons</div>';
+                    }
+                })
+                .catch(error => {
+                    manifestTest.innerHTML = `<div class="status error">❌ Manifest error: ${error.message}</div>`;
+                });
+        }
+
+        // Test icon files
+        function testIcons() {
+            const iconTest = document.getElementById('icon-test');
+            const sizes = [48, 72, 96, 144, 192, 512];
+            let checkedIcons = 0;
+            let foundIcons = 0;
+
+            sizes.forEach(size => {
+                const img = new Image();
+                img.onload = () => {
+                    foundIcons++;
+                    updateIconStatus();
+                };
+                img.onerror = () => {
+                    updateIconStatus();
+                };
+                img.src = `/icons/icon-${size}x${size}.png`;
+            });
+
+            function updateIconStatus() {
+                checkedIcons++;
+                if (checkedIcons === sizes.length) {
+                    if (foundIcons === sizes.length) {
+                        iconTest.innerHTML = '<div class="status success">✅ All icon files found</div>';
+                    } else {
+                        iconTest.innerHTML = `<div class="status error">❌ Found ${foundIcons}/${sizes.length} icon files</div>`;
+                    }
+                }
+            }
+        }
+
+        // Run all tests when page loads
+        window.onload = function() {
+            testEnvironment();
+            testFirebase();
+            testManifest();
+            testIcons();
+        };
+    </script>
+</body>
+</html>

@@ -16,9 +16,7 @@ class GeminiAiService {
 
   constructor() {
     // Gemini API Key from environment variable
-    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCD0pag3zk23HMc_lqCsDD4zxs16txxJVQ';
-    
-    if (!API_KEY || API_KEY === 'your_api_key_here') {
+    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyB2zUc0WHNGyontEzkFjvBcetPlrXlk1PY';    if (!API_KEY || API_KEY === 'your_api_key_here') {
       console.warn('⚠️ Gemini API key not properly configured');
     }
     
@@ -118,9 +116,7 @@ class GeminiAiService {
 
   // Direct REST API call as ultimate fallback
   private async generateWithRestAPI(prompt: string): Promise<string> {
-    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCD0pag3zk23HMc_lqCsDD4zxs16txxJVQ';
-    
-    try {
+    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyB2zUc0WHNGyontEzkFjvBcetPlrXlk1PY';    try {
       console.log('🌐 Trying direct REST API call...');
       
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${API_KEY}`, {

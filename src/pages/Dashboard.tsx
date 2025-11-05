@@ -1,6 +1,6 @@
 import React from 'react';
-// ...existing code...
-import { Sprout, ListChecks, Wifi, TrendingUp, Bug, Bot } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Sprout, ListChecks, Wifi, TrendingUp, Bug, Bot, Settings } from 'lucide-react';
 
 
 const guideSteps = [
@@ -43,39 +43,46 @@ const Dashboard: React.FC = () => {
 
       {/* Enhanced Quick Access Cards */}
       <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 px-4">
-        <a href="/live-weather" className="enhanced-card p-6 flex flex-col items-center hover:bg-blue-50 smooth-transition group">
+        <Link to="/weather" className="enhanced-card p-6 flex flex-col items-center hover:bg-blue-50 smooth-transition group">
           <div className="p-3 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 shadow-lg mb-3 group-hover:scale-110 smooth-transition">
             <Wifi className="h-6 w-6 text-white" />
           </div>
           <span className="font-bold text-contrast mb-1">Live Weather</span>
           <span className="text-xs text-contrast-light text-center">Current weather updates</span>
-        </a>
-        <a href="/mandi-prices" className="enhanced-card p-6 flex flex-col items-center hover:bg-green-50 smooth-transition group">
+        </Link>
+        <Link to="/market-prices" className="enhanced-card p-6 flex flex-col items-center hover:bg-green-50 smooth-transition group">
           <div className="p-3 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg mb-3 group-hover:scale-110 smooth-transition">
             <TrendingUp className="h-6 w-6 text-white" />
           </div>
-          <span className="font-bold text-contrast mb-1">Mandi Prices</span>
+          <span className="font-bold text-contrast mb-1">Market Prices</span>
           <span className="text-xs text-contrast-light text-center">Latest market rates</span>
-        </a>
-        <a href="/crop-info" className="enhanced-card p-6 flex flex-col items-center hover:bg-emerald-50 smooth-transition group">
+        </Link>
+        <Link to="/crop-management" className="enhanced-card p-6 flex flex-col items-center hover:bg-emerald-50 smooth-transition group">
           <div className="p-3 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg mb-3 group-hover:scale-110 smooth-transition">
             <Sprout className="h-6 w-6 text-white" />
           </div>
           <span className="font-bold text-contrast mb-1">Crop Info</span>
           <span className="text-xs text-contrast-light text-center">Indian crop details</span>
-        </a>
-        <a href="/disease-detection" className="enhanced-card p-6 flex flex-col items-center hover:bg-red-50 smooth-transition group">
+        </Link>
+        <Link to="/disease-detection" className="enhanced-card p-6 flex flex-col items-center hover:bg-red-50 smooth-transition group">
           <div className="p-3 rounded-full bg-gradient-to-br from-red-500 to-pink-600 shadow-lg mb-3 group-hover:scale-110 smooth-transition">
             <Bug className="h-6 w-6 text-white" />
           </div>
           <span className="font-bold text-contrast mb-1">Disease Detection</span>
           <span className="text-xs text-gray-500">Detect crop diseases</span>
-        </a>
-        <a href="/agent" className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:bg-green-50 transition sm:col-span-2 lg:col-span-4">
+        </Link>
+        <Link to="/settings" className="enhanced-card p-6 flex flex-col items-center hover:bg-gray-50 smooth-transition group">
+          <div className="p-3 rounded-full bg-gradient-to-br from-gray-500 to-slate-600 shadow-lg mb-3 group-hover:scale-110 smooth-transition">
+            <Settings className="h-6 w-6 text-white" />
+          </div>
+          <span className="font-bold text-contrast mb-1">Settings</span>
+          <span className="text-xs text-contrast-light text-center">App preferences</span>
+        </Link>
+        <Link to="/ai-agent" className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center hover:bg-green-50 transition sm:col-span-2 lg:col-span-3">
           <Bot className="h-8 w-8 text-purple-500 mb-2" />
           <span className="font-bold text-green-700 mb-1">AI Agent</span>
           <span className="text-xs text-gray-500">Ask farming questions</span>
-        </a>
+        </Link>
       </div>
 
       {/* Step-by-step Guide */}
