@@ -9,6 +9,8 @@
     "dev:server": "cd server && npm run dev",
     "dev:fullstack": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "start": "concurrently \"npm run preview\" \"cd server && npm start\"",
+    "start:production": "cd server && npm start",
+    "start:fullstack": "concurrently \"npm run preview\" \"cd server && npm start\"",
     "build": "vite build",
     "build:pwa": "tsc && vite build --mode pwa",
     "build:fullstack": "npm run build && cd server && npm run build",
