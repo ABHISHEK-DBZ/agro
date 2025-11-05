@@ -1266,6 +1266,16 @@ body > div:not(#root) {
   display: none !important;
 }
 
+/* Prevent multiple App instances */
+#root > div:not(:first-child) {
+  display: none !important;
+}
+
+/* Clear any duplicate routers */
+.router-wrapper:not(:first-child) {
+  display: none !important;
+}
+
 /* AI Agent Styles */
 .ai-chat-container {
   height: calc(100vh - 160px);

@@ -82,7 +82,7 @@ const AppLayout: React.FC = () => {
         v7_relativeSplatPath: true
       }}
     >
-      <div className="min-h-screen bg-gray-50 w-full overflow-x-hidden">
+      <div className="router-wrapper min-h-screen bg-gray-50 w-full overflow-x-hidden">
         {user && <Navbar />}
         <main className={`w-full ${user ? 'container mx-auto px-4 py-8' : ''}`}>
           <Routes>

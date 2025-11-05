@@ -35,7 +35,7 @@
   </head>
   <body>
     <div id="root">
-      <div id="loading-screen" style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; font-family: Arial, sans-serif; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;">
+      <div id="loading-screen" style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; font-family: Arial, sans-serif; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10000;">
         <div style="text-align: center;">
           <h1 style="color: #16a34a; margin-bottom: 15px; font-size: 2rem;">🌾 Smart Krishi Sahayak</h1>
           <p style="color: #6b7280; margin-bottom: 25px; font-size: 1.1rem;">Loading agriculture application...</p>
@@ -52,17 +52,43 @@
           padding: 0; 
           width: 100%;
           height: 100%;
-          overflow-x: hidden;
+          overflow: hidden;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
         }
         #root {
-          width: 100%;
-          min-height: 100vh;
+          width: 100vw;
+          height: 100vh;
           position: relative;
+          overflow: hidden;
+        }
+        /* Prevent scrollbars during loading */
+        body.loading {
+          overflow: hidden !important;
         }
       </style>
     </div>
     <!-- Vite will inject the React app script during build -->
     <script type="module" src="/src/main.tsx"></script>
+    
+    <script>
+      // Add loading class to body
+      document.body.classList.add('loading');
+      
+      // Remove loading class when app loads
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const loadingScreen = document.getElementById('loading-screen');
+          if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            loadingScreen.style.transition = 'opacity 0.5s ease-out';
+            setTimeout(function() {
+              loadingScreen.style.display = 'none';
+              document.body.classList.remove('loading');
+              document.body.style.overflow = 'auto';
+            }, 500);
+          }
+        }, 1000);
+      });
+    </script>
   </body>
 </html>
