@@ -1,17 +1,22 @@
 {
-  "name": "smart-krishi-sahayak-server",
+  "name": "smart-krishi-sahayak-backend",
   "version": "1.0.0",
-  "description": "Backend server for Smart Krishi Sahayak",
+  "description": "Smart Krishi Sahayak Backend API for Azure App Service",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
     "build": "echo 'Backend build completed - using existing files'",
-    "test": "echo 'No tests specified'"
+    "test": "echo 'No tests specified'",
+    "azure-build": "npm install --production"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["agriculture", "farming", "krishi", "backend", "api", "azure"],
+  "author": "ABHISHEK-DBZ",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.11.0",

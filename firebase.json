@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/api/**",
+        "function": "api"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
@@ -21,12 +25,49 @@
             "value": "max-age=31536000"
           }
         ]
+      },
+      {
+        "source": "/api/**",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          },
+          {
+            "key": "Access-Control-Allow-Methods",
+            "value": "GET, POST, PUT, DELETE, OPTIONS"
+          },
+          {
+            "key": "Access-Control-Allow-Headers",
+            "value": "Content-Type, Authorization"
+          }
+        ]
       }
     ]
+  },
+  "functions": {
+    "source": "functions",
+    "predeploy": [
+      "npm --prefix functions run build"
+    ],
+    "runtime": "nodejs18"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "emulators": {
     "auth": {
       "port": 9098
+    },
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "hosting": {
+      "port": 5000
     },
     "ui": {
       "enabled": true,

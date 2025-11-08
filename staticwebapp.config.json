@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "platform": {
+    "apiRuntime": "node:20"
+  },
+  "configurations": [
+    {
+      "appType": "webApp",
+      "appLocation": "server",
+      "apiLocation": "",
+      "outputLocation": "",
+      "appBuildCommand": "npm install",
+      "apiBuildCommand": "",
+      "appDevCommand": "npm run dev",
+      "apiDevCommand": ""
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/api/index"
+  },
+  "routes": [
+    {
+      "route": "/api/*",
+      "allowedRoles": ["anonymous"]
+    }
+  ],
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/api/404"
+    }
+  }
+}
