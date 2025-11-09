@@ -38,6 +38,10 @@ import LiveWeather from './pages/LiveWeather';
 import Analytics from './pages/Analytics';
 import GrievancesPage from './pages/GrievancesPage';
 import AdminGrievances from './pages/AdminGrievances';
+// New Features
+import CropCalendar from './pages/CropCalendar';
+import LoanCalculator from './pages/LoanCalculator';
+import SoilTesting from './pages/SoilTesting';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -201,6 +205,23 @@ const AppLayout: React.FC = () => {
             <Route path="/ai-agent" element={
               <ProtectedRoute>
                 <AiAgent />
+              </ProtectedRoute>
+            } />
+            
+            {/* New Features */}
+            <Route path="/crop-calendar" element={
+              <ProtectedRoute>
+                <CropCalendar />
+              </ProtectedRoute>
+            } />
+            <Route path="/loan-calculator" element={
+              <ProtectedRoute>
+                <LoanCalculator />
+              </ProtectedRoute>
+            } />
+            <Route path="/soil-testing" element={
+              <ProtectedRoute>
+                <SoilTesting />
               </ProtectedRoute>
             } />
             
