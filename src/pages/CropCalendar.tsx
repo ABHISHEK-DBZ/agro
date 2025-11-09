@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Plus, AlertCircle, Sun, CloudRain, Sprout } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { pageVariants, cardVariants, staggerContainerVariants } from '../utils/animations';
 
 interface CropEvent {
   id: string;
@@ -52,22 +54,37 @@ const CropCalendar: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white py-8 px-4">
+    <motion.div 
+      className="min-h-screen bg-gradient-to-b from-green-50 to-white py-8 px-4"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    >
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <motion.div 
+          className="bg-white rounded-2xl shadow-lg p-6 mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <CalendarIcon className="w-8 h-8 text-green-600" />
               <h1 className="text-3xl font-bold text-gray-800">फसल कैलेंडर</h1>
             </div>
-            <button className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition">
+            <motion.button 
+              className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               <Plus className="w-5 h-5" />
               नई गतिविधि
-            </button>
+            </motion.button>
           </div>
           <p className="text-gray-600">अपनी फसलों की बुवाई, देखभाल और कटाई की योजना बनाएं</p>
-        </div>
+        </motion.div>
 
         {/* Month Selector */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
@@ -171,7 +188,7 @@ const CropCalendar: React.FC = () => {
           </ul>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Droplet, TrendingUp, AlertTriangle, CheckCircle, MapPin, Upload } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { pageVariants, cardVariants } from '../utils/animations';
 
 interface SoilTest {
   id: string;
@@ -66,22 +68,37 @@ const SoilTesting: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-8 px-4">
+    <motion.div 
+      className="min-h-screen bg-gradient-to-b from-amber-50 to-white py-8 px-4"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    >
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <motion.div 
+          className="bg-white rounded-2xl shadow-lg p-6 mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Droplet className="w-8 h-8 text-amber-600" />
               <h1 className="text-3xl font-bold text-gray-800">मृदा परीक्षण</h1>
             </div>
-            <button className="bg-amber-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-700 transition">
+            <motion.button 
+              className="bg-amber-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-700 transition"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               <Upload className="w-5 h-5" />
               रिपोर्ट अपलोड करें
-            </button>
+            </motion.button>
           </div>
           <p className="text-gray-600">अपनी मिट्टी का विश्लेषण करें और बेहतर फसल के लिए सुझाव पाएं</p>
-        </div>
+        </motion.div>
 
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -234,7 +251,7 @@ const SoilTesting: React.FC = () => {
           </ul>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

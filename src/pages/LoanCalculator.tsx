@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Calculator, IndianRupee, TrendingDown, Calendar, Info } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { pageVariants, cardVariants } from '../utils/animations';
 
 const LoanCalculator: React.FC = () => {
   const [loanAmount, setLoanAmount] = useState<number>(100000);
@@ -27,16 +29,27 @@ const LoanCalculator: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-4">
+    <motion.div 
+      className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-4"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    >
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <motion.div 
+          className="bg-white rounded-2xl shadow-lg p-6 mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="flex items-center gap-3 mb-4">
             <Calculator className="w-8 h-8 text-blue-600" />
             <h1 className="text-3xl font-bold text-gray-800">कृषि ऋण कैलकुलेटर</h1>
           </div>
           <p className="text-gray-600">अपने कृषि ऋण की EMI और कुल राशि की गणना करें</p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Calculator Section */}
@@ -226,7 +239,7 @@ const LoanCalculator: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
