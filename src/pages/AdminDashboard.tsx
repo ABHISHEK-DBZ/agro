@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { db } from '../config/firebase';
+import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { 
   Users, 
   FileText, 
@@ -13,7 +15,11 @@ import {
   Shield,
   Database,
   Camera,
-  RefreshCw
+  RefreshCw,
+  Mail,
+  Calendar,
+  UserCheck,
+  Clock
 } from 'lucide-react';
 
 interface AdminStats {
@@ -30,15 +36,27 @@ interface AdminStats {
   };
 }
 
+interface UserData {
+  id: string;
+  email: string;
+  displayName?: string;
+  createdAt: any;
+  lastLoginAt?: any;
+  role?: string;
+  photoURL?: string;
+}
+
 const AdminDashboard: React.FC = () => {
   const { user, userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'posts' | 'analytics' | 'settings'>('overview');
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Check if user is admin
-  const isAdmin = userProfile?.role === 'admin' || user?.email === 'admin@smartkrishisahayak.com';
+  const isAdmin = userProfile?.role === 'admin' || user?.email === 'admin@smartkrishi.com';
 
   useEffect(() => {
     if (isAdmin) {
@@ -49,24 +67,92 @@ const AdminDashboard: React.FC = () => {
   const loadAdminData = async () => {
     try {
       setLoading(true);
-      await loadStats();
+      setError(null);
+      await Promise.all([loadStats(), loadUsers()]);
     } catch (error) {
       console.error('Error loading admin data:', error);
+      setError('Failed to load admin data');
     } finally {
       setLoading(false);
     }
   };
 
+  const loadUsers = async () => {
+    try {
+      const usersRef = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersRef);
+      
+      const usersData: UserData[] = [];
+      usersSnapshot.forEach((doc) => {
+        usersData.push({
+          id: doc.id,
+          ...doc.data()
+        } as UserData);
+      });
+      
+      // Sort by creation date (newest first)
+      usersData.sort((a, b) => {
+        const dateA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const dateB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return dateB - dateA;
+      });
+      
+      setUsers(usersData);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
+
   const loadStats = async () => {
     try {
-      // Mock data for now
+      const usersRef = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersRef);
+      
+      const totalUsers = usersSnapshot.size;
+      
+      // Calculate active users (logged in within last 24 hours)
+      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+      let activeUsers = 0;
+      
+      usersSnapshot.forEach((doc) => {
+        const userData = doc.data();
+        const lastLogin = userData.lastLoginAt?.toMillis ? userData.lastLoginAt.toMillis() : 0;
+        if (lastLogin > oneDayAgo) {
+          activeUsers++;
+        }
+      });
+      
+      // Try to get posts/comments count (if collections exist)
+      let totalPosts = 0;
+      let pendingPosts = 0;
+      let totalComments = 0;
+      
+      try {
+        const postsRef = collection(db, 'posts');
+        const postsSnapshot = await getDocs(postsRef);
+        totalPosts = postsSnapshot.size;
+        
+        postsSnapshot.forEach((doc) => {
+          if (doc.data().status === 'pending') {
+            pendingPosts++;
+          }
+        });
+        
+        const commentsRef = collection(db, 'comments');
+        const commentsSnapshot = await getDocs(commentsRef);
+        totalComments = commentsSnapshot.size;
+      } catch (err) {
+        // Collections might not exist yet
+        console.log('Posts/Comments collections not found, using default values');
+      }
+      
       setStats({
-        totalUsers: 150,
-        activeUsers: 45,
-        totalPosts: 89,
-        pendingPosts: 12,
-        totalComments: 234,
-        todayVisitors: 67,
+        totalUsers,
+        activeUsers,
+        totalPosts,
+        pendingPosts,
+        totalComments,
+        todayVisitors: activeUsers,
         systemHealth: {
           database: true,
           storage: true,
@@ -75,6 +161,20 @@ const AdminDashboard: React.FC = () => {
       });
     } catch (error) {
       console.error('Error loading stats:', error);
+      // Set default stats on error
+      setStats({
+        totalUsers: 0,
+        activeUsers: 0,
+        totalPosts: 0,
+        pendingPosts: 0,
+        totalComments: 0,
+        todayVisitors: 0,
+        systemHealth: {
+          database: false,
+          storage: true,
+          auth: true,
+        },
+      });
     }
   };
 
@@ -159,6 +259,18 @@ const AdminDashboard: React.FC = () => {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <XCircle className="h-5 w-5 text-red-500 mr-3" />
+              <div>
+                <h3 className="text-sm font-medium text-red-800">Error Loading Data</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Stats Grid */}
@@ -265,9 +377,147 @@ const AdminDashboard: React.FC = () => {
         )}
 
         {activeTab === 'users' && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">User Management</h3>
-            <p className="text-gray-600">User management features will be available here.</p>
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">User Management</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Total {users.length} registered users
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {users.length === 0 ? (
+              <div className="p-12 text-center">
+                <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No users yet</h3>
+                <p className="text-gray-600">Users will appear here once they register.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        User
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Role
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Joined
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Last Login
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {users.map((userData) => {
+                      const createdDate = userData.createdAt?.toDate ? 
+                        userData.createdAt.toDate() : new Date();
+                      const lastLoginDate = userData.lastLoginAt?.toDate ? 
+                        userData.lastLoginAt.toDate() : null;
+                      
+                      const isActive = lastLoginDate && 
+                        (Date.now() - lastLoginDate.getTime()) < (24 * 60 * 60 * 1000);
+                      
+                      return (
+                        <tr key={userData.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10">
+                                {userData.photoURL ? (
+                                  <img 
+                                    className="h-10 w-10 rounded-full" 
+                                    src={userData.photoURL} 
+                                    alt="" 
+                                  />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                    <span className="text-green-600 font-medium text-sm">
+                                      {userData.displayName?.charAt(0).toUpperCase() || 
+                                       userData.email?.charAt(0).toUpperCase() || '?'}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {userData.displayName || 'No name'}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center text-sm text-gray-900">
+                              <Mail className="h-4 w-4 text-gray-400 mr-2" />
+                              {userData.email}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              userData.role === 'admin' 
+                                ? 'bg-red-100 text-red-800' 
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {userData.role || 'user'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                              {createdDate.toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {lastLoginDate ? (
+                              <div className="flex items-center">
+                                <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                                {lastLoginDate.toLocaleDateString('en-IN', {
+                                  day: '2-digit',
+                                  month: 'short'
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">Never</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              isActive 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {isActive ? (
+                                <>
+                                  <UserCheck className="h-3 w-3 mr-1" />
+                                  Active
+                                </>
+                              ) : (
+                                'Inactive'
+                              )}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -279,9 +529,116 @@ const AdminDashboard: React.FC = () => {
         )}
 
         {activeTab === 'analytics' && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Analytics</h3>
-            <p className="text-gray-600">Analytics dashboard will be available here.</p>
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Analytics Dashboard</h3>
+              
+              {/* User Growth */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">User Statistics</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-blue-600 font-medium">Total Users</p>
+                        <p className="text-2xl font-bold text-blue-900 mt-1">{stats?.totalUsers || 0}</p>
+                      </div>
+                      <Users className="h-8 w-8 text-blue-600" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Active Today</p>
+                        <p className="text-2xl font-bold text-green-900 mt-1">{stats?.activeUsers || 0}</p>
+                      </div>
+                      <Activity className="h-8 w-8 text-green-600" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-purple-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-purple-600 font-medium">Engagement Rate</p>
+                        <p className="text-2xl font-bold text-purple-900 mt-1">
+                          {stats?.totalUsers ? Math.round((stats.activeUsers / stats.totalUsers) * 100) : 0}%
+                        </p>
+                      </div>
+                      <TrendingUp className="h-8 w-8 text-purple-600" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Recent Activity */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Recent User Activity</h4>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="space-y-3">
+                    {users.slice(0, 5).map((userData, index) => {
+                      const lastLogin = userData.lastLoginAt?.toDate ? 
+                        userData.lastLoginAt.toDate() : null;
+                      
+                      return (
+                        <div key={userData.id} className="flex items-center justify-between py-2 border-b border-gray-200 last:border-0">
+                          <div className="flex items-center">
+                            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                              <span className="text-green-600 font-medium text-xs">
+                                {userData.displayName?.charAt(0).toUpperCase() || 
+                                 userData.email?.charAt(0).toUpperCase() || '?'}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {userData.displayName || userData.email}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {lastLogin ? `Last active: ${lastLogin.toLocaleDateString('en-IN')}` : 'Never logged in'}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            lastLogin && (Date.now() - lastLogin.getTime()) < (24 * 60 * 60 * 1000)
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {lastLogin && (Date.now() - lastLogin.getTime()) < (24 * 60 * 60 * 1000) ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    
+                    {users.length === 0 && (
+                      <p className="text-center text-gray-500 py-4">No user activity yet</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* User Roles Distribution */}
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">User Roles</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Admin Users</span>
+                      <span className="text-lg font-bold text-gray-900">
+                        {users.filter(u => u.role === 'admin').length}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Regular Users</span>
+                      <span className="text-lg font-bold text-gray-900">
+                        {users.filter(u => u.role !== 'admin').length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

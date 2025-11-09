@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, MapPin, Thermometer, Droplets, Wind, Eye, Gauge, Sun, CloudRain, Cloud, Calendar, TrendingUp, TrendingDown, AlertTriangle, Sunrise, Sunset, Compass, Zap, Snowflake, CloudDrizzle, Navigation, Activity, BarChart3, Clock, Leaf, Sprout, Search, X, Star, History, Globe } from 'lucide-react';
+import { weatherAPI, getWeatherDescription, getWeatherDescriptionHindi } from '../services/api';
 
 interface WeatherData {
   location: string;
@@ -156,15 +157,98 @@ const Weather: React.FC = () => {
     setError(null);
     
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setWeatherData(mockWeatherData);
+      // Extract city name from location string
+      const cityName = location.split(',')[0].trim();
+      
+      // Fetch real weather data from Open-Meteo API
+      const weatherResponse = await weatherAPI.getWeatherByCity(cityName);
+      
+      // Transform API response to our format
+      const transformedData: WeatherData = {
+        location: location,
+        temperature: Math.round(weatherResponse.current.temperature),
+        condition: getWeatherDescription(weatherResponse.current.weatherCode),
+        humidity: weatherResponse.current.humidity,
+        windSpeed: Math.round(weatherResponse.current.windSpeed),
+        windDirection: getWindDirection(weatherResponse.current.windDirection),
+        visibility: 10, // Not provided by API
+        pressure: 1013, // Not provided by API
+        uvIndex: 0, // Not provided by free tier
+        feelsLike: Math.round(weatherResponse.current.feelsLike),
+        dewPoint: calculateDewPoint(weatherResponse.current.temperature, weatherResponse.current.humidity),
+        cloudCover: 40, // Not provided by API
+        sunrise: '06:45 AM', // Would need separate API or calculation
+        sunset: '05:30 PM', // Would need separate API or calculation
+        moonPhase: 'Waxing Crescent',
+        airQuality: {
+          index: 85,
+          level: 'Moderate',
+          pm25: 35,
+          pm10: 50,
+        },
+        forecast: weatherResponse.daily.time.slice(0, 7).map((date: string, index: number) => ({
+          day: new Date(date).toLocaleDateString('en-IN', { weekday: 'short' }),
+          date: new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+          high: Math.round(weatherResponse.daily.temperature_2m_max[index]),
+          low: Math.round(weatherResponse.daily.temperature_2m_min[index]),
+          condition: getWeatherDescription(weatherResponse.daily.weather_code[index]),
+          icon: getWeatherIcon(weatherResponse.daily.weather_code[index]),
+          humidity: weatherResponse.current.humidity,
+          windSpeed: Math.round(weatherResponse.current.windSpeed),
+          precipitation: weatherResponse.daily.precipitation_sum[index],
+          rainProbability: Math.min(100, Math.round(weatherResponse.daily.precipitation_sum[index] * 10)),
+        })),
+        hourlyForecast: weatherResponse.hourly.time.slice(0, 24).map((time: string, index: number) => ({
+          time: new Date(time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          temp: Math.round(weatherResponse.hourly.temperature_2m[index]),
+          condition: getWeatherDescription(weatherResponse.hourly.weather_code[index]),
+          icon: getWeatherIcon(weatherResponse.hourly.weather_code[index]),
+          rainChance: weatherResponse.hourly.precipitation_probability?.[index] || 0,
+          windSpeed: Math.round(weatherResponse.current.windSpeed),
+        })),
+        alerts: [],
+        historical: {
+          avgTemp: Math.round((weatherResponse.daily.temperature_2m_max[0] + weatherResponse.daily.temperature_2m_min[0]) / 2),
+          maxTemp: Math.round(Math.max(...weatherResponse.daily.temperature_2m_max.slice(0, 7))),
+          minTemp: Math.round(Math.min(...weatherResponse.daily.temperature_2m_min.slice(0, 7))),
+          rainfall: weatherResponse.daily.precipitation_sum.slice(0, 7).reduce((a: number, b: number) => a + b, 0),
+        },
+      };
+      
+      setWeatherData(transformedData);
       setLastRefresh(new Date());
     } catch (err) {
-      setError('Weather data unavailable');
+      console.error('Weather API Error:', err);
+      setError('Weather data unavailable. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper functions
+  const getWindDirection = (degrees: number): string => {
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const index = Math.round(degrees / 45) % 8;
+    return directions[index];
+  };
+
+  const calculateDewPoint = (temp: number, humidity: number): number => {
+    const a = 17.27;
+    const b = 237.7;
+    const alpha = ((a * temp) / (b + temp)) + Math.log(humidity / 100);
+    return Math.round((b * alpha) / (a - alpha));
+  };
+
+  const getWeatherIcon = (code: number): string => {
+    if (code === 0 || code === 1) return '☀️';
+    if (code === 2 || code === 3) return '⛅';
+    if (code >= 45 && code <= 48) return '🌫️';
+    if (code >= 51 && code <= 67) return '🌧️';
+    if (code >= 71 && code <= 77) return '🌨️';
+    if (code >= 80 && code <= 82) return '🌦️';
+    if (code >= 85 && code <= 86) return '🌨️';
+    if (code >= 95) return '⛈️';
+    return '🌤️';
   };
 
   const refreshWeather = () => {

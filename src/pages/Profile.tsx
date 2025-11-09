@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import profileService from '../services/profileService';
+import type { UserProfile, UserSettings } from '../services/profileService';
+import toast from 'react-hot-toast';
 import { 
   User, 
   Mail, 
@@ -26,184 +28,91 @@ import {
   Heart,
   Cloud,
   AlertCircle,
-  Globe
+  Globe,
+  CheckCircle2,
+  MessageSquare
 } from 'lucide-react';
-
-interface AdvancedUserProfile {
-  // Basic Info (from registration)
-  uid?: string;
-  name: string;
-  email: string;
-  phone: string;
-  displayName?: string;
-  photoURL?: string;
-  
-  // Location (from registration)
-  location: string;
-  village?: string;
-  district?: string;
-  state?: string;
-  
-  // Farm Details
-  farmSize: string;
-  primaryCrops: string[];
-  experience: string;
-  farmingType?: string[];
-  landSize?: number;
-  
-  // Preferences
-  language: string;
-  theme?: 'light' | 'dark' | 'auto';
-  notifications: {
-    weather: boolean;
-    prices: boolean;
-    diseases: boolean;
-    schemes: boolean;
-    community?: boolean;
-  };
-  
-  // Stats
-  joinedDate?: string;
-  totalPosts?: number;
-  helpfulAnswers?: number;
-  reputation?: number;
-  
-  // Additional Profile Fields
-  bio?: string;
-  expertise?: string[];
-  achievements?: string[];
-  dataSync?: {
-    autoBackup?: boolean;
-    cloudSync?: boolean;
-  };
-  socialLinks?: {
-    whatsapp?: string;
-    telegram?: string;
-  };
-}
-
-const API_URL = 'http://localhost:5000/api';
 
 const Profile: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { user, userProfile, updateUserProfile, logout } = useAuth();
+  const { user, logout } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [settings, setSettings] = useState<UserSettings | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState<AdvancedUserProfile | null>(null);
-  const [editedProfile, setEditedProfile] = useState<AdvancedUserProfile | null>(null);
+  const [editedProfile, setEditedProfile] = useState<Partial<UserProfile> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'farm' | 'preferences' | 'achievements'>('basic');
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
+    let mounted = true;
+    
     const loadProfile = async () => {
       try {
         setLoading(true);
         
-        // Get data from Firebase Auth context first
-        if (user && userProfile) {
-          const advancedProfile: AdvancedUserProfile = {
-            uid: user.uid,
-            name: userProfile.displayName || user.displayName || 'किसान',
-            displayName: userProfile.displayName || user.displayName || '',
-            email: user.email || userProfile.email || '',
-            phone: userProfile.phoneNumber || '',
-            location: userProfile.location 
-              ? `${userProfile.location.village || ''} ${userProfile.location.district || ''} ${userProfile.location.state || ''}`.trim()
-              : 'भारत',
-            village: userProfile.location?.village || '',
-            district: userProfile.location?.district || '',
-            state: userProfile.location?.state || '',
-            farmSize: userProfile.landSize ? `${userProfile.landSize} एकड़` : '2-5 एकड़',
-            primaryCrops: userProfile.crops || ['गेहूं', 'धान'],
-            experience: userProfile.experience ? `${userProfile.experience} वर्ष` : '5+ वर्ष',
-            farmingType: userProfile.farmingType || ['organic'],
-            landSize: userProfile.landSize || 3,
-            language: userProfile.preferences?.language || 'hi',
-            theme: userProfile.preferences?.theme || 'auto',
-            notifications: {
-              weather: userProfile.preferences?.notifications?.weather ?? true,
-              prices: userProfile.preferences?.notifications?.prices ?? true,
-              diseases: true,
-              schemes: userProfile.preferences?.notifications?.schemes ?? true,
-              community: userProfile.preferences?.notifications?.community ?? true
-            },
-            joinedDate: userProfile.createdAt?.toDate?.()?.toLocaleDateString('hi-IN') || new Date().toLocaleDateString('hi-IN'),
-            totalPosts: userProfile.stats?.postsCount || 0,
-            helpfulAnswers: userProfile.stats?.answersCount || 0,
-            reputation: userProfile.stats?.helpfulVotes || 0,
-            photoURL: user.photoURL || undefined,
-            bio: 'एक समर्पित किसान जो आधुनिक तकनीक के साथ पारंपरिक खेती करता है।',
-            expertise: ['Organic Farming', 'Crop Rotation', 'Pest Management'],
-            achievements: ['Best Farmer 2023', 'Organic Certification', 'High Yield Award']
+        // First, try to get the profile
+        const userProfile = await profileService.getUserProfile(user.uid);
+        
+        if (!mounted) return;
+        
+        if (userProfile) {
+          // Profile exists, subscribe to real-time updates
+          const unsubscribeProfile = profileService.subscribeToProfile(user.uid, (profile) => {
+            if (mounted) {
+              setProfile(profile);
+              setEditedProfile(profile);
+              setLoading(false);
+            }
+          });
+
+          const unsubscribeSettings = profileService.subscribeToSettings(user.uid, (userSettings) => {
+            if (mounted && userSettings?.appearance?.language) {
+              i18n.changeLanguage(userSettings.appearance.language);
+            }
+          });
+
+          return () => {
+            mounted = false;
+            unsubscribeProfile();
+            unsubscribeSettings();
           };
+        } else {
+          // Profile doesn't exist, create one
+          const newProfile = await profileService.createUserProfile(user, {
+            role: 'farmer',
+            state: '',
+            district: '',
+            village: '',
+          });
           
-          setProfile(advancedProfile);
-          setEditedProfile(advancedProfile);
-          
-          // Also save to localStorage for offline access
-          localStorage.setItem('userProfile', JSON.stringify(advancedProfile));
-          
-          if (advancedProfile.language) {
-            i18n.changeLanguage(advancedProfile.language);
+          if (mounted) {
+            setProfile(newProfile);
+            setEditedProfile(newProfile);
+            setLoading(false);
+            toast.success('Profile created! Please update your details.');
           }
-          
-          setLoading(false);
-          return;
         }
-        
-        // Fallback: Try localStorage
-        const savedProfile = localStorage.getItem('userProfile');
-        if (savedProfile) {
-          const parsedProfile = JSON.parse(savedProfile);
-          setProfile(parsedProfile);
-          setEditedProfile(parsedProfile);
-          if (parsedProfile.language) {
-            i18n.changeLanguage(parsedProfile.language);
-          }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        if (mounted) {
           setLoading(false);
-          return;
+          toast.error('प्रोफाइल लोड करने में त्रुटि');
         }
-        
-        // Default profile if nothing found
-        const defaultProfile: AdvancedUserProfile = {
-          name: 'स्मार्ट किसान',
-          email: 'farmer@smartkrishi.com',
-          phone: '+91 98765 43210',
-          location: 'पंजाब, भारत',
-          farmSize: '5 एकड़',
-          primaryCrops: ['गेहूं', 'धान', 'कपास'],
-          experience: '10+ वर्ष',
-          language: 'hi',
-          notifications: {
-            weather: true,
-            prices: true,
-            diseases: true,
-            schemes: true,
-            community: true
-          },
-          joinedDate: new Date().toLocaleDateString('hi-IN'),
-          totalPosts: 12,
-          helpfulAnswers: 8,
-          reputation: 95,
-          bio: 'एक अनुभवी किसान जो आधुनिक तकनीक और पारंपरिक ज्ञान का उपयोग करता है।',
-          expertise: ['जैविक खेती', 'फसल चक्र', 'कीट प्रबंधन'],
-          achievements: ['सर्वश्रेष्ठ किसान 2023', 'जैविक प्रमाणन', 'उच्च उत्पादन पुरस्कार']
-        };
-        
-        setProfile(defaultProfile);
-        setEditedProfile(defaultProfile);
-        localStorage.setItem('userProfile', JSON.stringify(defaultProfile));
-        
-      } catch (err) {
-        console.error('Profile loading error:', err);
-        setError('प्रोफाइल लोड करने में त्रुटि');
-      } finally {
-        setLoading(false);
       }
     };
     
     loadProfile();
-  }, [user, userProfile, i18n]);
+    
+    return () => {
+      mounted = false;
+    };
+  }, [user, i18n]);
 
   const cropOptions = [
     'गेहूं', 'धान', 'कपास', 'गन्ना', 'मक्का', 'सोयाबीन', 
@@ -231,65 +140,30 @@ const Profile: React.FC = () => {
   ];
 
   const handleSave = async () => {
-    if (!editedProfile) return;
+    if (!editedProfile || !user) return;
+    
     try {
-      setLoading(true);
+      setSaving(true);
       
-      // Save to localStorage first
-      localStorage.setItem('userProfile', JSON.stringify(editedProfile));
-      
-      // Try to update Firebase user profile
-      if (user && updateUserProfile) {
-        try {
-          const firebaseProfileData = {
-            displayName: editedProfile.name,
-            phoneNumber: editedProfile.phone,
-            location: {
-              village: editedProfile.village || '',
-              district: editedProfile.district || '',
-              state: editedProfile.state || ''
-            },
-            landSize: editedProfile.landSize,
-            crops: editedProfile.primaryCrops,
-            farmingType: editedProfile.farmingType || [],
-            preferences: {
-              language: editedProfile.language,
-              theme: editedProfile.theme || 'auto',
-              notifications: editedProfile.notifications
-            }
-          };
-          
-          await updateUserProfile(firebaseProfileData);
-          console.log('✅ Firebase profile updated successfully');
-        } catch (firebaseError) {
-          console.log('⚠️ Firebase update failed, saved locally only:', firebaseError);
-        }
-      }
-      
-      // Try to save to API backend (optional)
-      try {
-        const response = await axios.post(`${API_URL}/profile`, editedProfile, {
-          timeout: 5000
-        });
-        console.log('✅ API profile updated successfully');
-      } catch (apiError) {
-        console.log('⚠️ API save failed, saved locally only');
-      }
-      
-      setProfile(editedProfile);
+      // Update profile in Firebase
+      await profileService.updateUserProfile(user.uid, {
+        name: editedProfile.name,
+        phone: editedProfile.phone,
+        state: editedProfile.state,
+        district: editedProfile.district,
+        village: editedProfile.village,
+        experience: editedProfile.experience,
+        expertise: editedProfile.expertise,
+        bio: editedProfile.bio,
+      });
+
+      toast.success('प्रोफाइल सफलतापूर्वक अपडेट हुई!');
       setIsEditing(false);
-      setError(null);
-      
-      // Change language if updated
-      if (editedProfile.language && editedProfile.language !== i18n.language) {
-        i18n.changeLanguage(editedProfile.language);
-      }
-      
     } catch (err) {
-      setError('प्रोफाइल सेव करने में त्रुटि');
-      console.error('Save error:', err);
+      console.error('Error saving profile:', err);
+      toast.error('प्रोफाइल सेव करने में त्रुटि');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -298,34 +172,14 @@ const Profile: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleInputChange = (field: keyof AdvancedUserProfile, value: string | number) => {
+  const handleInputChange = (field: keyof UserProfile, value: any) => {
     if (!editedProfile) return;
     setEditedProfile({ ...editedProfile, [field]: value });
   };
 
-  const handleLocationChange = (field: 'village' | 'district' | 'state', value: string) => {
+  const handleExpertiseChange = (expertise: string[]) => {
     if (!editedProfile) return;
-    const updated = { ...editedProfile, [field]: value };
-    // Update combined location string
-    updated.location = `${updated.village || ''} ${updated.district || ''} ${updated.state || ''}`.trim();
-    setEditedProfile(updated);
-  };
-
-  const handleLanguageChange = (langCode: string) => {
-    if (!editedProfile) return;
-    i18n.changeLanguage(langCode);
-    setEditedProfile({ ...editedProfile, language: langCode });
-  };
-
-  const handleNotificationChange = (key: keyof AdvancedUserProfile['notifications'], value: boolean) => {
-    if (!editedProfile) return;
-    setEditedProfile({
-      ...editedProfile,
-      notifications: {
-        ...editedProfile.notifications,
-        [key]: value
-      }
-    });
+    setEditedProfile({ ...editedProfile, expertise });
   };
 
   const handleDataSyncChange = (key: string, value: boolean) => {
@@ -477,17 +331,29 @@ const Profile: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">प्रोफाइल लोड हो रही है...</p>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (!user) {
     return (
-      <div className="text-center text-red-500 p-8 bg-red-50 rounded-lg">
-        <AlertCircle size={48} className="mx-auto mb-4" />
-        <p>{error}</p>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex justify-center items-center">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
+          <User size={64} className="mx-auto mb-4 text-gray-400" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">लॉगिन आवश्यक है</h2>
+          <p className="text-gray-600 mb-4">कृपया अपनी प्रोफाइल देखने के लिए लॉगिन करें</p>
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="bg-green-500 text-white px-6 py-3 rounded-xl hover:bg-green-600 transition-colors"
+          >
+            लॉगिन करें
+          </button>
+        </div>
       </div>
     );
   }
@@ -527,18 +393,27 @@ const Profile: React.FC = () => {
                 <h1 className="text-4xl font-bold mb-2">{profile.name}</h1>
                 <p className="text-green-100 text-lg mb-4 flex items-center justify-center lg:justify-start">
                   <MapPin size={18} className="mr-2" />
-                  {profile.location}
+                  {profile.village && profile.district && profile.state 
+                    ? `${profile.village}, ${profile.district}, ${profile.state}`
+                    : 'Location not set'}
                 </p>
                 <div className="flex flex-wrap justify-center lg:justify-start gap-3">
                   <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm">
-                    🌾 {profile.farmSize}
+                    👤 {profile.role === 'farmer' ? 'किसान' : profile.role === 'expert' ? 'विशेषज्ञ' : 'छात्र'}
                   </span>
+                  {profile.experience && (
+                    <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm">
+                      📅 {profile.experience} अनुभव
+                    </span>
+                  )}
                   <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm">
-                    📅 {profile.experience}
+                    ⭐ {profile.reputation || 0} प्रतिष्ठा
                   </span>
-                  <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm">
-                    ⭐ {profile.reputation} प्रतिष्ठा
-                  </span>
+                  {profile.verified && (
+                    <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm flex items-center">
+                      <CheckCircle2 size={16} className="mr-1" /> सत्यापित
+                    </span>
+                  )}
                 </div>
                 {profile.bio && (
                   <p className="text-green-100 mt-4 text-lg italic">"{profile.bio}"</p>
@@ -583,19 +458,19 @@ const Profile: React.FC = () => {
               <StatCard 
                 icon={Calendar} 
                 label="सदस्य बने" 
-                value={profile.joinedDate || 'आज'}
+                value={profile.joined ? new Date(profile.joined).toLocaleDateString('hi-IN') : 'आज'}
                 color="blue"
               />
               <StatCard 
-                icon={User} 
+                icon={MessageSquare} 
                 label="कुल पोस्ट" 
-                value={profile.totalPosts || 0}
+                value={profile.stats?.totalPosts || 0}
                 color="green"
               />
               <StatCard 
                 icon={Award} 
                 label="सहायक उत्तर" 
-                value={profile.helpfulAnswers || 0}
+                value={profile.stats?.verifiedAnswers || 0}
                 color="purple"
               />
               <StatCard 
@@ -699,7 +574,7 @@ const Profile: React.FC = () => {
                   <input 
                     type="text" 
                     value={editedProfile.village || ''} 
-                    onChange={(e) => handleLocationChange('village', e.target.value)} 
+                    onChange={(e) => handleInputChange('village', e.target.value)} 
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                     placeholder="आपके गांव का नाम"
                   />
@@ -714,7 +589,7 @@ const Profile: React.FC = () => {
                   <input 
                     type="text" 
                     value={editedProfile.district || ''} 
-                    onChange={(e) => handleLocationChange('district', e.target.value)} 
+                    onChange={(e) => handleInputChange('district', e.target.value)} 
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                     placeholder="आपके जिले का नाम"
                   />
@@ -729,7 +604,7 @@ const Profile: React.FC = () => {
                   <input 
                     type="text" 
                     value={editedProfile.state || ''} 
-                    onChange={(e) => handleLocationChange('state', e.target.value)} 
+                    onChange={(e) => handleInputChange('state', e.target.value)} 
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                     placeholder="आपके राज्य का नाम"
                   />
@@ -765,67 +640,28 @@ const Profile: React.FC = () => {
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ProfileField 
-                  label="खेत का आकार" 
-                  value={profile.farmSize} 
-                  icon={MapPin} 
-                  isEditing={isEditing}
+                  label="भूमिका" 
+                  value={profile.role === 'farmer' ? 'किसान' : profile.role === 'expert' ? 'विशेषज्ञ' : 'छात्र'} 
+                  icon={User} 
+                  isEditing={false}
                 >
-                  <input 
-                    type="text" 
-                    value={editedProfile.farmSize} 
-                    onChange={(e) => handleInputChange('farmSize', e.target.value)} 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-                    placeholder="जैसे: 5 एकड़, 2 हेक्टेयर"
-                  />
+                  <p className="text-gray-700">{profile.role === 'farmer' ? 'किसान' : profile.role === 'expert' ? 'विशेषज्ञ' : 'छात्र'}</p>
                 </ProfileField>
                 
                 <ProfileField 
                   label="अनुभव" 
-                  value={profile.experience} 
+                  value={profile.experience || 'Not set'} 
                   icon={Calendar} 
                   isEditing={isEditing}
                 >
                   <input 
                     type="text" 
-                    value={editedProfile.experience} 
+                    value={editedProfile.experience || ''} 
                     onChange={(e) => handleInputChange('experience', e.target.value)} 
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                     placeholder="जैसे: 10+ वर्ष, 5 साल"
                   />
                 </ProfileField>
-                
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-600 mb-3">मुख्य फसलें</label>
-                  {isEditing ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {cropOptions.map(crop => (
-                        <label key={crop} className="flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={editedProfile.primaryCrops.includes(crop)} 
-                            onChange={() => toggleCrop(crop)} 
-                            className="hidden" 
-                          />
-                          <span className={`w-full px-3 py-2 rounded-lg text-sm text-center transition-all ${
-                            editedProfile.primaryCrops.includes(crop) 
-                              ? 'bg-green-500 text-white transform scale-105' 
-                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                          }`}>
-                            {crop}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {profile.primaryCrops.map(crop => (
-                        <span key={crop} className="bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium border border-green-200">
-                          🌾 {crop}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
                 
                 <div className="lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-600 mb-3">विशेषज्ञता</label>
@@ -851,11 +687,15 @@ const Profile: React.FC = () => {
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-2">
-                      {(profile.expertise || []).map(expertise => (
-                        <span key={expertise} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium border border-blue-200">
-                          ⭐ {expertise}
-                        </span>
-                      ))}
+                      {(profile.expertise && profile.expertise.length > 0) ? (
+                        profile.expertise.map(expertise => (
+                          <span key={expertise} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium border border-blue-200">
+                            ⭐ {expertise}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 italic">कोई विशेषज्ञता नहीं जोड़ी गई</p>
+                      )}
                     </div>
                   )}
                 </div>

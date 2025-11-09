@@ -20,7 +20,8 @@ import {
   LogOut,
   Bell,
   Database,
-  BarChart3
+  BarChart3,
+  Shield
 } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -86,9 +87,14 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
       titleKey: 'nav.community',
       items: [
         { path: '/community', name: 'Community', nameKey: 'nav.communityHub', icon: Users },
-        { path: '/government-schemes', name: 'Schemes', nameKey: 'nav.schemes', icon: FileText },
+        { path: '/grievances', name: 'Grievances', nameKey: 'nav.grievances', icon: FileText },
+        { path: '/government-schemes', name: 'Schemes', nameKey: 'nav.schemes', icon: Shield },
         { path: '/profile', name: 'Profile', nameKey: 'nav.profile', icon: User },
         { path: '/settings', name: 'Settings', nameKey: 'nav.settings', icon: Settings },
+        ...(user?.email === 'admin@smartkrishi.com' ? [
+          { path: '/admin', name: 'Admin Panel', nameKey: 'nav.admin', icon: Shield, badge: 'ADMIN' },
+          { path: '/admin/grievances', name: 'Grievances Admin', nameKey: 'nav.grievancesAdmin', icon: FileText, badge: 'ADMIN' }
+        ] : [])
       ]
     }
   ];

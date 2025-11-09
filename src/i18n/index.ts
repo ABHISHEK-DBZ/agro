@@ -114,8 +114,8 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en',
-    fallbackLng: 'en',
+    lng: localStorage.getItem('i18nextLng') || 'hi',
+    fallbackLng: ['hi', 'en'],
     
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
@@ -157,6 +157,9 @@ i18n
       useSuspense: false,
       bindI18n: 'languageChanged loaded',
       bindI18nStore: 'added removed',
+      transEmptyNodeValue: '',
+      transSupportBasicHtmlNodes: true,
+      transKeepBasicHtmlNodesFor: ['br', 'strong', 'i', 'p'],
     },
 
     debug: false,
@@ -170,5 +173,15 @@ i18n
     load: 'languageOnly',
     preload: ['en', 'hi']
   });
+
+// Add event listener for language changes
+i18n.on('languageChanged', (lng) => {
+  console.log('Language changed to:', lng);
+  localStorage.setItem('i18nextLng', lng);
+  document.documentElement.setAttribute('lang', lng);
+  
+  // Force re-render of all components
+  window.dispatchEvent(new Event('languagechange'));
+});
 
 export default i18n;

@@ -33,6 +33,113 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
+    // Community posts (new collection) - everyone can read and write
+    match /community_posts/{postId} {
+      allow read: if true; // Anyone can read posts
+      allow create: if request.auth != null; // Authenticated users can create
+      allow update: if request.auth != null; // Authenticated users can like/update
+      allow delete: if request.auth != null; // Authenticated users can delete
+    }
+    
+    // Community replies - everyone can read and write
+    match /community_replies/{replyId} {
+      allow read: if true; // Anyone can read replies
+      allow create: if request.auth != null; // Authenticated users can reply
+      allow update: if request.auth != null; // Mark helpful, etc.
+      allow delete: if request.auth != null;
+    }
+    
+    // Pest alerts - everyone can read and write
+    match /pest_alerts/{alertId} {
+      allow read: if true; // Public emergency alerts
+      allow create: if request.auth != null; // Create alerts
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+    
+    // Farmers profiles - everyone can read
+    match /farmers/{farmerId} {
+      allow read: if true; // Anyone can see farmer profiles
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid == farmerId;
+      allow delete: if request.auth != null && request.auth.uid == farmerId;
+    }
+    
+    // Contributions/Leaderboard - everyone can read
+    match /contributions/{contributionId} {
+      allow read: if true; // Public leaderboard
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if false; // No one can delete contributions
+    }
+    
+    // Farmer Groups - everyone can read, members can write
+    match /farmer_groups/{groupId} {
+      allow read: if true; // Anyone can see groups
+      allow create: if request.auth != null; // Authenticated users can create
+      allow update: if request.auth != null; // Members can update
+      allow delete: if request.auth != null; // Creators/admins can delete
+    }
+    
+    // Notifications - user can only read their own
+    match /notifications/{notifId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // Direct Messages - only sender and recipient can read
+    match /direct_messages/{messageId} {
+      allow read: if request.auth != null && 
+        (resource.data.senderId == request.auth.uid || resource.data.recipientId == request.auth.uid);
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.senderId == request.auth.uid;
+    }
+    
+    // Polls - public read, authenticated write
+    match /polls/{pollId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+    
+    // Achievements - public read, authenticated write
+    match /achievements/{achievementId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+    
+    // User Achievements - public read, authenticated write
+    match /user_achievements/{userAchievementId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // Settings - users can only read/write their own settings
+    match /settings/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Grievances - farmers can create/read own, admins can read/write all
+    match /grievances/{complaintId} {
+      // Allow read if user is authenticated (they can only query their own via client-side filtering)
+      allow read: if request.auth != null;
+      // Allow create if authenticated and user_id matches auth uid
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.user_id;
+      // Only admins can update/delete
+      allow update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Grievance updates/comments - public read for related users, authenticated create
+    match /grievance_updates/{updateId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
+    }
+    
     // Weather data - read-only for authenticated users
     match /weather/{weatherId} {
       allow read: if request.auth != null;

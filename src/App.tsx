@@ -1,17 +1,29 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import Dashboard from './pages/Dashboard';
 import Weather from './pages/Weather';
 import MarketPrices from './pages/MarketPrices';
 import CropManagement from './pages/CropManagement';
 import AiAgent from './pages/AiAgent';
 import DiseaseDetection from './pages/DiseaseDetection';
+import EnhancedDiseaseDetection from './pages/EnhancedDiseaseDetection';
 import GovernmentSchemes from './pages/GovernmentSchemes';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import EnhancedSettings from './pages/EnhancedSettings';
 import CommunityDashboard from './pages/CommunityDashboard';
+import GroupsPage from './pages/GroupsPage';
+import GroupDetailPage from './pages/GroupDetailPage';
+import NotificationsPage from './pages/NotificationsPage';
+import PollsPage from './pages/PollsPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import MessagesPage from './pages/MessagesPage';
+import MapViewPage from './pages/MapViewPage';
+import EnhancedProfilePage from './pages/EnhancedProfilePage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
@@ -24,6 +36,8 @@ import GovernmentAPITest from './components/GovernmentAPITest';
 import AuthTester from './components/AuthTester';
 import LiveWeather from './pages/LiveWeather';
 import Analytics from './pages/Analytics';
+import GrievancesPage from './pages/GrievancesPage';
+import AdminGrievances from './pages/AdminGrievances';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -58,6 +72,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 // Main App Layout Component
 const AppLayout: React.FC = () => {
   const { user } = useAuth();
+  const { i18n } = useTranslation();
   
   // Get base path based on deployment platform
   const getBasePath = () => {
@@ -82,7 +97,7 @@ const AppLayout: React.FC = () => {
         v7_relativeSplatPath: true
       }}
     >
-      <div className="router-wrapper min-h-screen bg-gray-50 w-full overflow-x-hidden">
+      <div key={i18n.language} className="router-wrapper min-h-screen bg-gray-50 w-full overflow-x-hidden">{/* Add key to force re-render on language change */}
         {user && <Navbar />}
         <main className={`w-full ${user ? 'container mx-auto px-4 py-8' : ''}`}>
           <Routes>
@@ -171,6 +186,11 @@ const AppLayout: React.FC = () => {
                 <DiseaseDetection />
               </ProtectedRoute>
             } />
+            <Route path="/disease-detection-ai" element={
+              <ProtectedRoute>
+                <EnhancedDiseaseDetection />
+              </ProtectedRoute>
+            } />
             <Route path="/government-schemes" element={
               <ProtectedRoute>
                 <GovernmentSchemes />
@@ -190,6 +210,46 @@ const AppLayout: React.FC = () => {
                 <CommunityDashboard />
               </ProtectedRoute>
             } />
+            <Route path="/groups" element={
+              <ProtectedRoute>
+                <GroupsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/groups/:groupId" element={
+              <ProtectedRoute>
+                <GroupDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/polls" element={
+              <ProtectedRoute>
+                <PollsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/leaderboard" element={
+              <ProtectedRoute>
+                <LeaderboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/messages" element={
+              <ProtectedRoute>
+                <MessagesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/map" element={
+              <ProtectedRoute>
+                <MapViewPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile/:userId" element={
+              <ProtectedRoute>
+                <EnhancedProfilePage />
+              </ProtectedRoute>
+            } />
             <Route path="/analytics" element={
               <ProtectedRoute>
                 <Analytics />
@@ -201,6 +261,18 @@ const AppLayout: React.FC = () => {
               </ProtectedRoute>
             } /> */}
             
+            {/* Grievances Routes */}
+            <Route path="/grievances" element={
+              <ProtectedRoute>
+                <GrievancesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/grievances" element={
+              <ProtectedRoute>
+                <AdminGrievances />
+              </ProtectedRoute>
+            } />
+            
             {/* User Routes */}
             <Route path="/profile" element={
               <ProtectedRoute>
@@ -208,6 +280,11 @@ const AppLayout: React.FC = () => {
               </ProtectedRoute>
             } />
             <Route path="/settings" element={
+              <ProtectedRoute>
+                <EnhancedSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings-old" element={
               <ProtectedRoute>
                 <Settings />
               </ProtectedRoute>
@@ -260,7 +337,9 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <AppLayout />
+        <SettingsProvider>
+          <AppLayout />
+        </SettingsProvider>
       </AuthProvider>
     </ErrorBoundary>
   );
