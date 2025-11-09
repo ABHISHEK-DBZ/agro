@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { SettingsProvider } from './contexts/SettingsContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
+import { initializeCapacitor } from './utils/capacitor-plugins';
 
 // Lazy load all page components
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -79,6 +80,11 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const AppLayout: React.FC = () => {
   const { user } = useAuth();
   const { i18n } = useTranslation();
+  
+  // Initialize Capacitor plugins when app starts
+  useEffect(() => {
+    initializeCapacitor();
+  }, []);
   
   // Get base path based on deployment platform
   const getBasePath = () => {
