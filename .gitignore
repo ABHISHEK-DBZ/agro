@@ -56,8 +56,33 @@ Desktop.ini
 
 # API Keys (important for security)
 .env
+.env.*
 config/keys.js
 .vercel
+*.key
+*.pem
+*.p12
+
+# Firebase Config (DO NOT COMMIT)
+src/config/firebase.ts
+firebaseConfig.json
+serviceAccountKey.json
+.firebase/
 
 # Local Netlify folder
 .netlify
+
+# Sensitive Data
+secrets/
+credentials/
+private/
+*.secret
+
+# Build files that may contain secrets
+.cache/
+build/
+.next/
+
+# Lock files with potential vulnerabilities
+package-lock.json
+yarn.lock
