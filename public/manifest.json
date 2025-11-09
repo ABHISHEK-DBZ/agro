@@ -1,14 +1,19 @@
 {
-  "name": "Smart Krishi Sahayak",
+  "name": "Smart Krishi Sahayak - Agriculture Assistant for Indian Farmers",
   "short_name": "Krishi Sahayak",
-  "description": "Agriculture Assistant app for Indian farmers with weather, crop info, and disease detection",
-  "start_url": "/",
-  "id": "/",
+  "description": "Complete agriculture assistance app for Indian farmers with AI-powered disease detection, live weather updates, market prices, crop management, government schemes, and expert farming guidance in Hindi and English",
+  "start_url": "/?source=pwa",
+  "id": "/?source=pwa",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#16a34a",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "dir": "ltr",
+  "lang": "hi-IN",
+  "scope": "/",
+  "prefer_related_applications": false,
+  
   "icons": [
     {
       "src": "/icons/icon-48x48.png",
@@ -47,34 +52,227 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["agriculture", "farming", "weather", "productivity"],
-  "lang": "en",
-  "scope": "/",
-  "prefer_related_applications": false,
+
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard with weather and crop information"
+    },
+    {
+      "src": "/screenshots/disease-detection.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AI-powered disease detection"
+    },
+    {
+      "src": "/screenshots/weather.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Live weather updates"
+    },
+    {
+      "src": "/screenshots/market-prices.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Real-time market prices"
+    }
+  ],
+
+  "categories": [
+    "agriculture",
+    "farming",
+    "weather",
+    "productivity",
+    "business",
+    "education",
+    "lifestyle"
+  ],
+
   "shortcuts": [
     {
       "name": "Live Weather",
       "short_name": "Weather",
-      "description": "Check live weather conditions",
-      "url": "/weather",
-      "icons": [{ "src": "/icons/weather-icon.png", "sizes": "96x96" }]
+      "description": "Check live weather conditions and forecast",
+      "url": "/live-weather?source=shortcut",
+      "icons": [
+        {
+          "src": "/icons/weather-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "AI Agent",
       "short_name": "AI Help",
-      "description": "Get AI farming assistance",
-      "url": "/ai-agent",
-      "icons": [{ "src": "/icons/ai-icon.png", "sizes": "96x96" }]
+      "description": "Get AI farming assistance and expert advice",
+      "url": "/ai-agent?source=shortcut",
+      "icons": [
+        {
+          "src": "/icons/ai-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Disease Detection",
-      "short_name": "Disease",
-      "description": "Detect crop diseases",
-      "url": "/disease-detection",
-      "icons": [{ "src": "/icons/disease-icon.png", "sizes": "96x96" }]
+      "short_name": "Disease AI",
+      "description": "AI-powered crop disease detection",
+      "url": "/disease-detection-ai?source=shortcut",
+      "icons": [
+        {
+          "src": "/icons/disease-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Market Prices",
+      "short_name": "Prices",
+      "description": "Check latest market prices",
+      "url": "/market-prices?source=shortcut",
+      "icons": [
+        {
+          "src": "/icons/market-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ],
+
+  "share_target": {
+    "action": "/share-crop-info",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "crop_image",
+          "accept": ["image/jpeg", "image/png", "image/webp"]
+        }
+      ]
+    }
+  },
+
+  "file_handlers": [
+    {
+      "action": "/disease-detection",
+      "accept": {
+        "image/jpeg": [".jpg", ".jpeg"],
+        "image/png": [".png"],
+        "image/webp": [".webp"]
+      },
+      "icons": [
+        {
+          "src": "/icons/file-handler-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ],
+      "launch_type": "single-client"
+    }
+  ],
+
+  "protocol_handlers": [
+    {
+      "protocol": "web+krishi",
+      "url": "/handle?protocol=%s"
+    }
+  ],
+
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.krishisahayak.app",
+      "id": "com.krishisahayak.app"
+    }
+  ],
+
   "launch_handler": {
     "client_mode": "focus-existing"
-  }
+  },
+
+  "note_taking": {
+    "new_note_url": "/crop-notes/new"
+  },
+
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+
+  "widgets": [
+    {
+      "name": "Weather Widget",
+      "short_name": "Weather",
+      "description": "Quick weather overview",
+      "tag": "weather",
+      "template": "weather-template",
+      "ms_ac_template": "/widgets/weather.json",
+      "data": "/widgets/weather-data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "/widgets/weather-screenshot.png",
+          "sizes": "600x400",
+          "label": "Weather widget preview"
+        }
+      ],
+      "icons": [
+        {
+          "src": "/icons/widget-weather-96.png",
+          "sizes": "96x96"
+        }
+      ],
+      "auth": false,
+      "update": 3600
+    },
+    {
+      "name": "Market Price Widget",
+      "short_name": "Prices",
+      "description": "Quick market prices",
+      "tag": "market",
+      "template": "price-template",
+      "ms_ac_template": "/widgets/prices.json",
+      "data": "/widgets/prices-data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "/widgets/prices-screenshot.png",
+          "sizes": "600x400",
+          "label": "Market prices widget preview"
+        }
+      ],
+      "icons": [
+        {
+          "src": "/icons/widget-market-96.png",
+          "sizes": "96x96"
+        }
+      ],
+      "auth": false,
+      "update": 1800
+    }
+  ],
+
+  "scope_extensions": [
+    {
+      "origin": "*.krishisahayak.com"
+    },
+    {
+      "origin": "https://weather-api.krishisahayak.com"
+    }
+  ],
+
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7"
 }
