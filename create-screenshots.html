@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Screenshot Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .screenshot-card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            max-width: 100%;
+            height: auto;
+        }
+        button {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #15803d;
+        }
+        h1 {
+            color: #16a34a;
+        }
+        .info {
+            background: #fef3c7;
+            padding: 15px;
+            border-left: 4px solid #f59e0b;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌾 Smart Krishi Sahayak - Screenshot Generator</h1>
+    
+    <div class="info">
+        <strong>📸 How to Create Real Screenshots:</strong>
+        <ol>
+            <li>Open your app: <a href="https://smart-krishi-sahayak-6871c.web.app" target="_blank">https://smart-krishi-sahayak-6871c.web.app</a></li>
+            <li>Open Chrome DevTools (F12)</li>
+            <li>Click "Toggle Device Toolbar" (Ctrl+Shift+M)</li>
+            <li>For narrow screenshots: Set to 750x1334 (iPhone 6/7/8 Plus)</li>
+            <li>For wide screenshots: Set to 1280x720 (Desktop)</li>
+            <li>Navigate to each page and take screenshots</li>
+            <li>Save as PNG in <code>public/screenshots/</code></li>
+        </ol>
+    </div>
+
+    <div class="screenshot-card">
+        <h2>1. Dashboard Screenshot (Wide - 1280x720)</h2>
+        <p>Shows: Weather widget, crop cards, quick actions</p>
+        <canvas id="dashboard" width="1280" height="720"></canvas>
+        <button onclick="downloadScreenshot('dashboard')">Download dashboard.png</button>
+    </div>
+
+    <div class="screenshot-card">
+        <h2>2. Disease Detection (Narrow - 750x1334)</h2>
+        <p>Shows: AI disease detection interface with camera</p>
+        <canvas id="disease" width="750" height="1334"></canvas>
+        <button onclick="downloadScreenshot('disease')">Download disease-detection.png</button>
+    </div>
+
+    <div class="screenshot-card">
+        <h2>3. Weather Page (Narrow - 750x1334)</h2>
+        <p>Shows: Live weather forecast and conditions</p>
+        <canvas id="weather" width="750" height="1334"></canvas>
+        <button onclick="downloadScreenshot('weather')">Download weather.png</button>
+    </div>
+
+    <div class="screenshot-card">
+        <h2>4. Market Prices (Narrow - 750x1334)</h2>
+        <p>Shows: Real-time crop prices and market trends</p>
+        <canvas id="market" width="750" height="1334"></canvas>
+        <button onclick="downloadScreenshot('market')">Download market-prices.png</button>
+    </div>
+
+    <script>
+        // Generate placeholder screenshots with app branding
+        function generatePlaceholder(canvasId, title, description, isWide = false) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#16a34a');
+            gradient.addColorStop(1, '#15803d');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // App name
+            ctx.fillStyle = 'white';
+            ctx.font = isWide ? 'bold 48px Arial' : 'bold 36px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Smart Krishi Sahayak', canvas.width/2, isWide ? 200 : 300);
+            
+            // Title
+            ctx.font = isWide ? '36px Arial' : '28px Arial';
+            ctx.fillText(title, canvas.width/2, isWide ? 280 : 400);
+            
+            // Description
+            ctx.font = isWide ? '24px Arial' : '20px Arial';
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            const lines = description.split('\n');
+            lines.forEach((line, i) => {
+                ctx.fillText(line, canvas.width/2, (isWide ? 340 : 500) + (i * 35));
+            });
+            
+            // Icon placeholder
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            const iconSize = isWide ? 120 : 100;
+            const iconX = (canvas.width - iconSize) / 2;
+            const iconY = isWide ? 400 : 600;
+            ctx.fillRect(iconX, iconY, iconSize, iconSize);
+            
+            // Footer
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.font = isWide ? '18px Arial' : '16px Arial';
+            ctx.fillText('🌾 Agriculture Assistant for Indian Farmers', canvas.width/2, canvas.height - 100);
+            ctx.fillText('Replace with actual app screenshot', canvas.width/2, canvas.height - 60);
+        }
+        
+        // Generate all placeholders
+        generatePlaceholder('dashboard', 'Dashboard', 'Weather • Crops • Quick Actions\nComplete farm management', true);
+        generatePlaceholder('disease', 'AI Disease Detection', 'Scan crop leaves\nInstant diagnosis with 95% accuracy');
+        generatePlaceholder('weather', 'Live Weather', 'Real-time forecast\n7-day predictions');
+        generatePlaceholder('market', 'Market Prices', 'Latest mandi rates\nTrack price trends');
+        
+        // Download function
+        function downloadScreenshot(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = canvasId === 'dashboard' ? 'dashboard.png' : 
+                           canvasId === 'disease' ? 'disease-detection.png' :
+                           canvasId === 'weather' ? 'weather.png' : 'market-prices.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>

@@ -53,6 +53,37 @@
     }
   ],
 
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard with weather and crop information - Complete farm management at a glance"
+    },
+    {
+      "src": "/screenshots/disease-detection.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AI-powered disease detection - Scan crop leaves for instant diagnosis with 95% accuracy"
+    },
+    {
+      "src": "/screenshots/weather.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Live weather updates - Real-time forecast with 7-day predictions"
+    },
+    {
+      "src": "/screenshots/market-prices.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Real-time market prices - Latest mandi rates and price trends"
+    }
+  ],
+
   "categories": [
     "agriculture",
     "farming",
