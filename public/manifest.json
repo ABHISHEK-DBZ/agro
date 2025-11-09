@@ -53,37 +53,6 @@
     }
   ],
 
-  "screenshots": [
-    {
-      "src": "/screenshots/dashboard.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Dashboard with weather and crop information"
-    },
-    {
-      "src": "/screenshots/disease-detection.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "AI-powered disease detection"
-    },
-    {
-      "src": "/screenshots/weather.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Live weather updates"
-    },
-    {
-      "src": "/screenshots/market-prices.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Real-time market prices"
-    }
-  ],
-
   "categories": [
     "agriculture",
     "farming",
@@ -102,7 +71,7 @@
       "url": "/live-weather?source=shortcut",
       "icons": [
         {
-          "src": "/icons/weather-96.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -115,7 +84,7 @@
       "url": "/ai-agent?source=shortcut",
       "icons": [
         {
-          "src": "/icons/ai-96.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -128,7 +97,7 @@
       "url": "/disease-detection-ai?source=shortcut",
       "icons": [
         {
-          "src": "/icons/disease-96.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -141,7 +110,7 @@
       "url": "/market-prices?source=shortcut",
       "icons": [
         {
-          "src": "/icons/market-96.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -176,7 +145,7 @@
       },
       "icons": [
         {
-          "src": "/icons/file-handler-96.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -222,16 +191,9 @@
       "ms_ac_template": "/widgets/weather.json",
       "data": "/widgets/weather-data.json",
       "type": "application/json",
-      "screenshots": [
-        {
-          "src": "/widgets/weather-screenshot.png",
-          "sizes": "600x400",
-          "label": "Weather widget preview"
-        }
-      ],
       "icons": [
         {
-          "src": "/icons/widget-weather-96.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96"
         }
       ],
@@ -247,16 +209,9 @@
       "ms_ac_template": "/widgets/prices.json",
       "data": "/widgets/prices-data.json",
       "type": "application/json",
-      "screenshots": [
-        {
-          "src": "/widgets/prices-screenshot.png",
-          "sizes": "600x400",
-          "label": "Market prices widget preview"
-        }
-      ],
       "icons": [
         {
-          "src": "/icons/widget-market-96.png",
+          "src": "/icons/icon-96x96.png",
           "sizes": "96x96"
         }
       ],
