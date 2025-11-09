@@ -146,8 +146,11 @@ function createMainWindow() {
 
   // Load the app
   const startUrl = process.env.ELECTRON_START_URL || 
-    `file://${path.join(__dirname, '../dist/index.html')}`;
+    (app.isPackaged
+      ? `file://${path.join(process.resourcesPath, 'app.asar/dist/index.html')}`
+      : `file://${path.join(__dirname, '../dist/index.html')}`);
 
+  console.log('Loading URL:', startUrl);
   mainWindow.loadURL(startUrl);
 
   // Show window when ready
