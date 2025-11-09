@@ -47,7 +47,16 @@
     "cap:run:android": "npm run build && npx cap sync && npx cap run android",
     "cap:build:android": "npm run build && npx cap sync && cd android && .\\gradlew assembleDebug",
     "cap:build:release": "npm run build && npx cap sync && cd android && .\\gradlew assembleRelease",
-    "mobile:dev": "npm run build && npx cap sync && npx cap open android"
+    "mobile:dev": "npm run build && npx cap sync && npx cap open android",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:win": "npm run build && electron-builder --win",
+    "electron:build:mac": "npm run build && electron-builder --mac",
+    "electron:build:linux": "npm run build && electron-builder --linux",
+    "electron:build:all": "npm run build && electron-builder -mwl",
+    "desktop:dev": "npm run electron:dev",
+    "desktop:build": "npm run electron:build"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
@@ -65,6 +74,7 @@
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-webgl": "^4.22.0",
     "axios": "^1.11.0",
+    "electron-squirrel-startup": "^1.0.1",
     "firebase": "^12.4.0",
     "framer-motion": "^12.23.24",
     "i18next": "^23.12.2",
@@ -100,6 +110,9 @@
     "autoprefixer": "^10.4.19",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
+    "electron": "^39.1.1",
+    "electron-builder": "^26.0.12",
+    "electron-devtools-installer": "^4.0.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
@@ -109,11 +122,77 @@
     "sharp": "^0.34.4",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.2.2",
-    "vite": "^5.2.0"
+    "vite": "^5.2.0",
+    "wait-on": "^9.0.3"
   },
   "description": "A comprehensive agriculture assistant app that provides real-time weather updates, crop information, disease detection, mandi prices, and government schemes for farmers.",
-  "main": "postcss.config.js",
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "main": "electron/main.cjs",
+  "keywords": [
+    "agriculture",
+    "farming",
+    "weather",
+    "crop",
+    "mandi",
+    "government-schemes",
+    "electron",
+    "desktop-app"
+  ],
+  "author": "ABHISHEK-DBZ",
+  "license": "MIT",
+  "build": {
+    "appId": "com.smartkrishi.sahayak",
+    "productName": "Smart Krishi Sahayak",
+    "directories": {
+      "buildResources": "public",
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "public/logo.png",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "icon": "public/logo.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "public/logo.png",
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "category": "Office"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Smart Krishi Sahayak"
+    }
+  }
 }
