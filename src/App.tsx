@@ -1,47 +1,49 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
-import Dashboard from './pages/Dashboard';
-import Weather from './pages/Weather';
-import MarketPrices from './pages/MarketPrices';
-import CropManagement from './pages/CropManagement';
-import AiAgent from './pages/AiAgent';
-import DiseaseDetection from './pages/DiseaseDetection';
-import EnhancedDiseaseDetection from './pages/EnhancedDiseaseDetection';
-import GovernmentSchemes from './pages/GovernmentSchemes';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
-import EnhancedSettings from './pages/EnhancedSettings';
-import CommunityDashboard from './pages/CommunityDashboard';
-import GroupsPage from './pages/GroupsPage';
-import GroupDetailPage from './pages/GroupDetailPage';
-import NotificationsPage from './pages/NotificationsPage';
-import PollsPage from './pages/PollsPage';
-import LeaderboardPage from './pages/LeaderboardPage';
-import MessagesPage from './pages/MessagesPage';
-import MapViewPage from './pages/MapViewPage';
-import EnhancedProfilePage from './pages/EnhancedProfilePage';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import AdminDashboard from './pages/AdminDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
-import RealTimeDashboard from './components/RealTimeDashboard';
-import DataSourceManager from './components/DataSourceManager';
-import GovernmentAPITest from './components/GovernmentAPITest';
-import AuthTester from './components/AuthTester';
-import LiveWeather from './pages/LiveWeather';
-import Analytics from './pages/Analytics';
-import GrievancesPage from './pages/GrievancesPage';
-import AdminGrievances from './pages/AdminGrievances';
+
+// Lazy load all page components
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Weather = lazy(() => import('./pages/Weather'));
+const MarketPrices = lazy(() => import('./pages/MarketPrices'));
+const CropManagement = lazy(() => import('./pages/CropManagement'));
+const AiAgent = lazy(() => import('./pages/AiAgent'));
+const DiseaseDetection = lazy(() => import('./pages/DiseaseDetection'));
+const EnhancedDiseaseDetection = lazy(() => import('./pages/EnhancedDiseaseDetection'));
+const GovernmentSchemes = lazy(() => import('./pages/GovernmentSchemes'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Settings = lazy(() => import('./pages/Settings'));
+const EnhancedSettings = lazy(() => import('./pages/EnhancedSettings'));
+const CommunityDashboard = lazy(() => import('./pages/CommunityDashboard'));
+const GroupsPage = lazy(() => import('./pages/GroupsPage'));
+const GroupDetailPage = lazy(() => import('./pages/GroupDetailPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const PollsPage = lazy(() => import('./pages/PollsPage'));
+const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
+const MessagesPage = lazy(() => import('./pages/MessagesPage'));
+const MapViewPage = lazy(() => import('./pages/MapViewPage'));
+const EnhancedProfilePage = lazy(() => import('./pages/EnhancedProfilePage'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const RealTimeDashboard = lazy(() => import('./components/RealTimeDashboard'));
+const DataSourceManager = lazy(() => import('./components/DataSourceManager'));
+const GovernmentAPITest = lazy(() => import('./components/GovernmentAPITest'));
+const AuthTester = lazy(() => import('./components/AuthTester'));
+const LiveWeather = lazy(() => import('./pages/LiveWeather'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const GrievancesPage = lazy(() => import('./pages/GrievancesPage'));
+const AdminGrievances = lazy(() => import('./pages/AdminGrievances'));
 // New Features
-import CropCalendar from './pages/CropCalendar';
-import LoanCalculator from './pages/LoanCalculator';
-import SoilTesting from './pages/SoilTesting';
+const CropCalendar = lazy(() => import('./pages/CropCalendar'));
+const LoanCalculator = lazy(() => import('./pages/LoanCalculator'));
+const SoilTesting = lazy(() => import('./pages/SoilTesting'));
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -104,18 +106,23 @@ const AppLayout: React.FC = () => {
       <div key={i18n.language} className="router-wrapper min-h-screen bg-gray-50 w-full overflow-x-hidden">{/* Add key to force re-render on language change */}
         {user && <Navbar />}
         <main className={`w-full ${user ? 'container mx-auto px-4 py-8' : ''}`}>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            } />
-            <Route path="/register" element={
-              <PublicRoute>
-                <Register />
-              </PublicRoute>
-            } />
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <LoadingSpinner />
+            </div>
+          }>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              } />
+              <Route path="/register" element={
+                <PublicRoute>
+                  <Register />
+                </PublicRoute>
+              } />
             {/* <Route path="/forgot-password" element={
               <PublicRoute>
                 <ForgotPassword />
@@ -321,6 +328,7 @@ const AppLayout: React.FC = () => {
             {/* Catch-all route */}
             <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
           </Routes>
+          </Suspense>
         </main>
         
         {/* Toast notifications */}
