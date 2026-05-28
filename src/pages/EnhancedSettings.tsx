@@ -249,22 +249,49 @@ const SettingsPage: React.FC = () => {
     </div>
   );
 
-  if (loading || !settings) {
+  if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-[#F9F9F6] to-emerald-50 flex flex-col items-center justify-center p-8">
+        <div className="text-center space-y-6">
+          <div className="relative mx-auto w-20 h-20">
+            <div className="absolute inset-0 rounded-full border-4 border-green-100"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-t-green-500 animate-spin"></div>
+            <Sprout className="absolute inset-0 m-auto text-green-600 animate-pulse" size={32} />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">सेटिंग्स लोड हो रही हैं...</h2>
+            <p className="text-sm text-gray-500 mt-1">कृपया प्रतीक्षा करें</p>
+          </div>
+        </div>
       </div>
     );
   }
 
+
+  // Ensure settings is always available for the render (fallback to defaults)
+  const safeSettings = settings || {
+    userId: user?.uid || '',
+    notifications: {
+      weatherAlerts: true, marketPriceUpdates: true, diseaseAlerts: true,
+      governmentSchemes: true, cropAdvice: true, communityReplies: true,
+      expertAnswers: true, pushEnabled: true, emailEnabled: false, smsEnabled: false,
+    },
+    appearance: { theme: 'light' as const, language: 'hi' as const, fontSize: 'medium' as const, colorTheme: 'green' as const },
+    privacy: {
+      shareLocation: false, publicProfile: true, showOnlineStatus: true,
+      showActivity: true, twoFactorAuth: false, loginNotifications: true,
+    },
+    data: { autoSync: true, offlineMode: false, cacheSize: 50 },
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-[#F9F9F6] to-emerald-50 p-4 md:p-6">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg p-6 border border-green-100/50">
           <div className="flex items-center space-x-4">
-            <div className="bg-gradient-to-br from-green-500 to-green-600 p-4 rounded-xl">
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-4 rounded-xl shadow-lg">
               <SettingsIcon className="text-white" size={32} />
             </div>
             <div>
@@ -320,7 +347,7 @@ const SettingsPage: React.FC = () => {
                   icon={Cloud}
                   title="मौसम अलर्ट"
                   description="मौसम की जानकारी और चेतावनियां प्राप्त करें"
-                  checked={settings.notifications.weatherAlerts}
+                  checked={safeSettings.notifications.weatherAlerts}
                   onChange={() => handleNotificationToggle('weatherAlerts')}
                 />
 
@@ -328,7 +355,7 @@ const SettingsPage: React.FC = () => {
                   icon={BarChart3}
                   title="बाजार मूल्य अपडेट"
                   description="फसलों के बाजार भाव की जानकारी"
-                  checked={settings.notifications.marketPriceUpdates}
+                  checked={safeSettings.notifications.marketPriceUpdates}
                   onChange={() => handleNotificationToggle('marketPriceUpdates')}
                 />
 
@@ -336,7 +363,7 @@ const SettingsPage: React.FC = () => {
                   icon={AlertCircle}
                   title="रोग चेतावनी"
                   description="फसल रोगों और कीटों की चेतावनी"
-                  checked={settings.notifications.diseaseAlerts}
+                  checked={safeSettings.notifications.diseaseAlerts}
                   onChange={() => handleNotificationToggle('diseaseAlerts')}
                 />
 
@@ -344,7 +371,7 @@ const SettingsPage: React.FC = () => {
                   icon={FileText}
                   title="सरकारी योजनाएं"
                   description="नई सरकारी योजनाओं की जानकारी"
-                  checked={settings.notifications.governmentSchemes}
+                  checked={safeSettings.notifications.governmentSchemes}
                   onChange={() => handleNotificationToggle('governmentSchemes')}
                 />
 
@@ -352,7 +379,7 @@ const SettingsPage: React.FC = () => {
                   icon={Sprout}
                   title="फसल सलाह"
                   description="विशेषज्ञों की फसल सलाह"
-                  checked={settings.notifications.cropAdvice}
+                  checked={safeSettings.notifications.cropAdvice}
                   onChange={() => handleNotificationToggle('cropAdvice')}
                 />
 
@@ -360,7 +387,7 @@ const SettingsPage: React.FC = () => {
                   icon={MessageSquare}
                   title="समुदाय के जवाब"
                   description="आपकी पोस्ट पर प्रतिक्रियाएं"
-                  checked={settings.notifications.communityReplies}
+                  checked={safeSettings.notifications.communityReplies}
                   onChange={() => handleNotificationToggle('communityReplies')}
                 />
 
@@ -368,7 +395,7 @@ const SettingsPage: React.FC = () => {
                   icon={Award}
                   title="विशेषज्ञ उत्तर"
                   description="विशेषज्ञों के सत्यापित उत्तर"
-                  checked={settings.notifications.expertAnswers}
+                  checked={safeSettings.notifications.expertAnswers}
                   onChange={() => handleNotificationToggle('expertAnswers')}
                 />
               </div>
@@ -380,7 +407,7 @@ const SettingsPage: React.FC = () => {
                     icon={Smartphone}
                     title="पुश सूचनाएं"
                     description="मोबाइल पर तुरंत सूचनाएं"
-                    checked={settings.notifications.pushEnabled}
+                    checked={safeSettings.notifications.pushEnabled}
                     onChange={() => handleNotificationToggle('pushEnabled')}
                   />
 
@@ -388,7 +415,7 @@ const SettingsPage: React.FC = () => {
                     icon={Mail}
                     title="ईमेल सूचनाएं"
                     description="ईमेल पर सूचनाएं भेजें"
-                    checked={settings.notifications.emailEnabled}
+                    checked={safeSettings.notifications.emailEnabled}
                     onChange={() => handleNotificationToggle('emailEnabled')}
                   />
 
@@ -396,7 +423,7 @@ const SettingsPage: React.FC = () => {
                     icon={MessageSquare}
                     title="SMS सूचनाएं"
                     description="SMS के माध्यम से सूचनाएं"
-                    checked={settings.notifications.smsEnabled}
+                    checked={safeSettings.notifications.smsEnabled}
                     onChange={() => handleNotificationToggle('smsEnabled')}
                   />
                 </div>
@@ -433,13 +460,13 @@ const SettingsPage: React.FC = () => {
                       key={value}
                       onClick={() => handleAppearanceChange('theme', value)}
                       className={`p-4 rounded-xl border-2 transition-all ${
-                        settings.appearance.theme === value
+                        safeSettings.appearance.theme === value
                           ? 'border-green-500 bg-green-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       <Icon className={`mx-auto mb-2 ${
-                        settings.appearance.theme === value ? 'text-green-600' : 'text-gray-600'
+                        safeSettings.appearance.theme === value ? 'text-green-600' : 'text-gray-600'
                       }`} size={24} />
                       <p className="text-sm font-medium text-center">{label}</p>
                     </button>
@@ -466,7 +493,7 @@ const SettingsPage: React.FC = () => {
                       key={code}
                       onClick={() => handleAppearanceChange('language', code)}
                       className={`p-3 rounded-lg border-2 transition-all ${
-                        settings.appearance.language === code
+                        safeSettings.appearance.language === code
                           ? 'border-green-500 bg-green-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
@@ -490,7 +517,7 @@ const SettingsPage: React.FC = () => {
                       key={value}
                       onClick={() => handleAppearanceChange('fontSize', value)}
                       className={`p-3 rounded-lg border-2 transition-all ${
-                        settings.appearance.fontSize === value
+                        safeSettings.appearance.fontSize === value
                           ? 'border-green-500 bg-green-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
@@ -519,7 +546,7 @@ const SettingsPage: React.FC = () => {
                       key={value}
                       onClick={() => handleAppearanceChange('colorTheme', value)}
                       className={`p-4 rounded-lg border-2 transition-all ${
-                        settings.appearance.colorTheme === value
+                        safeSettings.appearance.colorTheme === value
                           ? 'border-gray-800'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
@@ -550,7 +577,7 @@ const SettingsPage: React.FC = () => {
                   icon={MapPin}
                   title="लोकेशन शेयर करें"
                   description="मौसम की सटीक जानकारी के लिए"
-                  checked={settings.privacy.shareLocation}
+                  checked={safeSettings.privacy.shareLocation}
                   onChange={() => handlePrivacyToggle('shareLocation')}
                 />
 
@@ -558,7 +585,7 @@ const SettingsPage: React.FC = () => {
                   icon={Eye}
                   title="सार्वजनिक प्रोफाइल"
                   description="अन्य उपयोगकर्ता आपकी प्रोफाइल देख सकें"
-                  checked={settings.privacy.publicProfile}
+                  checked={safeSettings.privacy.publicProfile}
                   onChange={() => handlePrivacyToggle('publicProfile')}
                 />
 
@@ -566,7 +593,7 @@ const SettingsPage: React.FC = () => {
                   icon={Wifi}
                   title="ऑनलाइन स्टेटस दिखाएं"
                   description="अन्य को पता चले कि आप ऑनलाइन हैं"
-                  checked={settings.privacy.showOnlineStatus}
+                  checked={safeSettings.privacy.showOnlineStatus}
                   onChange={() => handlePrivacyToggle('showOnlineStatus')}
                 />
 
@@ -574,7 +601,7 @@ const SettingsPage: React.FC = () => {
                   icon={Activity}
                   title="गतिविधि दिखाएं"
                   description="आपकी पोस्ट और टिप्पणियां दिखाएं"
-                  checked={settings.privacy.showActivity}
+                  checked={safeSettings.privacy.showActivity}
                   onChange={() => handlePrivacyToggle('showActivity')}
                 />
 
@@ -582,7 +609,7 @@ const SettingsPage: React.FC = () => {
                   icon={Lock}
                   title="दो-चरणीय प्रमाणीकरण"
                   description="अतिरिक्त सुरक्षा परत जोड़ें"
-                  checked={settings.privacy.twoFactorAuth}
+                  checked={safeSettings.privacy.twoFactorAuth}
                   onChange={() => handlePrivacyToggle('twoFactorAuth')}
                 />
 
@@ -590,7 +617,7 @@ const SettingsPage: React.FC = () => {
                   icon={Bell}
                   title="लॉगिन सूचनाएं"
                   description="नए लॉगिन पर सूचना प्राप्त करें"
-                  checked={settings.privacy.loginNotifications}
+                  checked={safeSettings.privacy.loginNotifications}
                   onChange={() => handlePrivacyToggle('loginNotifications')}
                 />
               </div>
@@ -615,7 +642,7 @@ const SettingsPage: React.FC = () => {
                   icon={RefreshCw}
                   title="ऑटो सिंक"
                   description="डेटा स्वचालित रूप से सिंक करें"
-                  checked={settings.data.autoSync}
+                  checked={safeSettings.data.autoSync}
                   onChange={() => handleDataToggle('autoSync')}
                 />
 
@@ -623,7 +650,7 @@ const SettingsPage: React.FC = () => {
                   icon={WifiOff}
                   title="ऑफलाइन मोड"
                   description="बिना इंटरनेट के काम करें"
-                  checked={settings.data.offlineMode}
+                  checked={safeSettings.data.offlineMode}
                   onChange={() => handleDataToggle('offlineMode')}
                 />
 
@@ -712,7 +739,7 @@ const SettingsPage: React.FC = () => {
                       <Trash2 className="text-red-600" size={20} />
                       <div className="text-left">
                         <p className="font-semibold text-gray-800">कैश साफ़ करें</p>
-                        <p className="text-sm text-gray-600">अस्थायी डेटा हटाएं ({settings.data.cacheSize} MB)</p>
+                        <p className="text-sm text-gray-600">अस्थायी डेटा हटाएं ({safeSettings.data.cacheSize} MB)</p>
                       </div>
                     </div>
                     <ChevronRight className="text-gray-400" size={20} />
@@ -720,10 +747,10 @@ const SettingsPage: React.FC = () => {
                 </div>
               </div>
 
-              {settings.data.lastSync && (
+              {safeSettings.data.lastSync && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">
-                    आखिरी सिंक: {new Date(settings.data.lastSync).toLocaleString('hi-IN')}
+                    आखिरी सिंक: {new Date(safeSettings.data.lastSync).toLocaleString('hi-IN')}
                   </p>
                 </div>
               )}

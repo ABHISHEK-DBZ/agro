@@ -142,6 +142,50 @@ class ProfileService {
 
   // Get user profile
   async getUserProfile(userId: string): Promise<UserProfile | null> {
+    if (userId === 'demo-user-123') {
+      const stored = localStorage.getItem('userProfile');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          return {
+            ...parsed,
+            joined: parsed.joined ? new Date(parsed.joined) : new Date(),
+            lastActive: new Date()
+          } as UserProfile;
+        } catch (e) {}
+      }
+      return {
+        id: 'demo-user-123',
+        name: 'Demo Farmer (डेमो किसान)',
+        email: 'demo@example.com',
+        phone: '+91 98765 43210',
+        role: 'farmer',
+        state: 'Maharashtra',
+        district: 'Pune',
+        village: 'Khed',
+        experience: 12,
+        expertise: ['Organic Farming', 'Crop Rotation'],
+        bio: 'मी एक प्रगतीशील शेतकरी आहे आणि जैविक शेती करतो.',
+        avatar: 'https://api.dicebear.com/8.x/initials/svg?seed=Demo%20Farmer&backgroundColor=22c55e',
+        reputation: 150,
+        joined: new Date(),
+        lastActive: new Date(),
+        stats: {
+          totalPosts: 5,
+          totalReplies: 3,
+          helpfulVotes: 10,
+          questionsAsked: 2,
+          questionsAnswered: 1,
+          verifiedAnswers: 1,
+        },
+        verified: true,
+        publicProfile: true,
+        soilPh: 6.5,
+        soilN: 140,
+        soilP: 48,
+        soilK: 220
+      } as UserProfile;
+    }
     try {
       const userRef = doc(db, 'users', userId);
       const userSnap = await getDoc(userRef);
@@ -163,6 +207,12 @@ class ProfileService {
 
   // Update user profile
   async updateUserProfile(userId: string, updates: Partial<UserProfile>): Promise<void> {
+    if (userId === 'demo-user-123') {
+      const current = await this.getUserProfile(userId);
+      const merged = { ...current, ...updates };
+      localStorage.setItem('userProfile', JSON.stringify(merged));
+      return;
+    }
     try {
       const userRef = doc(db, 'users', userId);
       
@@ -181,6 +231,12 @@ class ProfileService {
 
   // Subscribe to real-time profile updates
   subscribeToProfile(userId: string, callback: (profile: UserProfile) => void): () => void {
+    if (userId === 'demo-user-123') {
+      this.getUserProfile(userId).then(profile => {
+        if (profile) callback(profile);
+      });
+      return () => {};
+    }
     const userRef = doc(db, 'users', userId);
     
     return onSnapshot(userRef, (snapshot) => {
@@ -275,6 +331,49 @@ class ProfileService {
 
   // Get user settings
   async getUserSettings(userId: string): Promise<UserSettings | null> {
+    if (userId === 'demo-user-123') {
+      const stored = localStorage.getItem('userSettings');
+      if (stored) {
+        try {
+          return JSON.parse(stored) as UserSettings;
+        } catch (e) {}
+      }
+      return {
+        userId: 'demo-user-123',
+        notifications: {
+          weatherAlerts: true,
+          marketPriceUpdates: true,
+          diseaseAlerts: true,
+          governmentSchemes: true,
+          cropAdvice: true,
+          communityReplies: true,
+          expertAnswers: true,
+          pushEnabled: false,
+          emailEnabled: true,
+          smsEnabled: false
+        },
+        appearance: {
+          theme: 'light',
+          language: 'hi',
+          fontSize: 'medium',
+          colorTheme: 'green'
+        },
+        privacy: {
+          shareLocation: true,
+          publicProfile: true,
+          showOnlineStatus: true,
+          showActivity: true,
+          twoFactorAuth: false,
+          loginNotifications: true
+        },
+        data: {
+          autoSync: true,
+          offlineMode: true,
+          cacheSize: 50,
+          lastSync: new Date()
+        }
+      } as UserSettings;
+    }
     try {
       const settingsRef = doc(db, 'settings', userId);
       const settingsSnap = await getDoc(settingsRef);
@@ -298,6 +397,19 @@ class ProfileService {
 
   // Update user settings
   async updateUserSettings(userId: string, updates: Partial<UserSettings>): Promise<void> {
+    if (userId === 'demo-user-123') {
+      const current = await this.getUserSettings(userId);
+      const merged = { 
+        ...current, 
+        ...updates,
+        notifications: { ...current?.notifications, ...updates.notifications },
+        appearance: { ...current?.appearance, ...updates.appearance },
+        privacy: { ...current?.privacy, ...updates.privacy },
+        data: { ...current?.data, ...updates.data }
+      };
+      localStorage.setItem('userSettings', JSON.stringify(merged));
+      return;
+    }
     try {
       const settingsRef = doc(db, 'settings', userId);
       await setDoc(settingsRef, updates, { merge: true });
@@ -309,6 +421,12 @@ class ProfileService {
 
   // Subscribe to real-time settings updates
   subscribeToSettings(userId: string, callback: (settings: UserSettings) => void): () => void {
+    if (userId === 'demo-user-123') {
+      this.getUserSettings(userId).then(settings => {
+        if (settings) callback(settings);
+      });
+      return () => {};
+    }
     const settingsRef = doc(db, 'settings', userId);
     
     return onSnapshot(settingsRef, (snapshot) => {
