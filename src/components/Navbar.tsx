@@ -21,7 +21,8 @@ import {
   Bell,
   Database,
   BarChart3,
-  Shield
+  Shield,
+  Cpu
 } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -63,6 +64,7 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
         { path: '/live-weather', name: 'Live Weather', nameKey: 'nav.liveWeather', icon: CloudRain, badge: 'LIVE', isLive: true },
         { path: '/market-prices', name: 'Market Prices', nameKey: 'nav.liveMarket', icon: TrendingUp, badge: 'LIVE', isLive: true },
         { path: '/real-time-dashboard', name: 'Real-Time Dashboard', nameKey: 'nav.realTimeDashboard', icon: Activity, badge: 'LIVE', isLive: true },
+        { path: '/farm-telemetry', name: 'Farm Telemetry', nameKey: 'nav.farmTelemetry', icon: Cpu, badge: 'NEW', isLive: true },
       ]
     },
     {

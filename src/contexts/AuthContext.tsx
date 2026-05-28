@@ -39,6 +39,10 @@ export interface UserProfile {
   landSize?: number;
   crops?: string[];
   verified: boolean;
+  soilPh?: number;
+  soilN?: number;
+  soilP?: number;
+  soilK?: number;
   createdAt: any;
   updatedAt: any;
   lastLoginAt: any;
@@ -237,6 +241,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
+
+      // Demo Account Bypass
+      if (email === 'demo@example.com' && password === 'password123') {
+        const mockUser = {
+          uid: 'demo-user-123',
+          email: 'demo@example.com',
+          displayName: 'Demo Farmer (डेमो किसान)',
+          photoURL: 'https://api.dicebear.com/8.x/initials/svg?seed=Demo%20Farmer&backgroundColor=22c55e',
+          emailVerified: true
+        } as User;
+
+        setUser(mockUser);
+
+        // Load default mock profile in context
+        const mockProfile: UserProfile = {
+          uid: 'demo-user-123',
+          email: 'demo@example.com',
+          displayName: 'Demo Farmer (डेमो किसान)',
+          photoURL: 'https://api.dicebear.com/8.x/initials/svg?seed=Demo%20Farmer&backgroundColor=22c55e',
+          role: 'farmer',
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          lastLoginAt: new Date(),
+          preferences: {
+            language: 'hi',
+            theme: 'light',
+            notifications: {
+              weather: true,
+              prices: true,
+              schemes: true,
+              community: true
+            }
+          },
+          stats: {
+            postsCount: 5,
+            questionsCount: 2,
+            answersCount: 1,
+            helpfulVotes: 10
+          }
+        };
+        setUserProfile(mockProfile);
+
+        // Save profile in localStorage for PWA offline capability
+        localStorage.setItem('userProfile', JSON.stringify(mockProfile));
+
+        toast.success('डेमो लॉगिन सफल! (Demo Bypass Active) 🌱');
+        return;
+      }
+
       await signInWithEmailAndPassword(auth, email, password);
       toast.success('सफलतापूर्वक लॉगिन हो गए!');
     } catch (error: any) {

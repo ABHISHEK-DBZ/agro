@@ -90,9 +90,22 @@
         }, 1000);
       });
       
-      // Register Service Worker for PWA offline support
+      // Register Service Worker for PWA offline support (disabled on localhost for active development)
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+          const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          if (isLocalhost) {
+            console.log('🚧 Service Worker disabled on localhost for real-time development HMR');
+            // Unregister existing service workers to clear cache immediately
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+              for (let registration of registrations) {
+                registration.unregister();
+                console.log('🗑️ Unregistered old local Service Worker.');
+              }
+            });
+            return;
+          }
+          
           navigator.serviceWorker.register('/sw.js')
             .then(registration => {
               console.log('✅ Service Worker registered successfully:', registration.scope);

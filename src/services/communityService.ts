@@ -1,4 +1,4 @@
-﻿// Farmer Community Service - Full WhatsApp-Style Real-time System
+// Farmer Community Service - Full WhatsApp-Style Real-time System
 import { 
   collection, doc, addDoc, getDoc, getDocs, updateDoc, deleteDoc, 
   query, where, orderBy, limit, increment, serverTimestamp, 
@@ -165,6 +165,7 @@ export interface Achievement {
   type: 'helper' | 'expert' | 'contributor' | 'leader' | 'pioneer';
   requirement: number;
   badgeColor: string;
+  points?: number;
 }
 
 export interface UserAchievement {
@@ -172,6 +173,40 @@ export interface UserAchievement {
   userId: string;
   achievementId: string;
   earnedAt: Date;
+}
+
+export interface DailyLog {
+  id: string;
+  farmerId: string;
+  date: Date;
+  cropType: string;
+  activities: {
+    watering: boolean;
+    fertilizer: string;
+    pesticide: string;
+    harvesting: boolean;
+    planting: boolean;
+    weeding: boolean;
+    other: string;
+  };
+  weather: {
+    temperature: number;
+    humidity: number;
+    rainfall: number;
+    condition: string;
+  };
+  cropHealth: {
+    overall: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+    leafColor: string;
+    growth: string;
+    diseases: string[];
+    pests: string[];
+  };
+  images: string[];
+  notes: string;
+  hindiNotes?: string;
+  aiInsights: string[];
+  nextActions: string[];
 }
 
 class CommunityService {
@@ -186,6 +221,7 @@ class CommunityService {
   private pollsCollection = collection(db, 'polls');
   private achievementsCollection = collection(db, 'achievements');
   private userAchievementsCollection = collection(db, 'user_achievements');
+  private dailyLogsCollection = collection(db, 'daily_logs');
 
   // ==================== LOCATION-BASED FUNCTIONS ====================
   
@@ -687,12 +723,12 @@ class CommunityService {
   }
 
   // Get top contributors (leaderboard)
-  async getTopContributors(limit: number = 10): Promise<FarmerProfile[]> {
+  async getTopContributors(limitCount: number = 10): Promise<FarmerProfile[]> {
     try {
       const q = query(
         this.farmersCollection,
         orderBy('contributionPoints', 'desc'),
-        limit(limit)
+        limit(limitCount)
       );
       
       const snapshot = await getDocs(q);
@@ -1523,6 +1559,73 @@ class CommunityService {
       }
     } catch (error) {
       console.error('Error checking achievements:', error);
+    }
+  }
+
+  // ==================== DAILY LOGS ====================
+  async getDailyLogs(farmerId: string, limitCount: number = 30): Promise<DailyLog[]> {
+    try {
+      const q = query(
+        this.dailyLogsCollection,
+        where('farmerId', '==', farmerId),
+        orderBy('date', 'desc'),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      const logs: DailyLog[] = [];
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        logs.push({
+          id: docSnap.id,
+          ...data,
+          date: data.date?.toDate() || new Date()
+        } as DailyLog);
+      });
+      return logs;
+    } catch (error) {
+      console.error('Error getting daily logs:', error);
+      return [];
+    }
+  }
+
+  async addDailyLog(log: Omit<DailyLog, 'id' | 'aiInsights' | 'nextActions'>): Promise<string> {
+    try {
+      // Simple AI insights generation for realistic experience
+      const aiInsights: string[] = [];
+      const nextActions: string[] = [];
+
+      if (log.cropHealth.overall === 'poor' || log.cropHealth.overall === 'critical') {
+        aiInsights.push('⚠️ Alert: Crop health has degraded. Check for pest infestation or severe watering issue.');
+        nextActions.push('Consult an agri-expert immediately.');
+        nextActions.push('Monitor leaves closely for any discoloration or spots.');
+      } else if (log.cropHealth.overall === 'excellent') {
+        aiInsights.push('🌟 Great: Excellent growth rate observed. Nutrient levels seem optimal.');
+        nextActions.push('Continue with the current watering schedule.');
+      } else {
+        aiInsights.push('👍 Normal: Growth is consistent with average seasonal metrics.');
+        nextActions.push('Maintain soil moisture levels.');
+      }
+
+      if (log.weather.temperature > 35) {
+        aiInsights.push('🔥 Heat stress detected: Higher temperature might evaporate moisture quickly.');
+        nextActions.push('Increase watering frequency or apply mulching to conserve moisture.');
+      }
+      if (log.weather.humidity > 80) {
+        aiInsights.push('💧 High humidity: Increases risk of fungal diseases.');
+        nextActions.push('Reduce overhead watering; prefer drip irrigation.');
+      }
+
+      const logEntry = {
+        ...log,
+        date: serverTimestamp(),
+        aiInsights,
+        nextActions
+      };
+      const docRef = await addDoc(this.dailyLogsCollection, logEntry);
+      return docRef.id;
+    } catch (error) {
+      console.error('Error adding daily log:', error);
+      throw error;
     }
   }
 }

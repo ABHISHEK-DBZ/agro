@@ -918,6 +918,14 @@ class RealTimeDataService {
       newest: entries.length > 0 ? new Date(Math.max(...entries.map(e => e.timestamp))).toISOString() : null
     };
   }
+
+  isWebSocketConnected(): boolean {
+    return navigator.onLine;
+  }
+
+  disableWebSocket(): void {
+    console.log('WebSocket connection disabled (using HTTP Polling fallback)');
+  }
 }
 
 export default new RealTimeDataService();

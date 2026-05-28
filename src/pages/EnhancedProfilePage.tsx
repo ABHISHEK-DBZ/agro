@@ -323,7 +323,7 @@ const EnhancedProfilePage: React.FC = () => {
                       <h3 className="text-xl font-bold text-gray-800 mb-2">{achievement.name}</h3>
                       <p className="text-sm text-gray-600 mb-3">{achievement.description}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-purple-600 font-semibold">+{achievement.points} points</span>
+                        <span className="text-xs text-purple-600 font-semibold">+{achievement.points || 100} points</span>
                         {isEarned && (
                           <span className="text-xs text-green-600 font-semibold">
                             Earned {new Date(userAch.earnedAt).toLocaleDateString()}

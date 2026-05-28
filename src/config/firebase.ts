@@ -10,15 +10,15 @@ const isDevelopment = import.meta.env.MODE === 'development';
 // For testing purposes, let's disable emulator mode temporarily to use real Firebase
 const useEmulator = false; // Set to false to use real Firebase
 
-// Firebase configuration - using real Firebase project
+// Firebase configuration - secure load from environment variables
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBJpozRU-RqZyAmryb4rPGh8ekZRPZxgXI",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "smart-krishi-sahayak-6871c.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "smart-krishi-sahayak-6871c",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "smart-krishi-sahayak-6871c.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "859693246419",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:859693246419:web:31133e84fcadb9ec617126",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-TWDGRX7JBG"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase

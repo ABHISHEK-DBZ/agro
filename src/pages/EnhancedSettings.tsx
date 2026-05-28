@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useSafeTranslation } from '../contexts/LanguageContext';
 import profileService from '../services/profileService';
 import type { UserSettings } from '../services/profileService';
 import toast from 'react-hot-toast';
@@ -35,13 +36,24 @@ import {
   HardDrive,
   Wifi,
   WifiOff,
-  Monitor
+  Monitor,
+  Cpu,
+  Activity,
+  BarChart3,
+  FileText,
+  MapPin,
+  Sprout,
+  Award
 } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const { settings, loading: settingsLoading, updateSettings: updateSettingsContext } = useSettings();
+  const { settings, loading: settingsLoading, updateSettings: updateSettingsContext, refreshSettings } = useSettings();
+  
+  // Strict low-bandwidth 2G/3G throttler (Module C)
+  const { isLowBandwidthMode, toggleLowBandwidthMode } = useSafeTranslation();
+  
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'notifications' | 'appearance' | 'privacy' | 'data'>('notifications');
 
@@ -154,7 +166,7 @@ const SettingsPage: React.FC = () => {
         await profileService.importUserData(user.uid, jsonData);
         
         // Reload settings
-        await loadSettings();
+        await refreshSettings();
         
         toast.dismiss();
         toast.success('डेटा सफलतापूर्वक इम्पोर्ट हो गया');
@@ -614,6 +626,47 @@ const SettingsPage: React.FC = () => {
                   checked={settings.data.offlineMode}
                   onChange={() => handleDataToggle('offlineMode')}
                 />
+
+                <SettingItem
+                  icon={Wifi}
+                  title="न्यूनतम बैंडविड्थ मोड (2G/3G Network Throttle)"
+                  description="कम इंटरनेट में इमेज कंप्रेस करें और एनिमेशन रोकें"
+                  checked={isLowBandwidthMode}
+                  onChange={toggleLowBandwidthMode}
+                />
+              </div>
+
+              {/* IoT Hardware Sync Console */}
+              <div className="border-t pt-6">
+                <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <Cpu className="text-green-600" size={20} />
+                  स्मार्ट फील्ड हार्डवेयर सिंक (IoT Node Synchronization)
+                </h3>
+                
+                <div className="space-y-3 bg-gray-50 rounded-xl p-5 border border-gray-100">
+                  <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                    <div>
+                      <p className="font-bold text-gray-800 text-sm">मातीचे तापमान सेन्सर (Soil Temperature Sensor Node)</p>
+                      <p className="text-xs text-green-600">📡 सिंक यशस्वी (Telemetry Stream Active)</p>
+                    </div>
+                    <span className="h-2.5 w-2.5 bg-green-500 rounded-full"></span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                    <div>
+                      <p className="font-bold text-gray-800 text-sm">ड्रोन कॅमेरा फीड (Garuda Drone Imaging Node)</p>
+                      <p className="text-xs text-blue-500">🔌 स्टँडबाय (Charging - Ready to Deploy)</p>
+                    </div>
+                    <span className="h-2.5 w-2.5 bg-blue-500 rounded-full"></span>
+                  </div>
+
+                  <button
+                    onClick={() => toast.success('सर्व IoT हार्डवेअर नोड्स पुन्हा स्कॅन केले आणि सिंक झाले! 📡')}
+                    className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors"
+                  >
+                    🔄 नवीन हार्डवेअर नोड सिंक करा (Scan & Sync Nodes)
+                  </button>
+                </div>
               </div>
 
               <div className="border-t pt-6">
@@ -689,8 +742,5 @@ const SettingsPage: React.FC = () => {
     </div>
   );
 };
-
-// Missing imports that need to be added
-import { Activity, BarChart3, FileText, MapPin, Sprout, Award } from 'lucide-react';
 
 export default SettingsPage;

@@ -41,6 +41,21 @@ export interface UserProfile {
   };
   verified: boolean;
   publicProfile: boolean;
+  photoURL?: string;
+  primaryCrops?: string[];
+  language?: string;
+  soilPh?: number;
+  soilN?: number;
+  soilP?: number;
+  soilK?: number;
+  notifications?: {
+    weather?: boolean;
+    prices?: boolean;
+  };
+  dataSync?: {
+    autoSync?: boolean;
+    offlineMode?: boolean;
+  };
 }
 
 // User Settings Interface

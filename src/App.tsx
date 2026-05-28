@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -19,8 +20,8 @@ const DiseaseDetection = lazy(() => import('./pages/DiseaseDetection'));
 const EnhancedDiseaseDetection = lazy(() => import('./pages/EnhancedDiseaseDetection'));
 const GovernmentSchemes = lazy(() => import('./pages/GovernmentSchemes'));
 const Profile = lazy(() => import('./pages/Profile'));
-const Settings = lazy(() => import('./pages/Settings'));
 const EnhancedSettings = lazy(() => import('./pages/EnhancedSettings'));
+
 const CommunityDashboard = lazy(() => import('./pages/CommunityDashboard'));
 const GroupsPage = lazy(() => import('./pages/GroupsPage'));
 const GroupDetailPage = lazy(() => import('./pages/GroupDetailPage'));
@@ -45,6 +46,8 @@ const AdminGrievances = lazy(() => import('./pages/AdminGrievances'));
 const CropCalendar = lazy(() => import('./pages/CropCalendar'));
 const LoanCalculator = lazy(() => import('./pages/LoanCalculator'));
 const SoilTesting = lazy(() => import('./pages/SoilTesting'));
+const DailyTrackingLog = lazy(() => import('./pages/DailyTrackingLog'));
+const FarmOperationsTelemetry = lazy(() => import('./pages/FarmOperationsTelemetry'));
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -289,11 +292,16 @@ const AppLayout: React.FC = () => {
                 <Analytics />
               </ProtectedRoute>
             } />
-            {/* <Route path="/daily-tracking" element={
+            <Route path="/daily-tracking" element={
               <ProtectedRoute>
                 <DailyTrackingLog />
               </ProtectedRoute>
-            } /> */}
+            } />
+            <Route path="/farm-telemetry" element={
+              <ProtectedRoute>
+                <FarmOperationsTelemetry />
+              </ProtectedRoute>
+            } />
             
             {/* Grievances Routes */}
             <Route path="/grievances" element={
@@ -318,11 +326,7 @@ const AppLayout: React.FC = () => {
                 <EnhancedSettings />
               </ProtectedRoute>
             } />
-            <Route path="/settings-old" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
+
             
             {/* Admin Dashboard */}
             <Route path="/admin" element={
@@ -373,7 +377,9 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <SettingsProvider>
-          <AppLayout />
+          <LanguageProvider>
+            <AppLayout />
+          </LanguageProvider>
         </SettingsProvider>
       </AuthProvider>
     </ErrorBoundary>

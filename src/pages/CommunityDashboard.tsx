@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, MessageCircle, ThumbsUp, Eye, Clock, User, Tag, Search, Send, X, Image as ImageIcon, MapPin, AlertCircle, Edit, Trash2, Users, Bell, BarChart3, Award, MessageSquare } from 'lucide-react';
+import { Plus, MessageCircle, ThumbsUp, Eye, Clock, User, Tag, Search, Send, X, Image as ImageIcon, MapPin, AlertCircle, Edit, Trash2, Users, Bell, BarChart3, Award, MessageSquare, Zap, Cpu, Battery, IndianRupee } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import communityService, { CommunityPost, CommunityStats } from '../services/communityService';
+import { useSwarmTelemetry } from '../hooks/useSwarmTelemetry';
 
 const CommunityDashboard: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  
+  // Real-time Swarm dispatch and telemetry channels (Module B)
+  const { peers, equipment, soilStats, liveMessages, sendBroadcastMessage } = useSwarmTelemetry();
+  
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showNewPostForm, setShowNewPostForm] = useState(false);
@@ -512,130 +517,279 @@ const CommunityDashboard: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredPosts.map(post => (
-              <div key={post.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden">
-                <div className="p-6">
-                  {/* Post Header */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      {/* User Avatar */}
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-lg">
-                        {post.farmerName.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800">{post.farmerName}</p>
-                        <p className="text-sm text-gray-500">{formatTimeAgo(post.timestamp)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {/* Urgency Badge */}
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        post.urgency === 'high' ? 'bg-red-100 text-red-700' :
-                        post.urgency === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-green-100 text-green-700'
-                      }`}>
-                        {post.urgency === 'high' ? '🔴 Urgent' :
-                         post.urgency === 'medium' ? '🟡 Medium' :
-                         '🟢 Low'}
-                      </span>
-                      
-                      {/* Edit & Delete Buttons */}
-                      <button
-                        onClick={() => handleEditPost(post)}
-                        className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
-                        title="Edit Post"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeletePost(post.id)}
-                        className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
-                        title="Delete Post"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Post Content */}
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">{post.title}</h3>
-                  <p className="text-gray-600 mb-4">{post.description}</p>
-
-                  {/* Images */}
-                  {post.imageUrls && post.imageUrls.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      {post.imageUrls.slice(0, 4).map((url, idx) => (
-                        <img
-                          key={idx}
-                          src={url}
-                          alt={`Post image ${idx + 1}`}
-                          className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => window.open(url, '_blank')}
-                        />
-                      ))}
-                      {post.imageUrls.length > 4 && (
-                        <div className="relative">
-                          <img
-                            src={post.imageUrls[4]}
-                            alt="More images"
-                            className="w-full h-48 object-cover rounded-lg opacity-50"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
-                            <span className="text-white text-2xl font-bold">+{post.imageUrls.length - 4}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* Left Column: Posts List (2/3 width on desktop) */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="space-y-4">
+                {filteredPosts.map(post => (
+                  <div key={post.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden border border-gray-100 hover:border-green-300">
+                    <div className="p-6">
+                      {/* Post Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {/* User Avatar */}
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-lg">
+                            {post.farmerName.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-800">{post.farmerName}</p>
+                            <p className="text-sm text-gray-500">{formatTimeAgo(post.timestamp)}</p>
                           </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                          {/* Urgency Badge */}
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            post.urgency === 'high' ? 'bg-red-100 text-red-700' :
+                            post.urgency === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-green-100 text-green-700'
+                          }`}>
+                            {post.urgency === 'high' ? '🔴 Urgent' :
+                             post.urgency === 'medium' ? '🟡 Medium' :
+                             '🟢 Low'}
+                          </span>
+                          
+                          {/* Edit & Delete Buttons */}
+                          <button
+                            onClick={() => handleEditPost(post)}
+                            className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
+                            title="Edit Post"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all"
+                            title="Delete Post"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Post Content */}
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">{post.title}</h3>
+                      <p className="text-gray-600 mb-4">{post.description}</p>
+
+                      {/* Images */}
+                      {post.imageUrls && post.imageUrls.length > 0 && (
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                          {post.imageUrls.slice(0, 4).map((url, idx) => (
+                            <img
+                              key={idx}
+                              src={url}
+                              alt={`Post image ${idx + 1}`}
+                              className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => window.open(url, '_blank')}
+                            />
+                          ))}
+                          {post.imageUrls.length > 4 && (
+                            <div className="relative">
+                              <img
+                                src={post.imageUrls[4]}
+                                alt="More images"
+                                className="w-full h-48 object-cover rounded-lg opacity-50"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
+                                <span className="text-white text-2xl font-bold">+{post.imageUrls.length - 4}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       )}
-                    </div>
-                  )}
 
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {post.tags.map((tag, idx) => (
-                      <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                        <Tag className="w-3 h-3" />
-                        {tag}
-                      </span>
-                    ))}
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {post.tags.map((tag, idx) => (
+                          <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                            <Tag className="w-3 h-3" />
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Post Actions */}
+                      <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
+                        <button 
+                          onClick={() => handleLikePost(post.id)}
+                          className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
+                        >
+                          <ThumbsUp className="w-5 h-5" />
+                          <span className="font-medium">{post.likes}</span>
+                        </button>
+                        <button 
+                          onClick={() => handleOpenReplies(post)}
+                          className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+                        >
+                          <MessageCircle className="w-5 h-5" />
+                          <span className="font-medium">{post.replies} Replies</span>
+                        </button>
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <Eye className="w-5 h-5" />
+                          <span>{post.views} Views</span>
+                        </div>
+                        {!post.solved && (
+                          <button
+                            onClick={() => handleMarkAsSolved(post.id)}
+                            className="ml-auto bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold hover:bg-green-200 transition-colors"
+                          >
+                            ✓ Mark as Solved
+                          </button>
+                        )}
+                        {post.solved && (
+                          <span className="ml-auto bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
+                            ✓ Solved
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
 
-                  {/* Post Actions */}
-                  <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
-                    <button 
-                      onClick={() => handleLikePost(post.id)}
-                      className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
-                    >
-                      <ThumbsUp className="w-5 h-5" />
-                      <span className="font-medium">{post.likes}</span>
-                    </button>
-                    <button 
-                      onClick={() => handleOpenReplies(post)}
-                      className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      <span className="font-medium">{post.replies} Replies</span>
-                    </button>
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Eye className="w-5 h-5" />
-                      <span>{post.views} Views</span>
-                    </div>
-                    {!post.solved && (
-                      <button
-                        onClick={() => handleMarkAsSolved(post.id)}
-                        className="ml-auto bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold hover:bg-green-200 transition-colors"
-                      >
-                        ✓ Mark as Solved
-                      </button>
-                    )}
-                    {post.solved && (
-                      <span className="ml-auto bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
-                        ✓ Solved
-                      </span>
-                    )}
+            {/* Right Column: Swarm dispatch & cooperative rentals (1/3 width on desktop) */}
+            <div className="space-y-6 lg:sticky lg:top-36">
+              
+              {/* 📡 Live Soil Telemetry Card */}
+              <div className="bg-gradient-to-br from-green-900 to-emerald-950 text-white rounded-2xl shadow-xl p-6 border border-emerald-800 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-emerald-400 animate-pulse" />
+                    <h3 className="font-bold text-lg tracking-wide uppercase">📡 थेट पीक टेलिमेट्री (Live Telemetry)</h3>
+                  </div>
+                  <span className="flex h-3.5 w-3.5 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-emerald-900/40 border border-emerald-800/50 rounded-xl p-3">
+                    <p className="text-xs text-emerald-300 uppercase font-medium">मातीची नमी (Moisture)</p>
+                    <p className="text-2xl font-bold tracking-tight text-white">{soilStats.moisture}%</p>
+                  </div>
+                  <div className="bg-emerald-900/40 border border-emerald-800/50 rounded-xl p-3">
+                    <p className="text-xs text-emerald-300 uppercase font-medium">तापमान (Temperature)</p>
+                    <p className="text-2xl font-bold tracking-tight text-white">{soilStats.temperature}°C</p>
+                  </div>
+                  <div className="bg-emerald-900/40 border border-emerald-800/50 rounded-xl p-3">
+                    <p className="text-xs text-emerald-300 uppercase font-medium">मातीचा pH (Soil pH)</p>
+                    <p className="text-2xl font-bold tracking-tight text-white">{soilStats.ph}</p>
+                  </div>
+                  <div className="bg-emerald-900/40 border border-emerald-800/50 rounded-xl p-3">
+                    <p className="text-xs text-emerald-300 uppercase font-medium">N-P-K मोजमाप</p>
+                    <p className="text-lg font-bold tracking-tight text-white">{soilStats.nitrogen}-{soilStats.phosphorus}-{soilStats.potassium}</p>
                   </div>
                 </div>
+                
+                <div className="text-xs text-emerald-400 flex items-center gap-1.5 justify-end">
+                  <Cpu className="w-3.5 h-3.5" />
+                  <span>शेवटचे अपडेट: {soilStats.updatedAt.toLocaleTimeString()}</span>
+                </div>
               </div>
-            ))}
+
+              {/* 🚜 Cooperative Swarm Rentals (Tractor & Drone Fleet) */}
+              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h3 className="font-extrabold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                  <Users className="w-5 h-5 text-green-600" />
+                  🚜 सहकारी मशिनरी स्वाम (Swarm Dispatch)
+                </h3>
+                <div className="space-y-4">
+                  {equipment.map(eq => (
+                    <div key={eq.id} className="border border-gray-100 hover:border-green-200 bg-gray-50/50 rounded-xl p-4 transition-all">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="font-bold text-gray-800 text-sm md:text-base">{eq.name}</p>
+                          <p className="text-xs text-gray-500">{eq.model}</p>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          eq.status === 'Active' ? 'bg-green-100 text-green-700' :
+                          eq.status === 'Idle' ? 'bg-blue-100 text-blue-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {eq.status}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
+                        <span className="flex items-center gap-1">
+                          <Battery className="w-3.5 h-3.5 text-gray-400" />
+                          {eq.battery}%
+                        </span>
+                        <span className="font-semibold text-green-600">₹{eq.rate}/hr</span>
+                      </div>
+
+                      <div className="text-[10px] text-gray-500 mb-3 bg-white p-2 rounded border border-gray-100/50 font-mono">
+                        GPS: {eq.coordinates.lat.toFixed(5)}, {eq.coordinates.lng.toFixed(5)}
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          const requestWord = i18n.language === 'hi' ? 'बुकिंग सफलतापूर्वक स्वीकृत!' : 
+                                              i18n.language === 'mr' ? 'बुकिंग यशस्वीरित्या स्वीकृत!' : 
+                                              'Rental request dispatched successfully!';
+                          alert(`🚜 ${eq.name} ${requestWord}`);
+                        }}
+                        className="w-full py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg text-xs transition-colors shadow-sm"
+                      >
+                        ⚡ भाड्याने घ्या (Request Booking)
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 💬 Swarm Broadcast Hub (Multi-Tab Broadcast Channel) */}
+              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                <h3 className="font-extrabold text-gray-800 mb-3 text-lg flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                  💬 स्वाम लाईव्ह चॅट (Broadcast Hub)
+                </h3>
+                <p className="text-xs text-gray-500 mb-3">
+                  (Standard browser broadcast - messages sync across tabs instantly)
+                </p>
+                
+                <div className="border border-gray-100 rounded-xl p-3 bg-gray-50/50 h-48 overflow-y-auto space-y-2.5 mb-3 text-xs">
+                  {liveMessages.length === 0 && (
+                    <p className="text-gray-400 text-center italic mt-16">नो चॅट मेसेज (No live broadcasts yet)</p>
+                  )}
+                  {liveMessages.map(msg => (
+                    <div key={msg.id} className="bg-white p-2 rounded-lg shadow-sm border border-gray-100">
+                      <div className="flex items-center justify-between mb-1 font-bold text-gray-700">
+                        <span>{msg.sender}</span>
+                        <span className="text-[9px] text-gray-400 font-normal">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      <p className="text-gray-600">{msg.content}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const input = form.elements.namedItem('broadcastInput') as HTMLInputElement;
+                  if (input.value.trim()) {
+                    sendBroadcastMessage('Demo Farmer (डेमो किसान)', input.value);
+                    input.value = '';
+                  }
+                }} className="flex gap-2">
+                  <input
+                    name="broadcastInput"
+                    type="text"
+                    placeholder="मेसेज टाईप करा..."
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg transition-colors flex items-center justify-center shadow-sm"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </form>
+              </div>
+
+            </div>
           </div>
         )}
       </div>

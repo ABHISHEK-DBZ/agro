@@ -68,6 +68,10 @@ export interface UserProfile {
   isVerified: boolean;
   role: 'farmer' | 'expert' | 'admin';
   status: 'active' | 'suspended' | 'inactive';
+  soilPh?: number;
+  soilN?: number;
+  soilP?: number;
+  soilK?: number;
 }
 
 export interface CommunityPost {

@@ -52,6 +52,16 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleQuickDemoLogin = async () => {
+    setError('');
+    try {
+      await login('demo@example.com', 'password123');
+      navigate('/dashboard');
+    } catch (error: any) {
+      setError(error.message || 'डेमो लॉगिन में त्रुटि हुई');
+    }
+  };
+
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     setError('');
     try {
@@ -160,6 +170,15 @@ const Login: React.FC = () => {
 
           {/* Social Login Buttons */}
           <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleQuickDemoLogin}
+              disabled={loading}
+              className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 font-bold transition-all shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 active:scale-95 duration-200"
+            >
+              🔐 त्वरित डेमो लॉगिन (Quick Demo Login)
+            </button>
+
             <button
               type="button"
               onClick={() => handleSocialLogin('google')}

@@ -3,7 +3,6 @@ import { TrendingUp, TrendingDown, RefreshCw, MapPin, IndianRupee, Search, X, Fi
 import { useTranslation } from 'react-i18next';
 import realTimeDataService from '../services/realTimeDataService';
 import offlineStorageService from '../services/offlineStorageService';
-import syncManager from '../services/syncManager';
 import type { RealTimeMarketData } from '../services/realTimeDataService';
 
 interface MarketPrice {
@@ -198,7 +197,6 @@ const MarketPricesAdvanced: React.FC = () => {
       setIsOnline(true);
       setRealTimeConnected(true);
       loadPrices(); // Reload when coming back online
-      syncManager.startSync(); // Trigger sync
     };
 
     const handleOffline = () => {
@@ -212,9 +210,6 @@ const MarketPricesAdvanced: React.FC = () => {
     
     // Initial load
     loadPrices();
-    
-    // Start sync manager
-    syncManager.startSync();
     
     // WebSocket disabled - using HTTP polling only
     // realTimeDataService.enableWebSocket();

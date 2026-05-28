@@ -172,6 +172,19 @@ const Profile: React.FC = () => {
     setIsEditing(false);
   };
 
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64String = reader.result as string;
+      handleInputChange('photoURL', base64String);
+      toast.success('प्रोफ़ाइल तस्वीर अपडेट हो गई! (Avatar updated locally)');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleInputChange = (field: keyof UserProfile, value: any) => {
     if (!editedProfile) return;
     setEditedProfile({ ...editedProfile, [field]: value });
@@ -180,6 +193,17 @@ const Profile: React.FC = () => {
   const handleExpertiseChange = (expertise: string[]) => {
     if (!editedProfile) return;
     setEditedProfile({ ...editedProfile, expertise });
+  };
+
+  const handleNotificationChange = (key: string, value: boolean) => {
+    if (!editedProfile) return;
+    setEditedProfile({
+      ...editedProfile,
+      notifications: {
+        ...editedProfile.notifications,
+        [key]: value
+      }
+    });
   };
 
   const handleDataSyncChange = (key: string, value: boolean) => {
@@ -208,9 +232,10 @@ const Profile: React.FC = () => {
 
   const toggleCrop = (crop: string) => {
     if (!editedProfile) return;
-    const updatedCrops = editedProfile.primaryCrops.includes(crop)
-      ? editedProfile.primaryCrops.filter(c => c !== crop)
-      : [...editedProfile.primaryCrops, crop];
+    const currentCrops = editedProfile.primaryCrops || [];
+    const updatedCrops = currentCrops.includes(crop)
+      ? currentCrops.filter(c => c !== crop)
+      : [...currentCrops, crop];
     
     setEditedProfile({ ...editedProfile, primaryCrops: updatedCrops });
   };
@@ -377,15 +402,24 @@ const Profile: React.FC = () => {
             <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
               
               {/* Profile Picture */}
-              <div className="relative group">
-                <img 
-                  src={profile.photoURL || `https://api.dicebear.com/8.x/initials/svg?seed=${profile.name}&backgroundColor=22c55e`} 
-                  alt="प्रोफाइल फोटो" 
-                  className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+              <div className="relative group cursor-pointer">
+                <input 
+                  type="file" 
+                  id="avatar-upload" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleAvatarUpload}
                 />
-                <button className="absolute bottom-2 right-2 bg-white text-green-600 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera size={16} />
-                </button>
+                <label htmlFor="avatar-upload" className="cursor-pointer">
+                  <img 
+                    src={editedProfile.photoURL || profile.photoURL || profile.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${profile.name}&backgroundColor=22c55e`} 
+                    alt="प्रोफाइल फोटो" 
+                    className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover hover:brightness-95 transition-all"
+                  />
+                  <div className="absolute bottom-2 right-2 bg-white text-green-600 p-2 rounded-full shadow-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                    <Camera size={16} />
+                  </div>
+                </label>
               </div>
               
               {/* Profile Info */}
@@ -699,6 +733,132 @@ const Profile: React.FC = () => {
                     </div>
                   )}
                 </div>
+
+                {/* 🧪 मातीचे आरोग्य - Soil Chemistry Vector Section */}
+                <div className="lg:col-span-2 border-t pt-6 mt-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <Leaf className="text-green-600" size={20} />
+                    मातीचे आरोग्य (Soil Chemistry Analysis)
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-green-50/50 rounded-2xl p-6 border border-green-100">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">मातीचा pH (Soil pH Level)</label>
+                        {isEditing ? (
+                          <div className="flex items-center gap-4">
+                            <input 
+                              type="range" 
+                              min="4.5" 
+                              max="9.0" 
+                              step="0.1"
+                              value={editedProfile.soilPh || 6.5} 
+                              onChange={(e) => handleInputChange('soilPh', parseFloat(e.target.value))} 
+                              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                            />
+                            <span className="font-bold text-green-700 bg-white px-2 py-1 rounded border min-w-[3rem] text-center">{editedProfile.soilPh || 6.5}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 py-1">
+                            <span className="text-2xl font-extrabold text-green-800">{profile.soilPh || 6.5}</span>
+                            <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800 font-bold">माती उत्तम आहे (Optimal)</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="bg-white p-2.5 rounded-lg border border-green-100/80 text-center">
+                          <p className="text-[10px] text-gray-500 font-bold">Nitrogen (N)</p>
+                          {isEditing ? (
+                            <input 
+                              type="number"
+                              value={editedProfile.soilN || 140}
+                              onChange={(e) => handleInputChange('soilN', parseInt(e.target.value) || 0)}
+                              className="w-full text-center text-sm font-bold text-green-700 focus:outline-none border-b border-green-300"
+                            />
+                          ) : (
+                            <p className="text-base font-extrabold text-gray-800">{profile.soilN || 140} <span className="text-[8px] font-normal">mg/kg</span></p>
+                          )}
+                        </div>
+                        <div className="bg-white p-2.5 rounded-lg border border-green-100/80 text-center">
+                          <p className="text-[10px] text-gray-500 font-bold">Phosphorus (P)</p>
+                          {isEditing ? (
+                            <input 
+                              type="number"
+                              value={editedProfile.soilP || 48}
+                              onChange={(e) => handleInputChange('soilP', parseInt(e.target.value) || 0)}
+                              className="w-full text-center text-sm font-bold text-green-700 focus:outline-none border-b border-green-300"
+                            />
+                          ) : (
+                            <p className="text-base font-extrabold text-gray-800">{profile.soilP || 48} <span className="text-[8px] font-normal">mg/kg</span></p>
+                          )}
+                        </div>
+                        <div className="bg-white p-2.5 rounded-lg border border-green-100/80 text-center">
+                          <p className="text-[10px] text-gray-500 font-bold">Potassium (K)</p>
+                          {isEditing ? (
+                            <input 
+                              type="number"
+                              value={editedProfile.soilK || 220}
+                              onChange={(e) => handleInputChange('soilK', parseInt(e.target.value) || 0)}
+                              className="w-full text-center text-sm font-bold text-green-700 focus:outline-none border-b border-green-300"
+                            />
+                          ) : (
+                            <p className="text-base font-extrabold text-gray-800">{profile.soilK || 220} <span className="text-[8px] font-normal">mg/kg</span></p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-green-800 leading-relaxed bg-white/70 p-4 rounded-xl border border-green-100 flex flex-col justify-center">
+                      <p className="font-bold mb-1">💡 कृषी सल्ला (AI Soil Advice):</p>
+                      <p>तुमच्या मातीचा pH सामान्य आणि उत्तम आहे. नत्र (Nitrogen) प्रमाण वाढवण्यासाठी खतांच्या प्रमाणात थोडे युरिया नियोजन फायदेशीर ठरेल.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 📅 पीक इतिहास - Interactive Crop Timeline Calendar */}
+                <div className="lg:col-span-2 border-t pt-6 mt-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <Calendar className="text-green-600" size={20} />
+                    पीक इतिहास आणि कालमर्यादा (Crop Milestones Timeline)
+                  </h3>
+                  
+                  <div className="relative pl-6 border-l-2 border-green-300 space-y-6">
+                    <div className="relative">
+                      <span className="absolute -left-[31px] top-1 bg-green-600 text-white p-1 rounded-full border-2 border-white shadow">
+                        <Leaf size={12} />
+                      </span>
+                      <div>
+                        <span className="text-xs font-bold text-green-600 uppercase">रब्बी हंगाम - मार्च २०२६ (Rabi)</span>
+                        <h4 className="font-extrabold text-gray-800">🌾 गहू कापणी यशस्वी (Wheat Harvest Complete)</h4>
+                        <p className="text-xs text-gray-600 mt-1">सरासरी उत्पन्न: १६ क्विंटल प्रति एकर. उत्तम हवामानामुळे आणि वेळीच खत नियोजनामुळे चांगले दर्जेदार पीक मिळाले.</p>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <span className="absolute -left-[31px] top-1 bg-yellow-500 text-white p-1 rounded-full border-2 border-white shadow">
+                        <Sprout size={12} />
+                      </span>
+                      <div>
+                        <span className="text-xs font-bold text-yellow-600 uppercase">डिसेंबर २०२५ (Winter Phase)</span>
+                        <h4 className="font-extrabold text-gray-800">💊 रासायनिक खत व निंदणी (Fertilization & Weeding)</h4>
+                        <p className="text-xs text-gray-600 mt-1">नत्र-फॉस्फरस खतांचा मात्रा देऊन तणांचा प्रादुर्भाव रोखण्यासाठी कोळपणी पूर्ण करण्यात आली.</p>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <span className="absolute -left-[31px] top-1 bg-blue-500 text-white p-1 rounded-full border-2 border-white shadow">
+                        <Calendar size={12} />
+                      </span>
+                      <div>
+                        <span className="text-xs font-bold text-blue-600 uppercase">नोव्हेंबर २०२५ (Sowing)</span>
+                        <h4 className="font-extrabold text-gray-800">🌱 गहू पेरणी (Wheat Sowing Complete)</h4>
+                        <p className="text-xs text-gray-600 mt-1">सुधारित लोकवन वाणाची कोरडवाहू व बागायती क्षेत्रावर १० एकर क्षेत्रात पेरणी पूर्ण झाली.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
