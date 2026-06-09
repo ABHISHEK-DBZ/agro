@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
@@ -11,12 +12,12 @@ import LoadingSpinner from './components/LoadingSpinner';
 import { initializeCapacitor } from './utils/capacitor-plugins';
 
 // Lazy load all page components
+const HomePage = lazy(() => import('./pages/HomePage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Weather = lazy(() => import('./pages/Weather'));
 const MarketPrices = lazy(() => import('./pages/MarketPrices'));
 const CropManagement = lazy(() => import('./pages/CropManagement'));
 const AiAgent = lazy(() => import('./pages/AiAgent'));
-const DiseaseDetection = lazy(() => import('./pages/DiseaseDetection'));
 const EnhancedDiseaseDetection = lazy(() => import('./pages/EnhancedDiseaseDetection'));
 const GovernmentSchemes = lazy(() => import('./pages/GovernmentSchemes'));
 const Profile = lazy(() => import('./pages/Profile'));
@@ -31,14 +32,12 @@ const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
 const MessagesPage = lazy(() => import('./pages/MessagesPage'));
 const MapViewPage = lazy(() => import('./pages/MapViewPage'));
 const EnhancedProfilePage = lazy(() => import('./pages/EnhancedProfilePage'));
+const AboutUs = lazy(() => import('./pages/AboutUs'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsConditions = lazy(() => import('./pages/TermsConditions'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-const RealTimeDashboard = lazy(() => import('./components/RealTimeDashboard'));
-const DataSourceManager = lazy(() => import('./components/DataSourceManager'));
-const GovernmentAPITest = lazy(() => import('./components/GovernmentAPITest'));
-const AuthTester = lazy(() => import('./components/AuthTester'));
-const LiveWeather = lazy(() => import('./pages/LiveWeather'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const GrievancesPage = lazy(() => import('./pages/GrievancesPage'));
 const AdminGrievances = lazy(() => import('./pages/AdminGrievances'));
@@ -52,30 +51,50 @@ const FarmOperationsTelemetry = lazy(() => import('./pages/FarmOperationsTelemet
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return <LoadingSpinner />;
   }
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  
+
+  return <>{children}</>;
+};
+
+// Admin Route Component — checks userProfile.role === 'admin'
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, userProfile, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (userProfile?.role !== 'admin') {
+    toast.error('Admin access required');
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 };
 
 // Public Route Component (redirect to dashboard if authenticated)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return <LoadingSpinner />;
   }
-  
+
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -112,9 +131,9 @@ const AppLayout: React.FC = () => {
         v7_relativeSplatPath: true
       }}
     >
-      <div key={i18n.language} className="router-wrapper min-h-screen bg-gray-50 w-full overflow-x-hidden">{/* Add key to force re-render on language change */}
+      <div key={i18n.language} className="router-wrapper min-h-screen bg-canvas w-full flex flex-col">
         {user && <Navbar />}
-        <main className={`w-full ${user ? 'container mx-auto px-4 py-8' : ''}`}>
+        <main className={`flex-1 w-full ${user ? '' : ''}`}>
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
               <LoadingSpinner />
@@ -139,12 +158,13 @@ const AppLayout: React.FC = () => {
             } />
             <Route path="/verify-email" element={<VerifyEmail />} /> */}
             
+            {/* Home/Landing Page (public) */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsConditions />} />
+
             {/* Protected Routes */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
@@ -162,50 +182,38 @@ const AppLayout: React.FC = () => {
                 <Weather />
               </ProtectedRoute>
             } />
-            <Route path="/live-weather" element={
-              <ProtectedRoute>
-                <LiveWeather />
-              </ProtectedRoute>
-            } />
-            
+            {/* Redirects for consolidated routes */}
+            <Route path="/live-weather" element={<Navigate to="/weather" replace />} />
+
             {/* Market Routes */}
             <Route path="/market-prices" element={
               <ProtectedRoute>
                 <MarketPrices />
               </ProtectedRoute>
             } />
-            
-            {/* Real-time Data Routes */}
-            <Route path="/real-time-dashboard" element={
-              <ProtectedRoute>
-                <RealTimeDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/data-sources" element={
-              <ProtectedRoute>
-                <DataSourceManager />
-              </ProtectedRoute>
-            } />
-            <Route path="/gov-api-test" element={
-              <ProtectedRoute>
-                <GovernmentAPITest />
-              </ProtectedRoute>
-            } />
+            <Route path="/market-prices-advanced" element={<Navigate to="/market-prices" replace />} />
+            <Route path="/mandi-prices" element={<Navigate to="/market-prices" replace />} />
+            <Route path="/live-market-prices" element={<Navigate to="/market-prices" replace />} />
+
+            {/* Debug route (now protected) */}
             <Route path="/auth-test" element={
-              <AuthTester />
+              <ProtectedRoute>
+                <div className="container-app py-8">
+                  <div className="card card-padded text-center">
+                    <h1 className="text-xl font-semibold text-strong">Auth tester removed in production</h1>
+                    <p className="text-sm text-muted mt-1">This debug page is no longer available.</p>
+                  </div>
+                </div>
+              </ProtectedRoute>
             } />
-            
+
             {/* Agricultural Information Routes */}
             <Route path="/crop-management" element={
               <ProtectedRoute>
                 <CropManagement />
               </ProtectedRoute>
             } />
-            <Route path="/disease-detection" element={
-              <ProtectedRoute>
-                <DiseaseDetection />
-              </ProtectedRoute>
-            } />
+            <Route path="/disease-detection" element={<Navigate to="/disease-detection-ai" replace />} />
             <Route path="/disease-detection-ai" element={
               <ProtectedRoute>
                 <EnhancedDiseaseDetection />
@@ -310,11 +318,11 @@ const AppLayout: React.FC = () => {
               </ProtectedRoute>
             } />
             <Route path="/admin/grievances" element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <AdminGrievances />
-              </ProtectedRoute>
+              </AdminRoute>
             } />
-            
+
             {/* User Routes */}
             <Route path="/profile" element={
               <ProtectedRoute>
@@ -327,12 +335,12 @@ const AppLayout: React.FC = () => {
               </ProtectedRoute>
             } />
 
-            
+
             {/* Admin Dashboard */}
             <Route path="/admin" element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <AdminDashboard />
-              </ProtectedRoute>
+              </AdminRoute>
             } />
             
             {/* Catch-all route */}
@@ -369,10 +377,11 @@ const AppLayout: React.FC = () => {
 };
 
 function App() {
-  console.log('🌾 Smart Krishi Sahayak App loading...');
-  console.log('Environment:', import.meta.env.MODE);
-  console.log('Current URL:', window.location.href);
-  
+  if (import.meta.env.DEV) {
+    // Lightweight dev-only diagnostics
+    console.log('[Smart Krishi Sahayak] mode =', import.meta.env.MODE);
+  }
+
   return (
     <ErrorBoundary>
       <AuthProvider>

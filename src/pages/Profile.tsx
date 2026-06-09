@@ -1,1010 +1,558 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import {
+  User, Mail, Phone, MapPin, Edit3, Save, X, Camera, LogOut,
+  Sprout, Calendar, Award, TrendingUp, Target, Leaf, BarChart3,
+  Heart, Cloud, Globe, CheckCircle2, MessageSquare, Shield,
+  ChevronRight, Loader2, AtSign, Hash, CalendarDays, Tractor,
+  Bell, Database
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import profileService from '../services/profileService';
 import type { UserProfile, UserSettings } from '../services/profileService';
+import { PageHeader, Tabs, Button, Badge, Kpi, SectionTitle, Alert, Skeleton, FormField, Input, Select, Textarea, Modal } from '../components/ui';
 import toast from 'react-hot-toast';
-import { 
-  User, 
-  Mail, 
-  Phone,
-  MapPin,
-  Edit, 
-  Save,
-  Settings,
-  Bell,
-  Shield,
-  Languages,
-  LogOut,
-  Camera,
-  Sprout,
-  Calendar,
-  Award,
-  TrendingUp,
-  ChevronRight,
-  Target,
-  Leaf,
-  BarChart3,
-  Heart,
-  Cloud,
-  AlertCircle,
-  Globe,
-  CheckCircle2,
-  MessageSquare
-} from 'lucide-react';
+
+type ProfileTab = 'basic' | 'farm' | 'stats' | 'preferences';
+
+const STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+  'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli',
+  'Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry',
+];
 
 const Profile: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { user, logout } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [settings, setSettings] = useState<UserSettings | null>(null);
+  const navigate = useNavigate();
+  const { user, userProfile, logout, refreshUserProfile } = useAuth();
+
+  const [profile, setProfile] = useState<UserProfile | null>(userProfile || null);
+  const [editedProfile, setEditedProfile] = useState<Partial<UserProfile>>({});
   const [isEditing, setIsEditing] = useState(false);
-  const [editedProfile, setEditedProfile] = useState<Partial<UserProfile> | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'basic' | 'farm' | 'preferences' | 'achievements'>('basic');
+  const [loading, setLoading] = useState(!userProfile);
+  const [activeTab, setActiveTab] = useState<ProfileTab>('basic');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     if (!user) {
       setLoading(false);
       return;
     }
-    
     let mounted = true;
-    
-    const loadProfile = async () => {
-      try {
-        setLoading(true);
-        
-        // First, try to get the profile
-        const userProfile = await profileService.getUserProfile(user.uid);
-        
+
+    const unsub = profileService.subscribeToProfile?.(user.uid, (p) => {
+      if (!mounted) return;
+      setProfile(p);
+      setEditedProfile(p || {});
+      setLoading(false);
+    });
+
+    if (!unsub) {
+      // Fallback
+      profileService.getUserProfile(user.uid).then((p) => {
         if (!mounted) return;
-        
-        if (userProfile) {
-          // Profile exists, subscribe to real-time updates
-          const unsubscribeProfile = profileService.subscribeToProfile(user.uid, (profile) => {
-            if (mounted) {
-              setProfile(profile);
-              setEditedProfile(profile);
-              setLoading(false);
-            }
-          });
+        setProfile(p);
+        setEditedProfile(p || {});
+        setLoading(false);
+      }).catch(() => setLoading(false));
+    }
 
-          const unsubscribeSettings = profileService.subscribeToSettings(user.uid, (userSettings) => {
-            if (mounted && userSettings?.appearance?.language) {
-              i18n.changeLanguage(userSettings.appearance.language);
-            }
-          });
-
-          return () => {
-            mounted = false;
-            unsubscribeProfile();
-            unsubscribeSettings();
-          };
-        } else {
-          // Profile doesn't exist, create one
-          const newProfile = await profileService.createUserProfile(user, {
-            role: 'farmer',
-            state: '',
-            district: '',
-            village: '',
-          });
-          
-          if (mounted) {
-            setProfile(newProfile);
-            setEditedProfile(newProfile);
-            setLoading(false);
-            toast.success('Profile created! Please update your details.');
-          }
-        }
-      } catch (error) {
-        console.error('Error loading profile:', error);
-        if (mounted) {
-          setLoading(false);
-          toast.error('प्रोफाइल लोड करने में त्रुटि');
-        }
-      }
-    };
-    
-    loadProfile();
-    
     return () => {
       mounted = false;
+      if (typeof unsub === 'function') unsub();
     };
-  }, [user, i18n]);
+  }, [user]);
 
-  const cropOptions = [
-    'गेहूं', 'धान', 'कपास', 'गन्ना', 'मक्का', 'सोयाबीन', 
-    'सरसों', 'जौ', 'चना', 'मसूर', 'अरहर', 'तिल'
-  ];
-  
-  const languageOptions = [
-    { code: 'en', name: 'English' },
-    { code: 'hi', name: 'हिंदी' },
-    { code: 'pa', name: 'ਪੰਜਾਬੀ' },
-    { code: 'gu', name: 'ગુજરાતી' },
-    { code: 'mr', name: 'मराठी' },
-    { code: 'bn', name: 'বাংলা' },
-    { code: 'ta', name: 'தமிழ்' },
-    { code: 'te', name: 'తెలుగు' },
-    { code: 'kn', name: 'ಕನ್ನಡ' },
-    { code: 'ml', name: 'മലയാളം' },
-    { code: 'or', name: 'ଓଡ଼ିଆ' }
-  ];
-  
-  const expertiseOptions = [
-    'Organic Farming', 'Crop Rotation', 'Pest Management', 'Soil Health',
-    'Water Management', 'Dairy Farming', 'Poultry Farming', 'Horticulture',
-    'Agricultural Technology', 'Marketing & Sales'
-  ];
+  const displayName = profile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'Farmer';
+  const initials = displayName
+    .split(' ')
+    .map((n) => n.charAt(0))
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+  const email = profile?.email || user?.email || '';
+  const joinedDate = (profile as any)?.createdAt
+    ? new Date((profile as any).createdAt)
+    : (user?.metadata?.creationTime ? new Date(user.metadata.creationTime) : null);
+  const isVerified = (profile as any)?.emailVerified ?? !!user?.emailVerified;
+  const location = (profile as any)?.location;
+  const locationStr = location
+    ? [location.village, location.district, location.state].filter(Boolean).join(', ')
+    : null;
+
+  const handleEdit = () => {
+    setEditedProfile(profile || {});
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setEditedProfile(profile || {});
+    setIsEditing(false);
+  };
 
   const handleSave = async () => {
-    if (!editedProfile || !user) return;
-    
+    if (!user) return;
+    setSaving(true);
     try {
-      setSaving(true);
-      
-      // Update profile in Firebase
-      await profileService.updateUserProfile(user.uid, {
-        name: editedProfile.name,
-        phone: editedProfile.phone,
-        state: editedProfile.state,
-        district: editedProfile.district,
-        village: editedProfile.village,
-        experience: editedProfile.experience,
-        expertise: editedProfile.expertise,
-        bio: editedProfile.bio,
-      });
-
-      toast.success('प्रोफाइल सफलतापूर्वक अपडेट हुई!');
+      await profileService.updateUserProfile(user.uid, editedProfile);
+      await refreshUserProfile?.();
       setIsEditing(false);
-    } catch (err) {
-      console.error('Error saving profile:', err);
-      toast.error('प्रोफाइल सेव करने में त्रुटि');
+      toast.success(t('profile.saved', 'Profile updated'));
+    } catch (e) {
+      console.error('Profile save failed', e);
+      toast.error(t('profile.saveError', 'Failed to save profile'));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCancel = () => {
-    setEditedProfile(profile);
-    setIsEditing(false);
-  };
-
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64String = reader.result as string;
-      handleInputChange('photoURL', base64String);
-      toast.success('प्रोफ़ाइल तस्वीर अपडेट हो गई! (Avatar updated locally)');
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleInputChange = (field: keyof UserProfile, value: any) => {
-    if (!editedProfile) return;
-    setEditedProfile({ ...editedProfile, [field]: value });
-  };
-
-  const handleExpertiseChange = (expertise: string[]) => {
-    if (!editedProfile) return;
-    setEditedProfile({ ...editedProfile, expertise });
-  };
-
-  const handleNotificationChange = (key: string, value: boolean) => {
-    if (!editedProfile) return;
-    setEditedProfile({
-      ...editedProfile,
-      notifications: {
-        ...editedProfile.notifications,
-        [key]: value
-      }
-    });
-  };
-
-  const handleDataSyncChange = (key: string, value: boolean) => {
-    if (!editedProfile) return;
-    setEditedProfile({
-      ...editedProfile,
-      dataSync: {
-        ...editedProfile.dataSync,
-        [key]: value
-      }
-    });
-  };
-
-  const toggleExpertise = (expertise: string) => {
-    if (!editedProfile) return;
-    const currentExpertise = editedProfile.expertise || [];
-    const updatedExpertise = currentExpertise.includes(expertise) 
-      ? currentExpertise.filter(item => item !== expertise)
-      : [...currentExpertise, expertise];
-    
-    setEditedProfile({
-      ...editedProfile,
-      expertise: updatedExpertise
-    });
-  };
-
-  const toggleCrop = (crop: string) => {
-    if (!editedProfile) return;
-    const currentCrops = editedProfile.primaryCrops || [];
-    const updatedCrops = currentCrops.includes(crop)
-      ? currentCrops.filter(c => c !== crop)
-      : [...currentCrops, crop];
-    
-    setEditedProfile({ ...editedProfile, primaryCrops: updatedCrops });
-  };
-
-  const achievements = [
-    {
-      title: 'पहला लॉगिन',
-      description: 'ऐप में पहली बार लॉगिन किया',
-      icon: <User size={20} />,
-      earned: true,
-      earnedDate: '15 दिसंबर 2024'
-    },
-    {
-      title: 'फसल विशेषज्ञ',
-      description: '5 फसलों की जानकारी जोड़ी',
-      icon: <Sprout size={20} />,
-      earned: true,
-      progress: 100,
-      earnedDate: '20 दिसंबर 2024'
-    },
-    {
-      title: 'मौसम ट्रैकर',
-      description: '30 दिन तक मौसम ट्रैक किया',
-      icon: <Cloud size={20} />,
-      earned: false,
-      progress: 75
-    },
-    {
-      title: 'मार्केट मास्टर',
-      description: '50 मार्केट प्राइस चेक किए',
-      icon: <BarChart3 size={20} />,
-      earned: false,
-      progress: 60
-    },
-    {
-      title: 'सामुदायिक सहायक',
-      description: '10 किसानों की मदद की',
-      icon: <Heart size={20} />,
-      earned: false,
-      progress: 30
-    },
-    {
-      title: 'टेक्नोलॉजी एडाप्टर',
-      description: 'सभी फीचर्स इस्तेमाल किए',
-      icon: <Award size={20} />,
-      earned: false,
-      progress: 85
-    }
-  ];
-
   const handleLogout = async () => {
     try {
-      if (logout) {
-        await logout();
-      }
-      localStorage.removeItem('userProfile');
-      // Navigate will be handled by AuthContext
-    } catch (error) {
-      console.error('Logout error:', error);
+      await logout();
+      navigate('/login');
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  const ProfileField = ({ 
-    label, 
-    value, 
-    icon: Icon, 
-    isEditing, 
-    children, 
-    type = 'text',
-    className = '' 
-  }: { 
-    label: string;
-    value: string | number;
-    icon: React.ElementType;
-    isEditing: boolean;
-    children?: React.ReactNode;
-    type?: string;
-    className?: string;
-  }) => (
-    <div className={className}>
-      <label className="block text-sm font-medium text-gray-600 mb-2">{label}</label>
-      {isEditing ? (
-        children
-      ) : (
-        <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-          <Icon className="mr-3 text-gray-500" size={18} />
-          <span className="text-gray-800 font-medium">{value}</span>
-        </div>
-      )}
-    </div>
-  );
-
-  const StatCard = ({ icon: Icon, label, value, color = 'green' }: {
-    icon: React.ElementType;
-    label: string;
-    value: string | number;
-    color?: 'green' | 'blue' | 'purple' | 'orange';
-  }) => {
-    const colors = {
-      green: 'bg-green-100 text-green-800 border-green-200',
-      blue: 'bg-blue-100 text-blue-800 border-blue-200',
-      purple: 'bg-purple-100 text-purple-800 border-purple-200',
-      orange: 'bg-orange-100 text-orange-800 border-orange-200'
-    };
-    
-    return (
-      <div className={`p-4 rounded-xl border-2 ${colors[color]} transition-transform hover:scale-105`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium opacity-80">{label}</p>
-            <p className="text-2xl font-bold">{value}</p>
-          </div>
-          <Icon size={24} className="opacity-60" />
-        </div>
-      </div>
-    );
-  };
+  // Stats — derived from profile where available
+  const stats = useMemo(() => {
+    const farmSize = (profile as any)?.farmSize ?? null;
+    const experience = (profile as any)?.experience ?? null;
+    const primaryCrops = (profile as any)?.primaryCrops ?? [];
+    return { farmSize, experience, primaryCrops };
+  }, [profile]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex justify-center items-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">प्रोफाइल लोड हो रही है...</p>
+      <div className="min-h-screen bg-canvas">
+        <div className="container-app py-8 space-y-3">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-64 w-full" />
         </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex justify-center items-center">
-        <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
-          <User size={64} className="mx-auto mb-4 text-gray-400" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">लॉगिन आवश्यक है</h2>
-          <p className="text-gray-600 mb-4">कृपया अपनी प्रोफाइल देखने के लिए लॉगिन करें</p>
-          <button 
-            onClick={() => window.location.href = '/login'}
-            className="bg-green-500 text-white px-6 py-3 rounded-xl hover:bg-green-600 transition-colors"
-          >
-            लॉगिन करें
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!profile || !editedProfile) {
-    return (
-      <div className="text-center p-8">
-        <User size={48} className="mx-auto mb-4 text-gray-400" />
-        <p>प्रोफाइल लोड नहीं हो सका।</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* Enhanced Profile Header */}
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-green-500 to-green-600 px-8 py-12">
-            <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
-              
-              {/* Profile Picture */}
-              <div className="relative group cursor-pointer">
-                <input 
-                  type="file" 
-                  id="avatar-upload" 
-                  className="hidden" 
-                  accept="image/*" 
-                  onChange={handleAvatarUpload}
-                />
-                <label htmlFor="avatar-upload" className="cursor-pointer">
-                  <img 
-                    src={editedProfile.photoURL || profile.photoURL || profile.avatar || `https://api.dicebear.com/8.x/initials/svg?seed=${profile.name}&backgroundColor=22c55e`} 
-                    alt="प्रोफाइल फोटो" 
-                    className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover hover:brightness-95 transition-all"
-                  />
-                  <div className="absolute bottom-2 right-2 bg-white text-green-600 p-2 rounded-full shadow-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                    <Camera size={16} />
-                  </div>
-                </label>
-              </div>
-              
-              {/* Profile Info */}
-              <div className="text-center lg:text-left text-white flex-1">
-                <h1 className="text-4xl font-bold mb-2">{profile.name}</h1>
-                <p className="text-green-100 text-lg mb-4 flex items-center justify-center lg:justify-start">
-                  <MapPin size={18} className="mr-2" />
-                  {profile.village && profile.district && profile.state 
-                    ? `${profile.village}, ${profile.district}, ${profile.state}`
-                    : 'Location not set'}
-                </p>
-                <div className="flex flex-wrap justify-center lg:justify-start gap-3">
-                  <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm">
-                    👤 {profile.role === 'farmer' ? 'किसान' : profile.role === 'expert' ? 'विशेषज्ञ' : 'छात्र'}
-                  </span>
-                  {profile.experience && (
-                    <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm">
-                      📅 {profile.experience} अनुभव
-                    </span>
-                  )}
-                  <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm">
-                    ⭐ {profile.reputation || 0} प्रतिष्ठा
-                  </span>
-                  {profile.verified && (
-                    <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm flex items-center">
-                      <CheckCircle2 size={16} className="mr-1" /> सत्यापित
-                    </span>
+    <div className="min-h-screen bg-canvas">
+      <div className="container-app py-5 md:py-8">
+        {/* Hero card with avatar */}
+        <div className="card overflow-hidden mb-5">
+          <div className="h-24 md:h-32 bg-gradient-to-r from-leaf-700 via-leaf-600 to-leaf-700 relative">
+            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_50%,white,transparent_50%)]" />
+          </div>
+          <div className="px-4 md:px-6 pb-5 -mt-12 md:-mt-14">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              {/* Avatar */}
+              <div className="relative flex-shrink-0">
+                <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-leaf-100 text-leaf-700 flex items-center justify-center text-2xl md:text-3xl font-bold border-4 border-surface shadow-md">
+                  {profile?.photoURL ? (
+                    <img src={profile.photoURL} alt={displayName} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    initials
                   )}
                 </div>
-                {profile.bio && (
-                  <p className="text-green-100 mt-4 text-lg italic">"{profile.bio}"</p>
-                )}
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex space-x-3">
-                {isEditing ? (
-                  <>
-                    <button 
-                      onClick={handleSave} 
-                      disabled={loading}
-                      className="bg-white text-green-600 px-6 py-3 rounded-xl hover:bg-green-50 flex items-center font-semibold transition-all shadow-lg disabled:opacity-50"
-                    >
-                      <Save className="mr-2" size={18} /> 
-                      {loading ? 'सेव हो रहा है...' : 'सेव करें'}
-                    </button>
-                    <button 
-                      onClick={handleCancel} 
-                      className="bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 font-semibold transition-all"
-                    >
-                      रद्द करें
-                    </button>
-                  </>
-                ) : (
-                  <button 
-                    onClick={() => setIsEditing(true)} 
-                    className="bg-white text-green-600 px-6 py-3 rounded-xl hover:bg-green-50 flex items-center font-semibold transition-all shadow-lg"
+                {isEditing && (
+                  <button
+                    type="button"
+                    className="absolute bottom-0 right-0 w-8 h-8 bg-leaf-600 text-white rounded-full flex items-center justify-center shadow-md hover:bg-leaf-700"
+                    aria-label="Change photo"
                   >
-                    <Edit className="mr-2" size={18} /> 
-                    प्रोफाइल एडिट करें
+                    <Camera className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
-            </div>
-          </div>
-          
-          {/* Stats Row */}
-          <div className="px-8 py-6 bg-white border-t border-gray-100">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard 
-                icon={Calendar} 
-                label="सदस्य बने" 
-                value={profile.joined ? new Date(profile.joined).toLocaleDateString('hi-IN') : 'आज'}
-                color="blue"
-              />
-              <StatCard 
-                icon={MessageSquare} 
-                label="कुल पोस्ट" 
-                value={profile.stats?.totalPosts || 0}
-                color="green"
-              />
-              <StatCard 
-                icon={Award} 
-                label="सहायक उत्तर" 
-                value={profile.stats?.verifiedAnswers || 0}
-                color="purple"
-              />
-              <StatCard 
-                icon={TrendingUp} 
-                label="प्रतिष्ठा स्कोर" 
-                value={profile.reputation || 0}
-                color="orange"
-              />
+
+              {/* Name & email */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl md:text-2xl font-semibold text-strong truncate">{displayName}</h1>
+                  {isVerified && (
+                    <span title="Verified" className="inline-flex items-center text-leaf-600">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-muted truncate flex items-center gap-1.5 mt-0.5">
+                  <Mail className="w-3.5 h-3.5" /> {email}
+                </p>
+                <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1.5 text-xs text-muted">
+                  {locationStr && (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" /> {locationStr}
+                    </span>
+                  )}
+                  {joinedDate && (
+                    <span className="inline-flex items-center gap-1">
+                      <CalendarDays className="w-3.5 h-3.5" />
+                      {t('profile.joined', 'Joined')} {joinedDate.toLocaleDateString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN', { month: 'short', year: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {isEditing ? (
+                  <>
+                    <Button variant="ghost" size="sm" onClick={handleCancel} leftIcon={<X className="w-3.5 h-3.5" />}>
+                      {t('common.cancel', 'Cancel')}
+                    </Button>
+                    <Button variant="primary" size="sm" onClick={handleSave} loading={saving} leftIcon={<Save className="w-3.5 h-3.5" />}>
+                      {t('common.save', 'Save')}
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="secondary" size="sm" onClick={handleEdit} leftIcon={<Edit3 className="w-3.5 h-3.5" />}>
+                    {t('profile.editProfile', 'Edit Profile')}
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={() => setShowLogoutConfirm(true)} leftIcon={<LogOut className="w-3.5 h-3.5" />}>
+                  {t('common.logout', 'Logout')}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="bg-white rounded-2xl shadow-lg p-2">
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { key: 'basic', label: 'बुनियादी जानकारी', icon: User },
-              { key: 'farm', label: 'खेती की जानकारी', icon: Sprout },
-              { key: 'preferences', label: 'सेटिंग्स', icon: Settings },
-              { key: 'achievements', label: 'उपलब्धियां', icon: Award }
-            ].map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key as any)}
-                className={`flex items-center justify-center p-4 rounded-xl transition-all ${
-                  activeTab === key 
-                    ? 'bg-green-500 text-white shadow-lg' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <Icon size={20} className="mr-2" />
-                <span className="hidden sm:inline">{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Tabs */}
+        <Tabs
+          variant="pill"
+          tabs={[
+            { id: 'basic', label: t('profile.tabBasic', 'Basic Info'), icon: <User className="w-3.5 h-3.5" /> },
+            { id: 'farm', label: t('profile.tabFarm', 'Farm Details'), icon: <Tractor className="w-3.5 h-3.5" /> },
+            { id: 'stats', label: t('profile.tabStats', 'Stats & Activity'), icon: <BarChart3 className="w-3.5 h-3.5" /> },
+            { id: 'preferences', label: t('profile.tabPrefs', 'Preferences'), icon: <Globe className="w-3.5 h-3.5" /> },
+          ]}
+          active={activeTab}
+          onChange={(id) => setActiveTab(id as ProfileTab)}
+        />
 
-        {/* Tab Content */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          
-          {/* Basic Information Tab */}
+        {/* Tab content */}
+        <div className="mt-5 space-y-4">
           {activeTab === 'basic' && (
-            <div className="p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <User className="mr-3 text-green-600" size={24} />
-                व्यक्तिगत जानकारी
-              </h2>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ProfileField 
-                  label="नाम" 
-                  value={profile.name} 
-                  icon={User} 
-                  isEditing={isEditing}
-                >
-                  <input 
-                    type="text" 
-                    value={editedProfile.name} 
-                    onChange={(e) => handleInputChange('name', e.target.value)} 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-                    placeholder="आपका नाम दर्ज करें"
-                  />
-                </ProfileField>
-                
-                <ProfileField 
-                  label="ईमेल" 
-                  value={profile.email} 
-                  icon={Mail} 
-                  isEditing={isEditing}
-                >
-                  <input 
-                    type="email" 
-                    value={editedProfile.email} 
-                    onChange={(e) => handleInputChange('email', e.target.value)} 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-                    placeholder="आपका ईमेल दर्ज करें"
-                  />
-                </ProfileField>
-                
-                <ProfileField 
-                  label="मोबाइल नंबर" 
-                  value={profile.phone} 
-                  icon={Phone} 
-                  isEditing={isEditing}
-                >
-                  <input 
-                    type="tel" 
-                    value={editedProfile.phone} 
-                    onChange={(e) => handleInputChange('phone', e.target.value)} 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-                    placeholder="+91 98765 43210"
-                  />
-                </ProfileField>
-                
-                <ProfileField 
-                  label="गांव" 
-                  value={profile.village || 'गांव का नाम'} 
-                  icon={MapPin} 
-                  isEditing={isEditing}
-                >
-                  <input 
-                    type="text" 
-                    value={editedProfile.village || ''} 
-                    onChange={(e) => handleInputChange('village', e.target.value)} 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-                    placeholder="आपके गांव का नाम"
-                  />
-                </ProfileField>
-                
-                <ProfileField 
-                  label="जिला" 
-                  value={profile.district || 'जिला का नाम'} 
-                  icon={MapPin} 
-                  isEditing={isEditing}
-                >
-                  <input 
-                    type="text" 
-                    value={editedProfile.district || ''} 
-                    onChange={(e) => handleInputChange('district', e.target.value)} 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-                    placeholder="आपके जिले का नाम"
-                  />
-                </ProfileField>
-                
-                <ProfileField 
-                  label="राज्य" 
-                  value={profile.state || 'राज्य का नाम'} 
-                  icon={MapPin} 
-                  isEditing={isEditing}
-                >
-                  <input 
-                    type="text" 
-                    value={editedProfile.state || ''} 
-                    onChange={(e) => handleInputChange('state', e.target.value)} 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-                    placeholder="आपके राज्य का नाम"
-                  />
-                </ProfileField>
-                
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-600 mb-2">परिचय</label>
+            <div className="card card-padded">
+              <SectionTitle
+                title={t('profile.basicInfo', 'Basic Information')}
+                description={t('profile.basicInfoDesc', 'Your personal details and contact information.')}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <FormField label={t('profile.name', 'Full Name')}>
                   {isEditing ? (
-                    <textarea 
-                      value={editedProfile.bio || ''} 
-                      onChange={(e) => handleInputChange('bio', e.target.value)} 
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-                      placeholder="अपने बारे में कुछ बताएं..."
+                    <Input
+                      value={editedProfile.displayName || ''}
+                      onChange={(e) => setEditedProfile((p) => ({ ...p, displayName: e.target.value }))}
+                      leftIcon={<User className="w-4 h-4" />}
+                      placeholder="Enter your full name"
                     />
                   ) : (
-                    <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-gray-800">{profile.bio || 'कोई परिचय नहीं दिया गया।'}</p>
-                    </div>
+                    <ReadonlyField icon={<User className="w-4 h-4" />} value={profile?.displayName || '—'} />
                   )}
-                </div>
+                </FormField>
+
+                <FormField label={t('profile.email', 'Email')}>
+                  <ReadonlyField icon={<Mail className="w-4 h-4" />} value={email} verified={isVerified} />
+                </FormField>
+
+                <FormField label={t('profile.phone', 'Phone Number')}>
+                  {isEditing ? (
+                    <Input
+                      type="tel"
+                      value={(editedProfile as any)?.phone || ''}
+                      onChange={(e) => setEditedProfile((p) => ({ ...p, phone: e.target.value } as any))}
+                      leftIcon={<Phone className="w-4 h-4" />}
+                      placeholder="+91 98765 43210"
+                    />
+                  ) : (
+                    <ReadonlyField
+                      icon={<Phone className="w-4 h-4" />}
+                      value={(profile as any)?.phone || t('profile.notSet', 'Not set')}
+                    />
+                  )}
+                </FormField>
+
+                <FormField label={t('profile.role', 'Role')}>
+                  <ReadonlyField icon={<Shield className="w-4 h-4" />} value={(profile as any)?.role || 'Farmer'} />
+                </FormField>
+              </div>
+
+              <div className="mt-4">
+                <FormField label={t('profile.bio', 'About me')}>
+                  {isEditing ? (
+                    <Textarea
+                      value={(editedProfile as any)?.bio || ''}
+                      onChange={(e) => setEditedProfile((p) => ({ ...p, bio: e.target.value } as any))}
+                      placeholder={t('profile.bioPlaceholder', 'Tell us about your farming journey...')}
+                      rows={3}
+                    />
+                  ) : (
+                    <p className="text-sm text-ink-700 leading-relaxed">
+                      {(profile as any)?.bio || (
+                        <span className="text-muted italic">{t('profile.noBio', 'No bio yet. Click "Edit Profile" to add one.')}</span>
+                      )}
+                    </p>
+                  )}
+                </FormField>
               </div>
             </div>
           )}
-          
-          {/* Farm Information Tab */}
-          {activeTab === 'farm' && (
-            <div className="p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <Sprout className="mr-3 text-green-600" size={24} />
-                खेती की जानकारी
-              </h2>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ProfileField 
-                  label="भूमिका" 
-                  value={profile.role === 'farmer' ? 'किसान' : profile.role === 'expert' ? 'विशेषज्ञ' : 'छात्र'} 
-                  icon={User} 
-                  isEditing={false}
-                >
-                  <p className="text-gray-700">{profile.role === 'farmer' ? 'किसान' : profile.role === 'expert' ? 'विशेषज्ञ' : 'छात्र'}</p>
-                </ProfileField>
-                
-                <ProfileField 
-                  label="अनुभव" 
-                  value={profile.experience || 'Not set'} 
-                  icon={Calendar} 
-                  isEditing={isEditing}
-                >
-                  <input 
-                    type="text" 
-                    value={editedProfile.experience || ''} 
-                    onChange={(e) => handleInputChange('experience', e.target.value)} 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-                    placeholder="जैसे: 10+ वर्ष, 5 साल"
-                  />
-                </ProfileField>
-                
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-medium text-gray-600 mb-3">विशेषज्ञता</label>
-                  {isEditing ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      {expertiseOptions.map(expertise => (
-                        <label key={expertise} className="flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={(editedProfile.expertise || []).includes(expertise)} 
-                            onChange={() => toggleExpertise(expertise)} 
-                            className="hidden" 
-                          />
-                          <span className={`w-full px-3 py-2 rounded-lg text-sm text-center transition-all ${
-                            (editedProfile.expertise || []).includes(expertise) 
-                              ? 'bg-blue-500 text-white' 
-                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                          }`}>
-                            {expertise}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {(profile.expertise && profile.expertise.length > 0) ? (
-                        profile.expertise.map(expertise => (
-                          <span key={expertise} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium border border-blue-200">
-                            ⭐ {expertise}
-                          </span>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 italic">कोई विशेषज्ञता नहीं जोड़ी गई</p>
-                      )}
-                    </div>
-                  )}
-                </div>
 
-                {/* 🧪 मातीचे आरोग्य - Soil Chemistry Vector Section */}
-                <div className="lg:col-span-2 border-t pt-6 mt-6">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <Leaf className="text-green-600" size={20} />
-                    मातीचे आरोग्य (Soil Chemistry Analysis)
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-green-50/50 rounded-2xl p-6 border border-green-100">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">मातीचा pH (Soil pH Level)</label>
-                        {isEditing ? (
-                          <div className="flex items-center gap-4">
-                            <input 
-                              type="range" 
-                              min="4.5" 
-                              max="9.0" 
-                              step="0.1"
-                              value={editedProfile.soilPh || 6.5} 
-                              onChange={(e) => handleInputChange('soilPh', parseFloat(e.target.value))} 
-                              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-                            />
-                            <span className="font-bold text-green-700 bg-white px-2 py-1 rounded border min-w-[3rem] text-center">{editedProfile.soilPh || 6.5}</span>
-                          </div>
+          {activeTab === 'farm' && (
+            <div className="space-y-4">
+              <div className="card card-padded">
+                <SectionTitle
+                  title={t('profile.location', 'Location')}
+                  description={t('profile.locationDesc', 'Your farm location helps us provide local weather, market, and soil data.')}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <FormField label={t('profile.state', 'State')}>
+                    {isEditing ? (
+                      <Select
+                        value={(editedProfile as any)?.state || ''}
+                        onChange={(e) => setEditedProfile((p) => ({ ...p, state: e.target.value } as any))}
+                      >
+                        <option value="">{t('common.select', 'Select...')}</option>
+                        {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </Select>
+                    ) : (
+                      <ReadonlyField icon={<MapPin className="w-4 h-4" />} value={(profile as any)?.state || '—'} />
+                    )}
+                  </FormField>
+                  <FormField label={t('profile.district', 'District')}>
+                    {isEditing ? (
+                      <Input
+                        value={(editedProfile as any)?.district || ''}
+                        onChange={(e) => setEditedProfile((p) => ({ ...p, district: e.target.value } as any))}
+                        placeholder="e.g. Pune"
+                      />
+                    ) : (
+                      <ReadonlyField value={(profile as any)?.district || '—'} />
+                    )}
+                  </FormField>
+                  <FormField label={t('profile.village', 'Village / Town')}>
+                    {isEditing ? (
+                      <Input
+                        value={(editedProfile as any)?.village || ''}
+                        onChange={(e) => setEditedProfile((p) => ({ ...p, village: e.target.value } as any))}
+                        placeholder="e.g. Hinjewadi"
+                      />
+                    ) : (
+                      <ReadonlyField value={(profile as any)?.village || '—'} />
+                    )}
+                  </FormField>
+                </div>
+              </div>
+
+              <div className="card card-padded">
+                <SectionTitle
+                  title={t('profile.farmInfo', 'Farm Information')}
+                  description={t('profile.farmInfoDesc', 'Tell us about your farm so we can give tailored advice.')}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <FormField label={t('profile.farmSize', 'Farm Size')} hint={t('profile.farmSizeHint', 'In acres')}>
+                    {isEditing ? (
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={(editedProfile as any)?.farmSize ?? ''}
+                        onChange={(e) => setEditedProfile((p) => ({ ...p, farmSize: parseFloat(e.target.value) || 0 } as any))}
+                        leftIcon={<Tractor className="w-4 h-4" />}
+                        placeholder="e.g. 5.5"
+                      />
+                    ) : (
+                      <ReadonlyField
+                        icon={<Tractor className="w-4 h-4" />}
+                        value={stats.farmSize != null ? `${stats.farmSize} acres` : '—'}
+                      />
+                    )}
+                  </FormField>
+                  <FormField label={t('profile.experience', 'Experience')} hint={t('profile.experienceHint', 'Years of farming')}>
+                    {isEditing ? (
+                      <Input
+                        type="number"
+                        value={(editedProfile as any)?.experience ?? ''}
+                        onChange={(e) => setEditedProfile((p) => ({ ...p, experience: parseInt(e.target.value) || 0 } as any))}
+                        leftIcon={<Award className="w-4 h-4" />}
+                        placeholder="e.g. 10"
+                      />
+                    ) : (
+                      <ReadonlyField
+                        icon={<Award className="w-4 h-4" />}
+                        value={stats.experience != null ? `${stats.experience} years` : '—'}
+                      />
+                    )}
+                  </FormField>
+                </div>
+                <div className="mt-4">
+                  <FormField label={t('profile.primaryCrops', 'Primary Crops')} hint={t('profile.primaryCropsHint', 'Comma-separated, e.g. Rice, Wheat, Cotton')}>
+                    {isEditing ? (
+                      <Input
+                        value={Array.isArray((editedProfile as any)?.primaryCrops) ? (editedProfile as any).primaryCrops.join(', ') : ''}
+                        onChange={(e) => setEditedProfile((p) => ({
+                          ...p,
+                          primaryCrops: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                        } as any))}
+                        leftIcon={<Sprout className="w-4 h-4" />}
+                        placeholder="Rice, Wheat, Cotton"
+                      />
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {stats.primaryCrops.length > 0 ? (
+                          stats.primaryCrops.map((c: string) => (
+                            <Badge key={c} tone="leaf">{c}</Badge>
+                          ))
                         ) : (
-                          <div className="flex items-center gap-2 py-1">
-                            <span className="text-2xl font-extrabold text-green-800">{profile.soilPh || 6.5}</span>
-                            <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800 font-bold">माती उत्तम आहे (Optimal)</span>
-                          </div>
+                          <span className="text-sm text-muted italic">—</span>
                         )}
                       </div>
-
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="bg-white p-2.5 rounded-lg border border-green-100/80 text-center">
-                          <p className="text-[10px] text-gray-500 font-bold">Nitrogen (N)</p>
-                          {isEditing ? (
-                            <input 
-                              type="number"
-                              value={editedProfile.soilN || 140}
-                              onChange={(e) => handleInputChange('soilN', parseInt(e.target.value) || 0)}
-                              className="w-full text-center text-sm font-bold text-green-700 focus:outline-none border-b border-green-300"
-                            />
-                          ) : (
-                            <p className="text-base font-extrabold text-gray-800">{profile.soilN || 140} <span className="text-[8px] font-normal">mg/kg</span></p>
-                          )}
-                        </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-green-100/80 text-center">
-                          <p className="text-[10px] text-gray-500 font-bold">Phosphorus (P)</p>
-                          {isEditing ? (
-                            <input 
-                              type="number"
-                              value={editedProfile.soilP || 48}
-                              onChange={(e) => handleInputChange('soilP', parseInt(e.target.value) || 0)}
-                              className="w-full text-center text-sm font-bold text-green-700 focus:outline-none border-b border-green-300"
-                            />
-                          ) : (
-                            <p className="text-base font-extrabold text-gray-800">{profile.soilP || 48} <span className="text-[8px] font-normal">mg/kg</span></p>
-                          )}
-                        </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-green-100/80 text-center">
-                          <p className="text-[10px] text-gray-500 font-bold">Potassium (K)</p>
-                          {isEditing ? (
-                            <input 
-                              type="number"
-                              value={editedProfile.soilK || 220}
-                              onChange={(e) => handleInputChange('soilK', parseInt(e.target.value) || 0)}
-                              className="w-full text-center text-sm font-bold text-green-700 focus:outline-none border-b border-green-300"
-                            />
-                          ) : (
-                            <p className="text-base font-extrabold text-gray-800">{profile.soilK || 220} <span className="text-[8px] font-normal">mg/kg</span></p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-xs text-green-800 leading-relaxed bg-white/70 p-4 rounded-xl border border-green-100 flex flex-col justify-center">
-                      <p className="font-bold mb-1">💡 कृषी सल्ला (AI Soil Advice):</p>
-                      <p>तुमच्या मातीचा pH सामान्य आणि उत्तम आहे. नत्र (Nitrogen) प्रमाण वाढवण्यासाठी खतांच्या प्रमाणात थोडे युरिया नियोजन फायदेशीर ठरेल.</p>
-                    </div>
-                  </div>
+                    )}
+                  </FormField>
                 </div>
-
-                {/* 📅 पीक इतिहास - Interactive Crop Timeline Calendar */}
-                <div className="lg:col-span-2 border-t pt-6 mt-6">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <Calendar className="text-green-600" size={20} />
-                    पीक इतिहास आणि कालमर्यादा (Crop Milestones Timeline)
-                  </h3>
-                  
-                  <div className="relative pl-6 border-l-2 border-green-300 space-y-6">
-                    <div className="relative">
-                      <span className="absolute -left-[31px] top-1 bg-green-600 text-white p-1 rounded-full border-2 border-white shadow">
-                        <Leaf size={12} />
-                      </span>
-                      <div>
-                        <span className="text-xs font-bold text-green-600 uppercase">रब्बी हंगाम - मार्च २०२६ (Rabi)</span>
-                        <h4 className="font-extrabold text-gray-800">🌾 गहू कापणी यशस्वी (Wheat Harvest Complete)</h4>
-                        <p className="text-xs text-gray-600 mt-1">सरासरी उत्पन्न: १६ क्विंटल प्रति एकर. उत्तम हवामानामुळे आणि वेळीच खत नियोजनामुळे चांगले दर्जेदार पीक मिळाले.</p>
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <span className="absolute -left-[31px] top-1 bg-yellow-500 text-white p-1 rounded-full border-2 border-white shadow">
-                        <Sprout size={12} />
-                      </span>
-                      <div>
-                        <span className="text-xs font-bold text-yellow-600 uppercase">डिसेंबर २०२५ (Winter Phase)</span>
-                        <h4 className="font-extrabold text-gray-800">💊 रासायनिक खत व निंदणी (Fertilization & Weeding)</h4>
-                        <p className="text-xs text-gray-600 mt-1">नत्र-फॉस्फरस खतांचा मात्रा देऊन तणांचा प्रादुर्भाव रोखण्यासाठी कोळपणी पूर्ण करण्यात आली.</p>
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <span className="absolute -left-[31px] top-1 bg-blue-500 text-white p-1 rounded-full border-2 border-white shadow">
-                        <Calendar size={12} />
-                      </span>
-                      <div>
-                        <span className="text-xs font-bold text-blue-600 uppercase">नोव्हेंबर २०२५ (Sowing)</span>
-                        <h4 className="font-extrabold text-gray-800">🌱 गहू पेरणी (Wheat Sowing Complete)</h4>
-                        <p className="text-xs text-gray-600 mt-1">सुधारित लोकवन वाणाची कोरडवाहू व बागायती क्षेत्रावर १० एकर क्षेत्रात पेरणी पूर्ण झाली.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
               </div>
             </div>
           )}
-          
-          {/* Preferences Tab */}
+
+          {activeTab === 'stats' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Kpi label={t('profile.statCrops', 'Crops')} value={stats.primaryCrops.length || '—'} icon={<Sprout className="w-4 h-4" />} />
+                <Kpi label={t('profile.statFarmSize', 'Farm Size')} value={stats.farmSize != null ? `${stats.farmSize}` : '—'} hint={t('common.acres', 'acres')} icon={<Tractor className="w-4 h-4" />} />
+                <Kpi label={t('profile.statExperience', 'Experience')} value={stats.experience != null ? `${stats.experience}` : '—'} hint={t('common.years', 'years')} icon={<Award className="w-4 h-4" />} />
+                <Kpi label={t('profile.statMember', 'Member since')} value={joinedDate ? joinedDate.getFullYear() : '—'} icon={<Calendar className="w-4 h-4" />} />
+              </div>
+
+              <div className="card card-padded">
+                <SectionTitle
+                  title={t('profile.activity', 'Recent Activity')}
+                  description={t('profile.activityDesc', 'Your recent actions across the platform.')}
+                />
+                <Alert tone="info" className="mt-3">
+                  <Heart className="w-4 h-4" />
+                  <span>
+                    {t('profile.activityEmpty', 'Activity history will appear here as you use the app.')}
+                  </span>
+                </Alert>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'preferences' && (
-            <div className="p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <Settings className="mr-3 text-green-600" size={24} />
-                सेटिंग्स और प्राथमिकताएं
-              </h2>
-              
-              <div className="space-y-8">
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <Globe className="mr-2 text-blue-500" size={20} />
-                    भाषा सेटिंग्स
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <label className="flex items-center cursor-pointer p-3 bg-white rounded-lg border hover:bg-gray-50">
-                      <input 
-                        type="radio" 
-                        name="language" 
-                        value="hi" 
-                        checked={editedProfile.language === 'hi'} 
-                        onChange={(e) => handleInputChange('language', e.target.value)}
-                        className="mr-3 text-green-500"
-                      />
-                      <span className="text-gray-800">हिंदी</span>
-                    </label>
-                    <label className="flex items-center cursor-pointer p-3 bg-white rounded-lg border hover:bg-gray-50">
-                      <input 
-                        type="radio" 
-                        name="language" 
-                        value="en" 
-                        checked={editedProfile.language === 'en'} 
-                        onChange={(e) => handleInputChange('language', e.target.value)}
-                        className="mr-3 text-green-500"
-                      />
-                      <span className="text-gray-800">English</span>
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <Bell className="mr-2 text-yellow-500" size={20} />
-                    सूचना सेटिंग्स
-                  </h3>
-                  <div className="space-y-4">
-                    <label className="flex items-center justify-between">
-                      <span className="text-gray-700">मौसम की चेतावनी</span>
-                      <input 
-                        type="checkbox" 
-                        checked={editedProfile.notifications?.weather || false}
-                        onChange={(e) => handleNotificationChange('weather', e.target.checked)}
-                        className="toggle-checkbox" 
-                      />
-                    </label>
-                    <label className="flex items-center justify-between">
-                      <span className="text-gray-700">मार्केट की कीमतें</span>
-                      <input 
-                        type="checkbox" 
-                        checked={editedProfile.notifications?.prices || false}
-                        onChange={(e) => handleNotificationChange('prices', e.target.checked)}
-                        className="toggle-checkbox" 
-                      />
-                    </label>
-                  </div>
-                </div>
+            <div className="card card-padded">
+              <SectionTitle
+                title={t('profile.preferences', 'Preferences')}
+                description={t('profile.preferencesDesc', 'Quick access to your account preferences.')}
+              />
+              <div className="divide-y divide-subtle">
+                <PrefLink
+                  icon={<Globe className="w-4 h-4" />}
+                  iconTone="sky"
+                  title={t('profile.language', 'Language')}
+                  description={t('profile.languageDesc', 'Change your preferred language')}
+                  trailing={i18n.language.toUpperCase()}
+                  onClick={() => navigate('/settings')}
+                />
+                <PrefLink
+                  icon={<Bell className="w-4 h-4" />}
+                  iconTone="harvest"
+                  title={t('profile.notifications', 'Notifications')}
+                  description={t('profile.notificationsDesc', 'Choose how you want to be notified')}
+                  onClick={() => navigate('/settings')}
+                />
+                <PrefLink
+                  icon={<Shield className="w-4 h-4" />}
+                  iconTone="leaf"
+                  title={t('profile.privacy', 'Privacy & Security')}
+                  description={t('profile.privacyDesc', 'Manage your privacy settings')}
+                  onClick={() => navigate('/settings')}
+                />
+                <PrefLink
+                  icon={<Database className="w-4 h-4" />}
+                  iconTone="soil"
+                  title={t('profile.data', 'Data & Storage')}
+                  description={t('profile.dataDesc', 'Export, import, and clear your data')}
+                  onClick={() => navigate('/settings')}
+                />
               </div>
             </div>
-          )}
-          
-          {/* Achievements Tab */}
-          {activeTab === 'achievements' && (
-            <div className="p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <Award className="mr-3 text-green-600" size={24} />
-                उपलब्धियां और बैज
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {achievements.map((achievement, index) => (
-                  <div key={index} className={`p-6 rounded-xl border-2 transition-all ${
-                    achievement.earned 
-                      ? 'border-green-500 bg-green-50' 
-                      : 'border-gray-200 bg-gray-50'
-                  }`}>
-                    <div className="flex items-center mb-4">
-                      <div className={`p-3 rounded-full ${
-                        achievement.earned 
-                          ? 'bg-green-500 text-white' 
-                          : 'bg-gray-300 text-gray-500'
-                      }`}>
-                        {achievement.icon}
-                      </div>
-                      <div className="ml-4">
-                        <h3 className={`font-semibold ${
-                          achievement.earned ? 'text-green-800' : 'text-gray-500'
-                        }`}>
-                          {achievement.title}
-                        </h3>
-                        <p className={`text-sm ${
-                          achievement.earned ? 'text-green-600' : 'text-gray-400'
-                        }`}>
-                          {achievement.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Action Buttons */}
-        <div className="flex justify-center space-x-4 mt-8">
-          {isEditing ? (
-            <>
-              <button 
-                onClick={handleSave} 
-                disabled={loading}
-                className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 font-semibold"
-              >
-                {loading ? 'सेव हो रहा है...' : 'सेव करें'}
-              </button>
-              <button 
-                onClick={handleCancel}
-                className="px-8 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 font-semibold"
-              >
-                कैंसल करें
-              </button>
-            </>
-          ) : (
-            <button 
-              onClick={() => setIsEditing(true)}
-              className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 font-semibold"
-            >
-              प्रोफाइल एडिट करें
-            </button>
           )}
         </div>
       </div>
+
+      {/* Logout confirmation modal */}
+      <Modal
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title={t('profile.logoutConfirmTitle', 'Log out?')}
+        description={t('profile.logoutConfirmDesc', 'You will need to sign in again to access your data.')}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowLogoutConfirm(false)}>
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button variant="danger" onClick={handleLogout} leftIcon={<LogOut className="w-4 h-4" />}>
+              {t('common.logout', 'Logout')}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-ink-700">
+          {t('profile.logoutMessage', 'Are you sure you want to end your session?')}
+        </p>
+      </Modal>
     </div>
+  );
+};
+
+// Read-only field with icon
+const ReadonlyField: React.FC<{ icon?: React.ReactNode; value: string; verified?: boolean }> = ({ icon, value, verified }) => (
+  <div className="input flex items-center gap-2 cursor-default">
+    {icon && <span className="text-ink-500">{icon}</span>}
+    <span className="text-sm text-strong flex-1">{value}</span>
+    {verified && <CheckCircle2 className="w-4 h-4 text-leaf-600 flex-shrink-0" />}
+  </div>
+);
+
+const PrefLink: React.FC<{
+  icon: React.ReactNode;
+  iconTone: 'leaf' | 'sky' | 'soil' | 'harvest' | 'danger' | 'default';
+  title: string;
+  description: string;
+  trailing?: React.ReactNode;
+  onClick: () => void;
+}> = ({ icon, iconTone, title, description, trailing, onClick }) => {
+  const tones: Record<string, string> = {
+    leaf: 'bg-leaf-50 text-leaf-700',
+    sky: 'bg-sky-50 text-sky-700',
+    soil: 'bg-soil-50 text-soil-700',
+    harvest: 'bg-harvest-50 text-harvest-700',
+    danger: 'bg-[#fef2f2] text-danger-600',
+    default: 'bg-sunken text-ink-700',
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-3 py-3 hover:bg-sunken/50 transition-colors rounded-md -mx-2 px-2"
+    >
+      <div className={`w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0 ${tones[iconTone]}`}>
+        {icon}
+      </div>
+      <div className="flex-1 text-left min-w-0">
+        <p className="text-sm font-medium text-strong">{title}</p>
+        <p className="text-xs text-muted truncate">{description}</p>
+      </div>
+      {trailing && <span className="text-xs font-medium text-muted">{trailing}</span>}
+      <ChevronRight className="w-4 h-4 text-ink-400 flex-shrink-0" />
+    </button>
   );
 };
 

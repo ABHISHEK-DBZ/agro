@@ -7,46 +7,46 @@ service cloud.firestore {
       allow read: if request.auth != null && resource.data.role == 'admin';
     }
     
-    // Crops collection - authenticated users can read all, write their own
+    // Crops collection - public read
     match /crops/{cropId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
-    // Government schemes - read-only for authenticated users
+    // Government schemes - public read
     match /schemes/{schemeId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
-    // Market prices - read-only for authenticated users
+    // Market prices - public read
     match /marketPrices/{priceId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
-    // Community posts - authenticated users can read all, write their own
+    // Community posts - public read
     match /communityPosts/{postId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
-    // Community posts (new collection) - everyone can read and write
+    // Community posts (new collection) - everyone can read, owners can delete
     match /community_posts/{postId} {
       allow read: if true; // Anyone can read posts
-      allow create: if request.auth != null; // Authenticated users can create
+      allow create: if request.auth != null && request.resource.data.farmerId == request.auth.uid;
       allow update: if request.auth != null; // Authenticated users can like/update
-      allow delete: if request.auth != null; // Authenticated users can delete
+      allow delete: if request.auth != null && resource.data.farmerId == request.auth.uid;
     }
     
-    // Community replies - everyone can read and write
+    // Community replies - everyone can read, owners can delete
     match /community_replies/{replyId} {
       allow read: if true; // Anyone can read replies
-      allow create: if request.auth != null; // Authenticated users can reply
+      allow create: if request.auth != null && request.resource.data.farmerId == request.auth.uid;
       allow update: if request.auth != null; // Mark helpful, etc.
-      allow delete: if request.auth != null;
+      allow delete: if request.auth != null && resource.data.farmerId == request.auth.uid;
     }
     
     // Pest alerts - everyone can read and write
@@ -73,12 +73,12 @@ service cloud.firestore {
       allow delete: if false; // No one can delete contributions
     }
     
-    // Farmer Groups - everyone can read, members can write
+    // Farmer Groups - everyone can read, creators can delete
     match /farmer_groups/{groupId} {
       allow read: if true; // Anyone can see groups
-      allow create: if request.auth != null; // Authenticated users can create
+      allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid; // Authenticated users can create
       allow update: if request.auth != null; // Members can update
-      allow delete: if request.auth != null; // Creators/admins can delete
+      allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid; // Creators/admins can delete
     }
     
     // Notifications - user can only read their own
@@ -116,8 +116,61 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
+    // Swarm telemetry - public read (real-time dashboards)
+    match /swarmPeers/{peerId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /telemetryEquipment/{equipId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Health data - public read
+    match /health/{healthId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // System & visitor stats - public read
+    match /visitor_stats/{statId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /system_metrics/{metricId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Comments & posts - authenticated read/write
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Daily logs - authenticated write, public read
+    match /daily_logs/{logId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
     // Settings - users can only read/write their own settings
     match /settings/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User subcollections - owner access
+    match /users/{userId}/{document=**} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
@@ -140,15 +193,16 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && resource.data.user_id == request.auth.uid;
     }
     
-    // Weather data - read-only for authenticated users
+    // Weather data - public read
     match /weather/{weatherId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
-    // Admin access to all collections
+    // Fallback - public read, only admins can write
     match /{document=**} {
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }
 }

@@ -1,5 +1,6 @@
-// Enhanced Farming AI Agent - v2.1 - With fallback support
+// Enhanced Farming AI Agent - v2.2 - OpenRouter fallback support
 import geminiAiService from './geminiAiService';
+import openRouterService from './openRouterService';
 
 interface FarmingQuery {
   id: string;
@@ -236,26 +237,18 @@ class EnhancedFarmingAI {
 
   // Generate base answer using knowledge base and AI
   private async generateBaseAnswer(query: FarmingQuery, category: string): Promise<any> {
-    // Get relevant information from knowledge base
     const contextInfo = this.getContextualInformation(query, category);
     
-    // Prepare enhanced prompt for Gemini AI
-    const enhancedPrompt = this.buildEnhancedPrompt(query, category, contextInfo);
-    
     try {
-      // Get AI response
-      const aiResponse = await geminiAiService.getAgricultureResponse(enhancedPrompt, 'hi');
-      
+      const orResponse = await openRouterService.getAgricultureResponse(query.query, 'en', query.location);
       return {
-        answer: aiResponse.text,
-        hindiAnswer: aiResponse.text,
-        confidence: 85,
+        answer: orResponse.text,
+        hindiAnswer: orResponse.text,
+        confidence: 80,
         contextInfo
       };
-    } catch (error) {
-      console.warn('AI service unavailable, using fallback response:', error);
-      
-      // Fallback response when AI is not available
+    } catch (orError) {
+      console.warn('OpenRouter unavailable, using local fallback:', orError);
       return {
         answer: this.getFallbackResponse(query, category),
         hindiAnswer: this.getFallbackResponseHindi(query, category),

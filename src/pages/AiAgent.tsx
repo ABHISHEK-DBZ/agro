@@ -1,25 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Send, 
-  User, 
-  Loader, 
-  BrainCircuit, 
-  Mic, 
-  MicOff, 
-  Volume2, 
-  VolumeX,
-  Trash2,
-  Lightbulb,
-  Clock,
-  MapPin,
-  Sprout
+import {
+  Send, User, Mic, MicOff, Volume2, VolumeX,
+  Trash2, Lightbulb,  Sprout,
+  Sparkles, Leaf, Droplets, AlertTriangle, Bot, ChevronRight,
+  BrainCircuit, WifiOff
 } from 'lucide-react';
-import geminiAiService from '../services/geminiAiService';
-import { locationService } from '../services/locationService';
-import enhancedFarmingAI from '../services/enhancedFarmingAI';
+import openRouterService from '../services/openRouterService';
+import { getLocalFallback, getCatchAllResponse } from '../services/localFallbackAi';
 
-// Extend the Window interface for speech recognition
 declare global {
   interface Window {
     webkitSpeechRecognition: any;
@@ -32,1027 +21,395 @@ interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
-  isTyping?: boolean;
   category?: string;
-  confidence?: number;
   suggestions?: string[];
+  isOffline?: boolean;
 }
 
-interface ChatState {
-  isListening: boolean;
-  isSpeaking: boolean;
-  isLoading: boolean;
-  speechEnabled: boolean;
-  showSuggestions: boolean;
-}
+const suggestions = [
+  { icon: Sprout, label: 'Crop Management', questions: ['Best crop for my soil type?', 'What to plant after wheat?', 'Crop rotation tips'] },
+  { icon: AlertTriangle, label: 'Pest Control', questions: ['How to control tomato pests?', 'Cotton disease treatment', 'Natural pesticides'] },
+  { icon: Leaf, label: 'Soil Health', questions: ['Interpret soil test results', 'Best fertilizers for rice', 'Organic soil improvement'] },
+  { icon: Droplets, label: 'Irrigation', questions: ['Water needs for wheat', 'Drip irrigation for chilies', 'Save water in farming'] },
+  { icon: BrainCircuit, label: 'Schemes', questions: ['Current mandi prices', 'PM-KISAN benefits', 'Crop insurance guide'] },
+];
 
-interface CategoryProps {
-  icon: React.ReactNode;
-  title: string;
-  questions: string[];
-  color: string;
-}
-
-const QuickSuggestions: React.FC<{ onSelect: (suggestion: string) => void }> = ({ onSelect }) => {
-  const { i18n, t } = useTranslation();
-  
-  // Debug translation function
-  console.log('🎯 AiAgent Language Debug:', {
-    currentLanguage: i18n.language,
-    title: t('aiagent.title'),
-    cropManagement: t('aiagent.categories.cropManagement'),
-    availableResources: Object.keys(i18n.getResourceBundle(i18n.language, 'translation') || {}),
-    sampleTranslation: i18n.getResourceBundle(i18n.language, 'translation')?.aiagent
-  });
-  
-  // Get localized questions based on current language
-  const getLocalizedQuestions = (category: string) => {
-    const questionSets: Record<string, Record<string, string[]>> = {
-      crop: {
-        hi: [
-          "मेरी मिट्टी के लिए कौन सी फसल उपयुक्त है?",
-          "गेहूं के बाद कौन सी फसल लें?",
-          "अभी कौन सी फसल फायदेमंद है?"
-        ],
-        mr: [
-          "माझ्या मातीसाठी कोणते पीक योग्य आहे?",
-          "गहूनंतर कोणते पीक घ्यावे?",
-          "आता कोणते पीक फायदेशीर आहे?"
-        ],
-        gu: [
-          "મારી માટી માટે કયો પાક યોગ્ય છે?",
-          "ઘઉં પછી કયો પાક લેવો?",
-          "હવે કયો પાક ફાયદાકારક છે?"
-        ],
-        ta: [
-          "என் மண்ணுக்கு எந்த பயிர் ஏற்றது?",
-          "கோதுமைக்கு பிறகு எந்த பயிர் போடலாம்?",
-          "இப்போது எந்த பயிர் லாபகரமானது?"
-        ],
-        te: [
-          "నా మట్టికి ఏ పంట అనుకూలం?",
-          "గోధుమల తర్వాత ఏ పంట వేయాలి?",
-          "ఇప్పుడు ఏ పంట లాభదాయకం?"
-        ],
-        pa: [
-          "ਮੇਰੀ ਮਿੱਟੀ ਲਈ ਕਿਹੜੀ ਫਸਲ ਢੁਕਵੀਂ ਹੈ?",
-          "ਕਣਕ ਤੋਂ ਬਾਅਦ ਕਿਹੜੀ ਫਸਲ ਲਓ?",
-          "ਹੁਣ ਕਿਹੜੀ ਫਸਲ ਫਾਇਦੇਮੰਦ ਹੈ?"
-        ],
-        bn: [
-          "আমার মাটির জন্য কোন ফসল উপযুক্ত?",
-          "গমের পর কোন ফসল নেব?",
-          "এখন কোন ফসল লাভজনক?"
-        ],
-        kn: [
-          "ನನ್ನ ಮಣ್ಣಿಗೆ ಯಾವ ಬೆಳೆ ಸೂಕ್ತ?",
-          "ಗೋಧಿ ನಂತರ ಯಾವ ಬೆಳೆ ತೆಗೆದುಕೊಳ್ಳಬೇಕು?",
-          "ಈಗ ಯಾವ ಬೆಳೆ ಲಾಭದಾಯಕ?"
-        ],
-        ml: [
-          "എന്റെ മണ്ണിന് ഏത് വിളയാണ് യോജിച്ചത്?",
-          "ഗോതമ്പിന് ശേഷം ഏത് വിള എടുക്കണം?",
-          "ഇപ്പോൾ ഏത് വിള ലാഭകരമാണ്?"
-        ],
-        or: [
-          "ମୋ ମାଟି ପାଇଁ କେଉଁ ଫସଲ ଉପଯୁକ୍ତ?",
-          "ଗହମ ପରେ କେଉଁ ଫସଲ ନେବ?",
-          "ବର୍ତ୍ତମାନ କେଉଁ ଫସଲ ଲାଭଜନକ?"
-        ],
-        ur: [
-          "میری مٹی کے لیے کون سی فصل موزوں ہے؟",
-          "گندم کے بعد کون سی فصل لیں؟",
-          "اب کون سی فصل فائدہ مند ہے؟"
-        ],
-        en: [
-          "Which crop suits my soil type?",
-          "What to plant after wheat harvest?",
-          "Best crop rotation practices?"
-        ]
-      },
-      pest: {
-        hi: [
-          "टमाटर में कीड़े लग गए हैं कैसे छुटकारा पाएं?",
-          "कपास की फसल में रोग दिख रहा है क्या करें?",
-          "प्राकृतिक कीटनाशक कैसे बनाएं?"
-        ],
-        mr: [
-          "टोमॅटोमध्ये कीड लागली आहे कसा छुटकारा मिळवावा?",
-          "कापसाच्या पिकात रोग दिसत आहे काय करावे?",
-          "नैसर्गिक कीटकनाशक कसे बनवावे?"
-        ],
-        gu: [
-          "ટામેટાંમાં કીડા લાગ્યા છે કેવી રીતે છુટકારો મેળવવો?",
-          "કપાસની ખેતીમાં રોગ દેખાય છે શું કરવું?",
-          "કુદરતી જંતુનાશક કેવી રીતે બનાવવું?"
-        ],
-        ta: [
-          "தக்காளியில் பூச்சிகள் தாக்கியுள்ளன எப்படி கட்டுப்படுத்துவது?",
-          "பருத்தி பயிரில் நோய் தென்படுகிறது என்ன செய்வது?",
-          "இயற்கை பூச்சிக்கொல்லி எப்படி தயாரிப்பது?"
-        ],
-        te: [
-          "టమాటాలో పురుగులు వచ్చాయి ఎలా తొలగించాలి?",
-          "పత్తి పంటలో వ్యాధి కనిపిస్తోంది ఏమి చేయాలి?",
-          "సహజ పురుగుమందు ఎలా తయారు చేయాలి?"
-        ],
-        pa: [
-          "ਟਮਾਟਰ ਵਿੱਚ ਕੀੜੇ ਲੱਗ ਗਏ ਹਨ ਕਿਵੇਂ ਛੁਟਕਾਰਾ ਪਾਈਏ?",
-          "ਕਪਾਹ ਦੀ ਫਸਲ ਵਿੱਚ ਰੋਗ ਦਿਖ ਰਿਹਾ ਹੈ ਕੀ ਕਰੀਏ?",
-          "ਕੁਦਰਤੀ ਕੀੜੇਮਾਰ ਕਿਵੇਂ ਬਣਾਈਏ?"
-        ],
-        bn: [
-          "টমেটোতে পোকা লেগেছে কিভাবে দূর করব?",
-          "তুলার ফসলে রোগ দেখা দিয়েছে কী করব?",
-          "প্রাকৃতিক কীটনাশক কিভাবে তৈরি করব?"
-        ],
-        kn: [
-          "ಟೊಮೇಟೊದಲ್ಲಿ ಕೀಟಗಳು ಬಂದಿವೆ ಹೇಗೆ ತೊಡೆದುಹಾಕುವುದು?",
-          "ಹತ್ತಿ ಬೆಳೆಯಲ್ಲಿ ರೋಗ ಕಾಣುತ್ತಿದೆ ಏನು ಮಾಡಬೇಕು?",
-          "ನೈಸರ್ಗಿಕ ಕೀಟನಾಶಕ ಹೇಗೆ ತಯಾರಿಸುವುದು?"
-        ],
-        ml: [
-          "തക്കാളിയിൽ കീടങ്ങൾ വന്നിട്ടുണ്ട് എങ്ങനെ നീക്കം ചെയ്യും?",
-          "പഞ്ഞി വിളയിൽ രോഗം കാണുന്നു എന്തു ചെയ്യണം?",
-          "പ്രകൃതിദത്ത കീടനാശിനി എങ്ങനെ ഉണ്ടാക്കാം?"
-        ],
-        or: [
-          "ଟମାଟୋରେ କୀଟ ଲାଗିଛି କିପରି ଦୂର କରିବ?",
-          "କପା ଫସଲରେ ରୋଗ ଦେଖାଯାଉଛି କଣ କରିବ?",
-          "ପ୍ରାକୃତିକ କୀଟନାଶକ କିପରି ତିଆରି କରିବ?"
-        ],
-        ur: [
-          "ٹماٹر میں کیڑے لگ گئے ہیں کیسے چھٹکارا پائیں؟",
-          "کپاس کی فصل میں بیماری نظر آ رہی ہے کیا کریں؟",
-          "قدرتی کیڑے مار کیسے بنائیں؟"
-        ],
-        en: [
-          "How to control pests in tomatoes?",
-          "Cotton crop disease management?",
-          "Natural pesticide preparation?"
-        ]
-      }
-    };
-    
-    return questionSets[category]?.[i18n.language] || questionSets[category]?.en || [];
-  };
-  
-  const categories: CategoryProps[] = [
-    {
-      icon: "🌱",
-      title: t('aiagent.categories.cropManagement'),
-      questions: getLocalizedQuestions('crop'),
-      color: "from-green-500 to-green-600"
-    },
-    {
-      icon: "🐛",
-      title: t('aiagent.categories.pestControl'),
-      questions: getLocalizedQuestions('pest'),
-      color: "from-red-500 to-red-600"
-    },
-    {
-      icon: "🧪",
-      title: t('aiagent.categories.soilHealth'),
-      questions: i18n.language === 'hi' ? [
-        "मेरी मिट्टी की जांच रिपोर्ट का क्या मतलब है?",
-        "धान के लिए कौन सा उर्वरक सही है?",
-        "मिट्टी को जैविक तरीके से कैसे सुधारें?"
-      ] : [
-        "How to interpret soil test results?",
-        "Best fertilizers for rice",
-        "Organic soil improvement methods"
-      ],
-      color: "from-yellow-500 to-yellow-600"
-    },
-    {
-      icon: "💧",
-      title: t('aiagent.categories.irrigation'),
-      questions: i18n.language === 'hi' ? [
-        "गेहूं को कितना पानी चाहिए?",
-        "मिर्च के लिए ड्रिप इरिगेशन सही है?",
-        "पानी कैसे बचाएं?"
-      ] : [
-        "Water requirements for wheat",
-        "Is drip irrigation good for chilies?",
-        "Water conservation methods"
-      ],
-      color: "from-cyan-500 to-cyan-600"
-    },
-    {
-      icon: "🌦",
-      title: t('aiagent.categories.weatherImpact'),
-      questions: i18n.language === 'hi' ? [
-        "इस हफ्ते का मौसम कैसा रहेगा?",
-        "क्या कल बारिश होगी?",
-        "क्या अभी बुवाई का समय सही है?"
-      ] : [
-        "Weather impact on crops",
-        "Best time for sowing",
-        "Protecting crops from weather"
-      ],
-      color: "from-blue-500 to-blue-600"
-    },
-    {
-      icon: "💰",
-      title: t('aiagent.categories.marketPrices'),
-      questions: i18n.language === 'hi' ? [
-        "टमाटर का मंडी भाव क्या है?",
-        "जैविक सब्जियां कहां बेचें?",
-        "प्याज के लिए खरीददार कहां मिलेंगे?"
-      ] : [
-        "Current market prices",
-        "Where to sell organic produce?",
-        "Best time to sell crops"
-      ],
-      color: "from-purple-500 to-purple-600"
-    },
-    {
-      icon: "🏛",
-      title: t('aiagent.categories.governmentSchemes'),
-      questions: i18n.language === 'hi' ? [
-        "फसल बीमा के लिए क्या करें?",
-        "PM-KISAN के फायदे कैसे लें?",
-        "सोलर पंप पर सब्सिडी मिलेगी?"
-      ] : [
-        "How to get crop insurance?",
-        "PM-KISAN benefits guide",
-        "Available farming subsidies"
-      ],
-      color: "from-indigo-500 to-indigo-600"
-    },
-    {
-      icon: "🧑‍🌾",
-      title: t('aiagent.categories.organicFarming'),
-      questions: i18n.language === 'hi' ? [
-        "जैविक खेती कैसे शुरू करें?",
-        "प्राकृतिक कीटनाशक कैसे बनाएं?",
-        "जैविक प्रमाणन कैसे प्राप्त करें?"
-      ] : [
-        "How to start organic farming?",
-        "Natural pesticide recipes",
-        "Organic certification process"
-      ],
-      color: "from-emerald-500 to-emerald-600"
-    }
-  ];
-
-  return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-        <Lightbulb className="w-5 h-5 mr-2 text-yellow-500" />
-        {t('suggestions.title')}
-      </h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {categories.map((category, idx) => (
-          <div key={idx} className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-gray-100">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-2xl">{category.icon}</span>
-              <h4 className="font-semibold text-gray-800">{category.title}</h4>
-            </div>
-            
-            <div className="space-y-2">
-              {category.questions.map((question, qIdx) => (
-                <button
-                  key={qIdx}
-                  onClick={() => onSelect(question)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200
-                    bg-gradient-to-r ${category.color} text-white opacity-90
-                    hover:opacity-100 hover:shadow-md hover:transform hover:scale-[1.02]`}
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const MessageComponent: React.FC<{ 
-  message: Message; 
-  onSpeak: (text: string) => void;
-  isSpeechSupported: boolean;
-}> = ({ message, onSpeak, isSpeechSupported }) => {
-  const getCategoryIcon = (category?: string) => {
-    switch (category) {
-      case 'cropManagement': return '🌱';
-      case 'pestControl': return '🐛';
-      case 'soilHealth': return '🧪';
-      case 'irrigation': return '💧';
-      case 'weatherImpact': return '🌦';
-      case 'marketPrices': return '💰';
-      case 'governmentSchemes': return '🏛';
-      case 'organicFarming': return '🧑‍🌾';
-      default: return '🌾';
-    }
-  };
-
-  const getCategoryColor = (category?: string) => {
-    switch (category) {
-      case 'cropManagement': return 'text-green-600';
-      case 'pestControl': return 'text-red-600';
-      case 'soilHealth': return 'text-yellow-600';
-      case 'irrigation': return 'text-cyan-600';
-      case 'weatherImpact': return 'text-blue-600';
-      case 'marketPrices': return 'text-purple-600';
-      case 'governmentSchemes': return 'text-indigo-600';
-      case 'organicFarming': return 'text-emerald-600';
-      default: return 'text-orange-600';
-    }
-  };
-
-  return (
-    <div className={`flex items-end gap-3 ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-      {!message.isUser && (
-        <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white flex-shrink-0 shadow-lg`}>
-          {getCategoryIcon(message.category)}
-        </div>
-      )}
-      
-      <div className={`max-w-lg ${message.isUser ? 'order-last' : ''}`}>
-        <div className={`px-4 py-3 rounded-2xl shadow-sm ${
-          message.isUser 
-            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none' 
-            : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none'
-        }`}>
-          {!message.isUser && message.category && (
-            <div className={`flex items-center text-xs font-medium mb-1 ${getCategoryColor(message.category)}`}>
-              {getCategoryIcon(message.category)}
-              <span className="ml-1 capitalize">{message.category}</span>
-              {message.confidence && (
-                <span className="ml-2 bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                  {Math.round(message.confidence * 100)}%
-                </span>
-              )}
-            </div>
-          )}
-          
-          <p className="whitespace-pre-wrap">{message.text}</p>
-          
-          <div className="flex items-center justify-between mt-2">
-            <span className={`text-xs ${message.isUser ? 'text-blue-100' : 'text-gray-500'}`}>
-              <Clock className="w-3 h-3 inline mr-1" />
-              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            
-            {!message.isUser && isSpeechSupported && (
-              <button
-                onClick={() => onSpeak(message.text)}
-                className="p-1 text-gray-400 hover:text-orange-600 transition-colors rounded"
-                title="Speak this message"
-              >
-                <Volume2 size={14} />
-              </button>
-            )}
-          </div>
-        </div>
-        
-        {message.suggestions && message.suggestions.length > 0 && (
-          <div className="mt-2 space-y-1">
-            {message.suggestions.map((suggestion, index) => (
-              <button
-                key={index}
-                className="block w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg text-gray-700 transition-colors"
-              >
-                💡 {suggestion}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      
-      {message.isUser && (
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white flex-shrink-0 shadow-lg">
-          <User size={20} />
-        </div>
-      )}
-    </div>
-  );
+const cleanText = (text: string) => {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/_(.*?)_/g, '$1')
+    .replace(/`{1,3}[^`]*`{1,3}/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/#{1,6}\s/g, '')
+    .trim();
 };
 
 const AiAgent: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [chatState, setChatState] = useState<ChatState>({
-    isListening: false,
-    isSpeaking: false,
-    isLoading: false,
-    speechEnabled: true,
-    showSuggestions: true
-  });
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
-  const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Initialize Speech Recognition
-  useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
-      
-      recognitionInstance.continuous = false;
-      recognitionInstance.interimResults = false;
-      
-      const langMap: { [key: string]: string } = {
-        'en': 'en-US',
-        'hi': 'hi-IN',
-        'mr': 'mr-IN',
-        'gu': 'gu-IN',
-        'ta': 'ta-IN',
-        'te': 'te-IN',
-        'pa': 'pa-IN'
-      };
-      
-      recognitionInstance.lang = langMap[i18n.language] || 'en-US';
-
-      recognitionInstance.onstart = () => {
-        setChatState(prev => ({ ...prev, isListening: true }));
-      };
-
-      recognitionInstance.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(transcript);
-        setChatState(prev => ({ ...prev, isListening: false }));
-      };
-
-      recognitionInstance.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        setChatState(prev => ({ ...prev, isListening: false }));
-      };
-
-      recognitionInstance.onend = () => {
-        setChatState(prev => ({ ...prev, isListening: false }));
-      };
-
-      recognitionRef.current = recognitionInstance;
-    }
-  }, [i18n.language]);
-  
-  // Initialize with personalized greeting and location-based recommendations
-  useEffect(() => {
-    const initializeChat = async () => {
-      try {
-        const location = locationService.getCurrentLocation();
-        const farmingQuery = {
-          id: `greeting-${Date.now()}`,
-          query: i18n.language === 'hi' 
-            ? "नमस्ते! मैं कृषि में सहायता चाहता हूं।" 
-            : "Hello! I need help with farming.",
-          hindiQuery: "नमस्ते! मैं कृषि में सहायता चाहता हूं।",
-          language: i18n.language as 'en' | 'hi',
-          location: location ? {
-            state: location.state,
-            district: location.district,
-            climate: 'temperate'
-          } : undefined,
-          category: 'general' as any,
-          userId: 'user-1',
-          timestamp: new Date(),
-          urgency: 'low' as any
-        };
-        
-        let greeting = await enhancedFarmingAI.processFarmingQuery(farmingQuery);
-        
-        // Add location-specific information if available
-        if (location) {
-          const zone = locationService.getAgroClimaticZone(location.state);
-          
-          const locationInfo = i18n.language === 'hi'
-            ? `\n\nमैं देख रहा हूं कि आप ${location.district}, ${location.state} से हैं।`
-            : `\n\nI see you're from ${location.district}, ${location.state}.`;
-            
-          const zoneInfo = zone 
-            ? (i18n.language === 'hi'
-              ? `\nआपका क्षेत्र ${zone.name} में आता है, जहाँ ${zone.characteristics.majorCrops.join(', ')} जैसी फसलें अच्छी होती हैं।`
-              : `\nYour area falls in the ${zone.name}, which is great for crops like ${zone.characteristics.majorCrops.join(', ')}.`)
-            : '';
-            
-          greeting.answer += locationInfo + zoneInfo;
-        }
-
-        const initialMessage: Message = {
-          id: Date.now().toString(),
-          text: i18n.language === 'hi' ? greeting.hindiAnswer : greeting.answer,
-          isUser: false,
-          timestamp: new Date(),
-          category: 'general',
-          suggestions: i18n.language === 'hi' 
-            ? greeting.hindiFollowUpQuestions 
-            : greeting.followUpQuestions || (location ? locationService.getLocalizedRecommendations() : undefined)
-        };
-        setMessages([initialMessage]);
-      } catch (error) {
-        console.error('Enhanced AI initialization error:', error);
-        // Fallback greeting
-        const fallbackGreeting = i18n.language === 'hi' 
-          ? "नमस्ते! मैं आपका उन्नत AI कृषि सहायक हूं। मैं फसलों, मौसम, बीमारियों और सरकारी योजनाओं के बारे में विस्तृत जानकारी दे सकता हूं।"
-          : "Hello! I'm your advanced AI Agriculture Assistant. I can provide detailed information about crops, weather, diseases, and government schemes.";
-        
-        const fallbackMessage: Message = {
-          id: Date.now().toString(),
-          text: fallbackGreeting,
-          isUser: false,
-          timestamp: new Date(),
-          category: 'general'
-        };
-        setMessages([fallbackMessage]);
-      }
-    };
-
-    initializeChat();
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = i18n.language === 'hi' ? 'hi-IN' : 'en-US';
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event: any) => { setInput(event.results[0][0].transcript); setIsListening(false); };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
   }, [i18n.language]);
 
-  const startListening = () => {
-    if (recognitionRef.current && !chatState.isListening) {
-      recognitionRef.current.start();
-    }
-  };
-
-  const stopListening = () => {
-    if (recognitionRef.current && chatState.isListening) {
-      recognitionRef.current.stop();
-    }
-  };
-
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      const voiceLangMap: { [key: string]: string } = {
-        'en': 'en-US',
-        'hi': 'hi-IN',
-        'mr': 'mr-IN',
-        'gu': 'gu-IN',
-        'ta': 'ta-IN',
-        'te': 'te-IN',
-        'pa': 'pa-IN'
-      };
-      
-      utterance.lang = voiceLangMap[i18n.language] || 'en-US';
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      
-      utterance.onstart = () => setChatState(prev => ({ ...prev, isSpeaking: true }));
-      utterance.onend = () => setChatState(prev => ({ ...prev, isSpeaking: false }));
-      utterance.onerror = () => setChatState(prev => ({ ...prev, isSpeaking: false }));
-      
-      speechSynthesis.speak(utterance);
-      synthesisRef.current = utterance;
-    }
-  };
-
-  const stopSpeaking = () => {
-    if ('speechSynthesis' in window) {
-      speechSynthesis.cancel();
-      setChatState(prev => ({ ...prev, isSpeaking: false }));
-    }
-  };
-
-  const handleSend = async (messageText?: string) => {
-    const textToSend = messageText || input.trim();
-    if (textToSend === '' || chatState.isLoading) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: textToSend,
-      isUser: true,
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setChatState(prev => ({ ...prev, isLoading: true }));
-
-    try {
-      const location = locationService.getCurrentLocation();
-      
-      // Create farming query for enhanced AI
-      const farmingQuery = {
-        id: `query-${Date.now()}`,
-        query: textToSend,
-        hindiQuery: textToSend, // In real app, translate if needed
-        category: 'general' as any, // Will be auto-detected by AI
-        location: location ? {
-          state: location.state,
-          district: location.district,
-          climate: 'temperate'
-        } : undefined,
-        userId: 'user-1',
-        timestamp: new Date(),
-        urgency: 'medium' as any
-      };
-      
-      let response = await enhancedFarmingAI.processFarmingQuery(farmingQuery);
-      
-      // Enhance response with location-specific information
-      if (location && (
-        textToSend.toLowerCase().includes('crop') ||
-        textToSend.toLowerCase().includes('weather') ||
-        textToSend.toLowerCase().includes('soil') ||
-        textToSend.toLowerCase().includes('फसल') ||
-        textToSend.toLowerCase().includes('मौसम') ||
-        textToSend.toLowerCase().includes('मिट्टी')
-      )) {
-        const zone = locationService.getAgroClimaticZone(location.state);
-
-        if (zone) {
-          const locationContext = i18n.language === 'hi'
-            ? `\n\nआपके क्षेत्र ${location.district}, ${location.state} के लिए विशेष जानकारी:\n`
-            : `\n\nSpecific information for your area ${location.district}, ${location.state}:\n`;
-
-          const currentAnswer = i18n.language === 'hi' ? response.hindiAnswer : response.answer;
-          const updatedAnswer = currentAnswer + locationContext;
-
-          if (textToSend.toLowerCase().includes('crop') || textToSend.toLowerCase().includes('फसल')) {
-            const cropInfo = i18n.language === 'hi'
-              ? `• इस क्षेत्र की प्रमुख फसलें: ${zone.characteristics.majorCrops.join(', ')}\n`
-              : `• Major crops for this region: ${zone.characteristics.majorCrops.join(', ')}\n`;
-            
-            if (i18n.language === 'hi') {
-              response.hindiAnswer = updatedAnswer + cropInfo;
-            } else {
-              response.answer = updatedAnswer + cropInfo;
-            }
-          }
-
-          if (textToSend.toLowerCase().includes('weather') || textToSend.toLowerCase().includes('मौसम')) {
-            const weatherInfo = i18n.language === 'hi'
-              ? `• सामान्य वर्षा: ${zone.characteristics.rainfall}\n• तापमान: ${zone.characteristics.temperature}\n`
-              : `• Typical rainfall: ${zone.characteristics.rainfall}\n• Temperature: ${zone.characteristics.temperature}\n`;
-            
-            if (i18n.language === 'hi') {
-              response.hindiAnswer = updatedAnswer + weatherInfo;
-            } else {
-              response.answer = updatedAnswer + weatherInfo;
-            }
-          }
-
-          if (textToSend.toLowerCase().includes('soil') || textToSend.toLowerCase().includes('मिट्टी')) {
-            const soilInfo = i18n.language === 'hi'
-              ? `• मिट्टी के प्रकार: ${zone.characteristics.soilTypes.join(', ')}\n`
-              : `• Soil types: ${zone.characteristics.soilTypes.join(', ')}\n`;
-            
-            if (i18n.language === 'hi') {
-              response.hindiAnswer = updatedAnswer + soilInfo;
-            } else {
-              response.answer = updatedAnswer + soilInfo;
-            }
-
-            // Add soil-specific recommendations
-            const soilType = zone.characteristics.soilTypes[0]?.toLowerCase();
-            const soilTypeInfo = locationService.getSoilType(soilType);
-            if (soilTypeInfo) {
-              const managementTips = i18n.language === 'hi'
-                ? `\nमिट्टी प्रबंधन सुझाव:\n${soilTypeInfo.management.map(tip => `• ${tip}`).join('\n')}`
-                : `\nSoil management tips:\n${soilTypeInfo.management.map(tip => `• ${tip}`).join('\n')}`;
-              
-              if (i18n.language === 'hi') {
-                response.hindiAnswer += managementTips;
-              } else {
-                response.answer += managementTips;
-              }
-            }
-          }
-        }
-      }
-      
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: i18n.language === 'hi' ? response.hindiAnswer : response.answer,
+  useEffect(() => {
+    if (messages.length === 0) {
+      setMessages([{
+        id: 'greeting',
+        text: i18n.language === 'hi'
+          ? "नमस्ते! मैं आपका कृषि सहायक हूं। फसलों, मौसम, कीट नियंत्रण और सरकारी योजनाओं के बारे में पूछें।"
+          : "Hello! I'm your agriculture assistant. Ask me about crops, weather, pest control, and government schemes.",
         isUser: false,
         timestamp: new Date(),
-        category: 'general',
-        confidence: response.confidence,
-        suggestions: i18n.language === 'hi' 
-          ? response.hindiFollowUpQuestions 
-          : response.followUpQuestions || (location ? locationService.getLocalizedRecommendations() : undefined)
-      };
-      
-      setMessages(prev => [...prev, botMessage]);
-
-      // Auto-speak if not already speaking
-      if (!chatState.isSpeaking && chatState.speechEnabled) {
-        speakText(i18n.language === 'hi' ? response.hindiAnswer : response.answer);
-      }
-
-    } catch (error) {
-      console.error("Error with enhanced AI:", error);
-      // Fallback to basic gemini service
-      try {
-        const location = locationService.getCurrentLocation();
-        let fallbackResponse = await geminiAiService.getAgricultureResponse(textToSend, i18n.language, location);
-        
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: fallbackResponse.text,
-          isUser: false,
-          timestamp: new Date(),
-          category: fallbackResponse.category || 'general',
-          confidence: fallbackResponse.confidence,
-          suggestions: fallbackResponse.suggestions
-        };
-        
-        setMessages(prev => [...prev, botMessage]);
-        
-        if (!chatState.isSpeaking && chatState.speechEnabled) {
-          speakText(fallbackResponse.text);
-        }
-      } catch (fallbackError) {
-        const errorText = i18n.language === 'hi' 
-          ? "माफ करें, मुझे अभी समस्या हो रही है। कृपया फिर से कोशिश करें।"
-          : "Sorry, I'm having trouble right now. Please try again.";
-        
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: errorText,
-          isUser: false,
-          timestamp: new Date(),
-          category: 'error'
-        };
-        
-        setMessages(prev => [...prev, errorMessage]);
-        console.error("Fallback error:", fallbackError);
-      }
-    } finally {
-      setChatState(prev => ({ ...prev, isLoading: false }));
+        category: 'general'
+      }]);
     }
+  }, []);
+
+  const speakText = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = i18n.language === 'hi' ? 'hi-IN' : 'en-US';
+    utterance.rate = 0.9;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => { speechSynthesis.cancel(); setIsSpeaking(false); };
+
+  const addBotMessage = (text: string, category?: string, suggestionsList?: string[], offline?: boolean) => {
+    setMessages(prev => [...prev, {
+      id: (Date.now() + Math.random()).toString(),
+      text,
+      isUser: false,
+      timestamp: new Date(),
+      category,
+      suggestions: suggestionsList,
+      isOffline: offline
+    }]);
+  };
+
+  const handleSend = async (text?: string) => {
+    const msg = (text || input).trim();
+    if (!msg || isLoading) return;
+
+    // Add user message
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      text: msg,
+      isUser: true,
+      timestamp: new Date()
+    }]);
+    setInput('');
+    setIsLoading(true);
+    setShowSuggestions(false);
+
+    // 1. Check local fallback first (instant, guaranteed for known topics)
+    const localAnswer = getLocalFallback(msg, i18n.language);
+
+    // 2. Try OpenRouter AI for a comprehensive answer
+    try {
+      const prompt = `Answer this agriculture question: ${msg}\n\nProvide a concise, practical answer suitable for Indian farmers. Include specific crop names, region info, and actionable steps.`;
+      const response = await openRouterService.chat(prompt, i18n.language);
+
+      // API succeeded — use the AI response
+      addBotMessage(cleanText(response.text), response.category, response.suggestions);
+      setIsOfflineMode(false);
+      setIsLoading(false);
+      return;
+    } catch (err) {
+      console.warn('[AI] OpenRouter failed:', err);
+    }
+
+    // 3. API failed — use local fallback if available
+    if (localAnswer) {
+      addBotMessage(localAnswer, 'general', undefined, true);
+      setIsOfflineMode(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // 4. Nothing matched — use universal catch-all
+    const catchAll = getCatchAllResponse(i18n.language);
+    addBotMessage(catchAll, 'general', undefined, true);
+    setIsOfflineMode(true);
+    setIsLoading(false);
   };
 
   const clearConversation = () => {
     setMessages([]);
-    // Clear both Gemini AI service and Enhanced Farming AI history
-    geminiAiService.clearHistory();
-    // Enhanced Farming AI doesn't have persistent history, it's stateless
+    openRouterService.clearHistory();
+    setShowSuggestions(true);
+    setIsOfflineMode(false);
   };
 
   const isVoiceSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
   const isSpeechSupported = 'speechSynthesis' in window;
 
   return (
-    <div className="ai-chat-container">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-[#f8f7f5] dark:bg-[#14130f]">
       {/* Header */}
-      <div className="ai-chat-header">
-        <div className="flex items-center">
-          <div className="bg-gradient-to-br from-orange-400 to-orange-600 p-3 rounded-2xl mr-4 shadow-lg">
-            <BrainCircuit className="h-8 w-8 text-white" />
+      <div className="shrink-0 bg-white dark:bg-[#1f1d18] border-b border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)]" style={{ boxShadow: '0 1px 2px rgba(38,36,31,0.04)' }}>
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#39542f] flex items-center justify-center shadow-sm">
+              <Bot className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-base font-semibold text-[#181713] dark:text-[#f1efe9]">Krishi AI</h1>
+              <div className="flex items-center gap-1.5">
+                {isOfflineMode ? (
+                  <>
+                    <WifiOff className="w-3 h-3 text-[#dc8a14]" />
+                    <p className="text-[11px] text-[#dc8a14] font-medium">Offline Mode</p>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#3d8b4d] animate-pulse" />
+                    <p className="text-[11px] text-[#7a7364] dark:text-[#9b9482]">Smart Krishi Sahayak</p>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              {t('aiagent.title')} Advanced
-            </h1>
-            <p className="text-gray-600">{t('aiagent.subtitle')} - Enhanced Intelligence</p>
-          </div>
-        </div>
-        
-        {/* Controls */}
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={clearConversation}
-            className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
-            title="Clear conversation"
-          >
-            <Trash2 size={18} />
-          </button>
-          
-          <button
-            onClick={() => setChatState(prev => ({ ...prev, showSuggestions: !prev.showSuggestions }))}
-            className="p-2 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors"
-            title="Toggle suggestions"
-          >
-            <Lightbulb size={18} />
-          </button>
-          
-          {isSpeechSupported && (
+          <div className="flex items-center gap-1">
             <button
-              onClick={chatState.isSpeaking ? stopSpeaking : () => {}}
-              disabled={!chatState.isSpeaking}
-              className={`p-2 rounded-xl transition-colors ${
-                chatState.isSpeaking 
-                  ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              onClick={() => setShowSuggestions(!showSuggestions)}
+              className={`p-2 rounded-lg transition-all ${
+                showSuggestions
+                  ? 'bg-[#f3f7f1] text-[#476a39] dark:bg-[rgba(93,133,76,0.12)] dark:text-[#a3bf96]'
+                  : 'text-[#9b9482] hover:text-[#4d483f] dark:hover:text-[#bfbaad] hover:bg-[#f1efe9] dark:hover:bg-[rgba(255,255,255,0.04)]'
               }`}
-              title={chatState.isSpeaking ? 'Stop speaking' : 'Not speaking'}
+              title="Suggestions"
             >
-              {chatState.isSpeaking ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              <Lightbulb className="w-4 h-4" />
             </button>
-          )}
+            {isSpeechSupported && (
+              <button
+                onClick={isSpeaking ? stopSpeaking : undefined}
+                disabled={!isSpeaking}
+                className={`p-2 rounded-lg transition-all ${
+                  isSpeaking
+                    ? 'bg-[#fbf0ee] text-[#b94a3e] dark:bg-[rgba(185,74,62,0.15)] dark:text-[#e06b5e]'
+                    : 'text-[#9b9482] hover:text-[#4d483f] dark:hover:text-[#bfbaad] hover:bg-[#f1efe9] dark:hover:bg-[rgba(255,255,255,0.04)]'
+                }`}
+              >
+                {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+            )}
+            <button
+              onClick={clearConversation}
+              className="p-2 rounded-lg text-[#9b9482] hover:text-[#b94a3e] hover:bg-[#fbf0ee] dark:hover:bg-[rgba(185,74,62,0.15)] transition-all"
+              title="New conversation"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="ai-chat-messages">
-        {/* Quick suggestions */}
-        {chatState.showSuggestions && messages.length <= 1 && (
-          <QuickSuggestions onSelect={handleSend} />
-        )}
-
-        {/* Enhanced AI Status */}
-        <div className="enhanced-card p-4 shadow-sm mb-4">
-          <div className="flex items-center">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-              <BrainCircuit className="text-green-600 mr-2" size={20} />
-              <div>
-                <h3 className="font-semibold text-contrast">Advanced AI Agriculture Assistant</h3>
-                <p className="text-contrast-light text-sm font-medium">
-                  Powered by Gemini AI with specialized agriculture knowledge base
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Location Context Card */}
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 shadow-sm mb-6 border border-green-100">
-          <div className="flex flex-col space-y-4">
-            {/* Location Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <MapPin className="text-emerald-600" size={20} />
-                <h3 className="font-semibold text-emerald-800">
-                  {t('aiagent.locationContext.title')}
-                </h3>
-              </div>
-              <div className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">
-                {locationService.getCurrentLocation()?.state || t('aiagent.locationContext.locationNotFound')}
-              </div>
-            </div>
-
-            {/* Current Season */}
-            <div className="flex items-center space-x-2 text-sm">
-              <Clock className="text-amber-600" size={16} />
-              <span className="text-gray-700">
-                {(() => {
-                  const month = new Date().getMonth();
-                  if (month >= 5 && month <= 9) {
-                    return t('aiagent.locationContext.kharifSeason');
-                  } else if (month >= 9 || month <= 2) {
-                    return t('aiagent.locationContext.rabiSeason');
-                  } else {
-                    return t('aiagent.locationContext.zaidSeason');
-                  }
-                })()}
-              </span>
-            </div>
-
-            {/* Agro-Climatic Info */}
-            {locationService.getCurrentLocation() && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                {/* Zone Info */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-green-100">
-                  <h4 className="font-medium text-sm text-gray-700 mb-2">
-                    {t('aiagent.locationContext.agroClimaticZone')}
-                  </h4>
-                  {(() => {
-                    const zone = locationService.getAgroClimaticZone(
-                      locationService.getCurrentLocation()?.state || ''
-                    );
-                    return zone ? (
-                      <div className="space-y-1 text-sm">
-                        <p className="text-emerald-700">{zone.name}</p>
-                        <p className="text-gray-600 text-xs">
-                          {t('aiagent.locationContext.rainfall')}: {zone.characteristics.rainfall}
-                        </p>
-                        <p className="text-gray-600 text-xs">
-                          {t('aiagent.locationContext.temperature')}: {zone.characteristics.temperature}
-                        </p>
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4 py-6">
+          {/* Suggestion cards */}
+          {showSuggestions && messages.length <= 1 && (
+            <div className="mb-8">
+              <p className="text-xs font-medium text-[#7a7364] dark:text-[#9b9482] uppercase tracking-wider mb-3 px-1">
+                Quick Questions
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {suggestions.map((group, i) => {
+                  const Icon = group.icon;
+                  return (
+                    <div key={i} className="bg-white dark:bg-[#1f1d18] rounded-xl border border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)] overflow-hidden hover:border-[rgba(38,36,31,0.15)] hover:shadow-sm transition-all">
+                      <div className="p-2.5 pb-1">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Icon className="w-3.5 h-3.5 text-[#476a39] dark:text-[#7ea26d]" />
+                          <span className="text-[11px] font-semibold text-[#3a3630] dark:text-[#bfbaad] truncate">{group.label}</span>
+                        </div>
                       </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">{t('aiagent.locationContext.zoneNotFound')}</p>
-                    );
-                  })()}
-                </div>
+                      <div className="px-2.5 pb-2 space-y-0.5">
+                        {group.questions.map((q, j) => (
+                          <button
+                            key={j}
+                            onClick={() => handleSend(q)}
+                            className="w-full text-left text-[11px] text-[#7a7364] dark:text-[#9b9482] hover:text-[#39542f] dark:hover:text-[#a3bf96] hover:bg-[#f3f7f1] dark:hover:bg-[rgba(93,133,76,0.08)] rounded-lg px-2 py-1.5 transition-all flex items-center justify-between group"
+                          >
+                            <span className="truncate">{q}</span>
+                            <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                {/* Current Recommendations */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-green-100">
-                  <h4 className="font-medium text-sm text-gray-700 mb-2">
-                    <Sprout className="inline-block mr-1 text-green-600" size={16} />
-                    {t('aiagent.locationContext.seasonalCrops')}
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {locationService.getCropRecommendations()
-                      .slice(1) // Skip the first item which is the heading
-                      .map((crop, index) => (
-                        <span
-                          key={index}
-                          className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full"
+          {/* Chat messages */}
+          <div className="space-y-3">
+            {messages.map((msg) => (
+              <div key={msg.id} className={`flex gap-2.5 ${msg.isUser ? 'flex-row-reverse' : ''}`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                  msg.isUser
+                    ? 'bg-[#dbd8d0] dark:bg-[#3a3630]'
+                    : 'bg-[#39542f]'
+                }`}>
+                  {msg.isUser ? (
+                    <User className="w-3.5 h-3.5 text-[#615b4f] dark:text-[#9b9482]" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5 text-white" />
+                  )}
+                </div>
+                <div className={`max-w-[80%] ${msg.isUser ? 'items-end' : 'items-start'} flex flex-col`}>
+                  <div className={`px-3.5 py-2.5 ${
+                    msg.isUser
+                      ? 'bg-[#39542f] text-white rounded-2xl rounded-tr-md shadow-sm'
+                      : 'bg-white dark:bg-[#1f1d18] text-[#26241f] dark:text-[#eeece7] rounded-2xl rounded-tl-md border border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)]'
+                  }`} style={!msg.isUser ? { boxShadow: '0 1px 2px rgba(38,36,31,0.04)' } : undefined}>
+                    {!msg.isUser && msg.isOffline && (
+                      <div className="flex items-center gap-1 text-[10px] font-medium text-[#dc8a14] mb-1">
+                        <WifiOff className="w-3 h-3" />
+                        <span>Offline response</span>
+                      </div>
+                    )}
+                    {!msg.isUser && msg.category && msg.category !== 'general' && msg.category !== 'error' && (
+                      <div className="text-[10px] font-semibold text-[#476a39] dark:text-[#7ea26d] mb-1 uppercase tracking-widest">
+                        {msg.category}
+                      </div>
+                    )}
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className={`text-[10px] ${msg.isUser ? 'text-white/50' : 'text-[#9b9482]'}`}>
+                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {!msg.isUser && isSpeechSupported && (
+                        <button
+                          onClick={() => speakText(msg.text)}
+                          className="p-1 -mr-1 text-[#9b9482] hover:text-[#476a39] transition-colors rounded"
                         >
-                          {crop}
-                        </span>
+                          <Volume2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {!msg.isUser && msg.suggestions && msg.suggestions.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {msg.suggestions.slice(0, 3).map((s, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleSend(s)}
+                          className="text-[11px] px-2.5 py-1 rounded-full border border-[rgba(38,36,31,0.1)] dark:border-[rgba(255,255,255,0.08)] text-[#615b4f] dark:text-[#9b9482] hover:bg-[#f3f7f1] hover:border-[#c7d9bf] hover:text-[#39542f] dark:hover:bg-[rgba(93,133,76,0.08)] dark:hover:text-[#a3bf96] transition-all"
+                        >
+                          {s}
+                        </button>
                       ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Loading indicator */}
+            {isLoading && (
+              <div className="flex gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-[#39542f] flex items-center justify-center shrink-0">
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div className="px-3.5 py-3 rounded-2xl rounded-tl-md bg-white dark:bg-[#1f1d18] border border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)]" style={{ boxShadow: '0 1px 2px rgba(38,36,31,0.04)' }}>
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 bg-[#476a39] rounded-full animate-bounce" />
+                      <span className="w-1.5 h-1.5 bg-[#476a39] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                      <span className="w-1.5 h-1.5 bg-[#476a39] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                    </div>
+                    <span className="text-[11px] text-[#7a7364]">Thinking...</span>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Quick Actions: Only Live Weather button shown as requested */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => handleSend(t('aiagent.locationContext.queries.weather'))}
-                className="text-xs px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-              >
-                🌤️ {t('aiagent.locationContext.actions.checkWeather')}
-              </button>
-            </div>
+            <div ref={messagesEndRef} />
           </div>
         </div>
-
-        {/* Message list */}
-        {messages.map((message) => (
-          <MessageComponent
-            key={message.id}
-            message={message}
-            onSpeak={speakText}
-            isSpeechSupported={isSpeechSupported}
-          />
-        ))}
-        
-        {/* Loading indicator */}
-        {chatState.isLoading && (
-          <div className="flex items-end gap-3 justify-start">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white flex-shrink-0 shadow-lg">
-              <Loader className="animate-spin" size={20} />
-            </div>
-            <div className="px-4 py-3 rounded-2xl bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm">
-              <div className="flex items-center space-x-2">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-                <span className="text-sm text-gray-500">AI is thinking...</span>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="ai-chat-input">
-        <div className="ai-input-container">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={t('aiagent.placeholder') + ' (Advanced AI)'}
-            className="ai-input-field bg-white text-gray-800 placeholder-gray-400 border-2 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-lg px-4 py-3 shadow-sm"
-            disabled={chatState.isLoading}
-          />
-          
-          {isVoiceSupported && (
+      {/* Input area */}
+      <div className="shrink-0 bg-white dark:bg-[#1f1d18] border-t border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)]" style={{ boxShadow: '0 -1px 3px rgba(38,36,31,0.03)' }}>
+        <div className="max-w-3xl mx-auto px-4 py-3">
+          <div className="flex items-center gap-2 bg-[#f1efe9] dark:bg-[#181713] rounded-2xl px-4 py-1 border border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)] focus-within:border-[#476a39] focus-within:ring-1 focus-within:ring-[rgba(71,106,57,0.2)] transition-all">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder={i18n.language === 'hi' ? "फसल, कीट, मौसम के बारे में पूछें..." : "Ask about crops, pests, weather..."}
+              className="flex-1 bg-transparent text-sm text-[#26241f] dark:text-[#eeece7] placeholder-[#9b9482] dark:placeholder-[#615b4f] outline-none py-2"
+              disabled={isLoading}
+            />
+            {isVoiceSupported && (
+              <button
+                onClick={() => isListening ? recognitionRef.current?.stop() : recognitionRef.current?.start()}
+                disabled={isLoading}
+                className={`p-2 rounded-xl transition-all ${
+                  isListening
+                    ? 'bg-[#fbf0ee] text-[#b94a3e] dark:bg-[rgba(185,74,62,0.15)] dark:text-[#e06b5e] animate-pulse'
+                    : 'text-[#9b9482] hover:text-[#4d483f] dark:hover:text-[#bfbaad] hover:bg-[#dbd8d0] dark:hover:bg-[rgba(255,255,255,0.06)]'
+                }`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+            )}
             <button
-              onClick={chatState.isListening ? stopListening : startListening}
-              disabled={chatState.isLoading}
-              className={`p-2 rounded-xl mr-2 transition-all duration-200 ${
-                chatState.isListening 
-                  ? 'bg-red-100 text-red-600 hover:bg-red-200 animate-pulse shadow-lg' 
-                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200 hover:shadow-md'
-              }`}
-              title={chatState.isListening ? 'Stop listening' : 'Start voice input'}
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isLoading}
+              className="p-2 rounded-xl bg-[#39542f] text-white hover:bg-[#2f4328] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
             >
-              {chatState.isListening ? <MicOff size={20} /> : <Mic size={20} />}
+              <Send className="w-4 h-4" />
             </button>
-          )}
-          
-          <button
-            onClick={() => handleSend()}
-            disabled={input.trim() === '' || chatState.isLoading}
-            className="enhanced-button rounded-xl p-2 disabled:opacity-50 disabled:cursor-not-allowed smooth-transition"
-          >
-            <Send size={20} />
-          </button>
-        </div>
-        
-        {chatState.isListening && (
-          <div className="mt-3 text-center">
-            <div className="inline-flex items-center space-x-2 bg-blue-100 px-4 py-2 rounded-full">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-blue-700 font-medium">
-                🎤 Listening... Speak now!
+          </div>
+          {isListening && (
+            <div className="mt-2 text-center">
+              <span className="inline-flex items-center gap-1.5 text-xs text-[#b94a3e] dark:text-[#e06b5e] bg-[#fbf0ee] dark:bg-[rgba(185,74,62,0.1)] px-3 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 bg-[#b94a3e] rounded-full animate-pulse" />
+                Listening... speak now
               </span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

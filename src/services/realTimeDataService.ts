@@ -2,7 +2,12 @@ import axios from 'axios';
 
 /**
  * Real-Time Agricultural Data Service
- * Integrates multiple data sources for live market prices, weather, and news
+ * Integrates multiple data sources for live market prices, weather, and news.
+ *
+ * NOTE: As of the mock-data cleanup, this service no longer fabricates
+ * fallback numbers. When a real source fails (or is not configured) it
+ * returns an empty array so consumer pages can render an honest empty
+ * state via the UI library.
  */
 
 export interface DataSourceConfig {
@@ -42,8 +47,8 @@ export interface WeatherData {
   rainfall: number;
   windSpeed: number;
   conditions: string;
-  soilMoisture?: number; // From Open-Meteo
-  soilTemperature?: number; // From Open-Meteo
+  soilMoisture?: number;
+  soilTemperature?: number;
   sunrise?: string;
   sunset?: string;
   forecast: Array<{
@@ -78,12 +83,13 @@ class RealTimeDataService {
 
   private initializeDataSources() {
     // Government of India Data Portal - Market Prices (Alternative endpoint)
+    const dataGovKey = import.meta.env.VITE_DATA_GOV_API_KEY as string | undefined;
     this.dataSources.set('gov_market', {
       name: 'Government of India - Daily Market Prices',
       url: 'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070',
-      apiKey: '579b464db66ec23bdd0000015d8d13a03c6845da63e8d4bfe1ac5148',
+      apiKey: dataGovKey || '',
       priority: 1,
-      enabled: true
+      enabled: Boolean(dataGovKey),
     });
 
     // AGMARKNET - Agricultural Marketing Division
@@ -205,7 +211,7 @@ class RealTimeDataService {
             console.error(`Error fetching ${dataType}:`, error);
           }
         }, intervalMs);
-        
+
         this.intervalIds.set(dataType, intervalId);
       }
     });
@@ -227,7 +233,7 @@ class RealTimeDataService {
   // Stop real-time updates
   stopRealTimeUpdates(dataTypes?: string[]) {
     const typesToStop = dataTypes || Array.from(this.intervalIds.keys());
-    
+
     typesToStop.forEach(dataType => {
       const intervalId = this.intervalIds.get(dataType);
       if (intervalId) {
@@ -255,7 +261,7 @@ class RealTimeDataService {
 
     try {
       let data;
-      
+
       switch (dataType) {
         case 'market_prices':
           data = await this.fetchMarketPrices();
@@ -283,12 +289,12 @@ class RealTimeDataService {
       return data;
     } catch (error) {
       console.error(`Error fetching ${dataType}:`, error);
-      
+
       // Return cached data if available
       if (cachedData) {
         return cachedData.data;
       }
-      
+
       throw error;
     }
   }
@@ -303,10 +309,12 @@ class RealTimeDataService {
     return ttlMap[dataType] || 300000;
   }
 
-  // Fetch live market prices from multiple sources
+  // Fetch live market prices from multiple sources.
+  // Mock-data fallback has been removed: when all real sources fail we
+  // simply return [] so the consumer page can render an empty state.
   private async fetchMarketPrices(): Promise<RealTimeMarketData[]> {
     const results: RealTimeMarketData[] = [];
-    
+
     // Try Government API first (data.gov.in)
     try {
       console.log('🏛️ Attempting to fetch from Government API...');
@@ -330,59 +338,53 @@ class RealTimeDataService {
       }
     }
 
-    // If all real sources fail, generate realistic mock data
-    if (results.length === 0) {
-      console.log('📝 Using enhanced mock market data as fallback');
-      results.push(...this.generateMockMarketData());
-    }
-
     return results;
   }
 
   private async fetchFromGovernmentAPI(): Promise<RealTimeMarketData[]> {
     const config = this.dataSources.get('gov_market')!;
-    
+
     if (!config.enabled || !config.apiKey) {
       throw new Error('Government API not configured');
     }
 
     console.log('🏛️ Fetching live market prices from Government API...');
-    
+
     const response = await axios.get(config.url, {
       params: {
         'api-key': config.apiKey,
         format: 'json',
-        limit: 200, // Increased limit for more data
+        limit: 200,
         offset: 0
       },
-      timeout: 15000 // Increased timeout
+      timeout: 15000
     });
 
     console.log(`✅ Government API: Received ${response.data.records?.length || 0} market records`);
-    
+
     return this.transformGovernmentData(response.data.records || []);
   }
 
   private transformGovernmentData(records: any[]): RealTimeMarketData[] {
     console.log('🔄 Transforming Government market data...');
-    
+
     return records.map((record: any) => {
-      // Use exact field names from the Government API response
       const commodity = record.commodity || 'Unknown';
       const market = record.market || 'Unknown Market';
       const state = record.state || 'Unknown State';
       const district = record.district || '';
       const variety = record.variety || '';
       const grade = record.grade || '';
-      
-      // Parse prices from API (they come as strings)
+
       const modalPrice = parseFloat(record.modal_price || 0);
       const minPrice = parseFloat(record.min_price || 0);
       const maxPrice = parseFloat(record.max_price || 0);
-      
-      // Calculate price change (mock for now, but can be enhanced with historical data)
-      const priceChange = (Math.random() - 0.5) * modalPrice * 0.05; // ±5% variation
-      const changePercent = modalPrice > 0 ? (priceChange / modalPrice) * 100 : 0;
+
+      // The original implementation used Math.random() here to fabricate a
+      // price change. We now set it to 0; consumers can compute change from
+      // a historical snapshot if/when that data becomes available.
+      const priceChange = 0;
+      const changePercent = modalPrice > 0 ? 0 : 0;
 
       return {
         source: 'Government of India (data.gov.in)',
@@ -399,101 +401,24 @@ class RealTimeDataService {
           change: priceChange,
           changePercent: changePercent
         },
-        volume: Math.floor(Math.random() * 1000) + 100, // Mock volume data
+        volume: 0, // volume not available from the API
         quality: this.determineQuality(modalPrice),
         lastUpdated: record.arrival_date || new Date().toISOString().split('T')[0]
       };
-    }).filter(item => item.price.current > 0); // Filter out invalid price records
+    }).filter(item => item.price.current > 0);
   }
 
   private async fetchFromAGMARKNET(): Promise<RealTimeMarketData[]> {
-    // AGMARKNET requires web scraping or specific API calls
-    // For now, return mock data with AGMARKNET branding
-    return this.generateMockMarketData().map(data => ({
-      ...data,
-      source: 'AGMARKNET'
-    }));
+    // AGMARKNET requires web scraping or specific API calls that we don't
+    // currently implement. Returning an empty array lets the consumer show
+    // an honest empty state until a real source is wired in.
+    console.warn('AGMARKNET source not implemented; returning []');
+    return [];
   }
 
-  private generateMockMarketData(): RealTimeMarketData[] {
-    console.log('📝 Generating enhanced mock market data (Government API style)...');
-    
-    const commodities = [
-      'Rice', 'Wheat', 'Cotton', 'Sugarcane', 'Onion', 'Tomato',
-      'Potato', 'Soybean', 'Mustard', 'Groundnut', 'Maize', 'Bajra',
-      'Chana', 'Tur Dal', 'Moong', 'Urad', 'Barley', 'Jowar'
-    ];
-
-    const statesWithMarkets = [
-      { state: 'Maharashtra', markets: ['Mumbai APMC', 'Pune APMC', 'Nashik APMC', 'Kolhapur APMC'] },
-      { state: 'Uttar Pradesh', markets: ['Agra Mandi', 'Lucknow Mandi', 'Kanpur APMC', 'Varanasi Mandi'] },
-      { state: 'Madhya Pradesh', markets: ['Indore APMC', 'Bhopal Mandi', 'Jabalpur APMC', 'Gwalior Mandi'] },
-      { state: 'Gujarat', markets: ['Ahmedabad APMC', 'Surat Mandi', 'Rajkot APMC', 'Vadodara Mandi'] },
-      { state: 'Rajasthan', markets: ['Jaipur Mandi', 'Jodhpur APMC', 'Kota Mandi', 'Udaipur APMC'] },
-      { state: 'Karnataka', markets: ['Bangalore APMC', 'Mysore Mandi', 'Hubli APMC', 'Belgaum Mandi'] },
-      { state: 'Andhra Pradesh', markets: ['Hyderabad APMC', 'Vijayawada Mandi', 'Visakhapatnam APMC'] },
-      { state: 'Punjab', markets: ['Ludhiana Mandi', 'Amritsar APMC', 'Jalandhar Mandi'] }
-    ];
-
-    const data: RealTimeMarketData[] = [];
-
-    commodities.forEach(commodity => {
-      const basePrice = this.getBasePriceForCommodity(commodity);
-      
-      statesWithMarkets.slice(0, 4).forEach(stateData => {
-        stateData.markets.slice(0, 2).forEach(market => {
-          const priceVariation = (Math.random() - 0.5) * 0.3; // ±15% variation
-          const currentPrice = Math.round(basePrice * (1 + priceVariation));
-          const minPrice = Math.round(currentPrice * 0.85);
-          const maxPrice = Math.round(currentPrice * 1.15);
-          const change = (Math.random() - 0.5) * currentPrice * 0.1; // ±10% price change
-          const changePercent = (change / currentPrice) * 100;
-
-          data.push({
-            source: 'Government API Simulation (data.gov.in)',
-            timestamp: new Date().toISOString(),
-            commodity,
-            market,
-            state: stateData.state,
-            price: {
-              current: currentPrice,
-              min: minPrice,
-              max: maxPrice,
-              change: Math.round(change),
-              changePercent: Math.round(changePercent * 100) / 100
-            },
-            volume: Math.round(50 + Math.random() * 500), // 50-550 tonnes
-            quality: this.determineQuality(currentPrice),
-            lastUpdated: new Date().toISOString().split('T')[0]
-          });
-        });
-      });
-    });
-
-    console.log(`✅ Generated ${data.length} realistic market price records`);
-    return data;
-  }
-
-  private getBasePriceForCommodity(commodity: string): number {
-    // Realistic base prices per quintal (100kg) in INR based on current market rates
-    const basePrices: { [key: string]: number } = {
-      'Rice': 2800, 'Wheat': 2100, 'Cotton': 5800, 'Sugarcane': 320,
-      'Onion': 1200, 'Tomato': 1800, 'Potato': 1000, 'Soybean': 4200,
-      'Mustard': 5200, 'Groundnut': 4800, 'Maize': 1700, 'Bajra': 1900,
-      'Chana': 4500, 'Tur Dal': 6000, 'Moong': 5500, 'Urad': 5800,
-      'Barley': 1600, 'Jowar': 1500
-    };
-    return basePrices[commodity] || 2000;
-  }
-
-  private determineQuality(price: number): string {
-    if (price > 5000) return 'Premium';
-    if (price > 3000) return 'Good';
-    if (price > 1500) return 'Average';
-    return 'Below Average';
-  }
-
-  // Fetch weather data
+  // Fetch weather data.
+  // Mock-data fallback has been removed: when all real sources fail we
+  // simply return [] so the consumer page can render an empty state.
   private async fetchWeatherData(): Promise<WeatherData[]> {
     const results: WeatherData[] = [];
 
@@ -517,19 +442,13 @@ class RealTimeDataService {
       }
     }
 
-    // If all real sources fail, use mock data
-    if (results.length === 0) {
-      console.log('📝 Using mock weather data as fallback');
-      results.push(...this.generateMockWeatherData());
-    }
-
     return results;
   }
 
   // Fetch weather data from Open-Meteo API
   private async fetchFromOpenMeteo(): Promise<WeatherData[]> {
     const config = this.dataSources.get('openmeteo')!;
-    
+
     if (!config.enabled) {
       throw new Error('Open-Meteo API not enabled');
     }
@@ -618,7 +537,7 @@ class RealTimeDataService {
 
   private async fetchFromOpenWeather(): Promise<WeatherData[]> {
     const config = this.dataSources.get('openweather')!;
-    
+
     if (!config.enabled || !config.apiKey) {
       throw new Error('OpenWeather API not configured');
     }
@@ -676,44 +595,9 @@ class RealTimeDataService {
     };
   }
 
-  private generateMockWeatherData(): WeatherData[] {
-    const cities = [
-      { name: 'Mumbai', lat: 19.0760, lon: 72.8777 },
-      { name: 'Delhi', lat: 28.7041, lon: 77.1025 },
-      { name: 'Bangalore', lat: 12.9716, lon: 77.5946 },
-      { name: 'Hyderabad', lat: 17.3850, lon: 78.4867 },
-      { name: 'Chennai', lat: 13.0827, lon: 80.2707 }
-    ];
-    
-    return cities.map(city => ({
-      source: 'Mock Weather Service (Enhanced)',
-      location: city.name,
-      latitude: city.lat,
-      longitude: city.lon,
-      temperature: 25 + Math.random() * 15,
-      humidity: 40 + Math.random() * 40,
-      rainfall: Math.random() * 10,
-      windSpeed: 5 + Math.random() * 15,
-      conditions: ['Clear', 'Cloudy', 'Partly Cloudy', 'Rainy'][Math.floor(Math.random() * 4)],
-      soilMoisture: 20 + Math.random() * 60, // 20-80% soil moisture
-      soilTemperature: 18 + Math.random() * 20, // 18-38°C soil temperature
-      sunrise: new Date(Date.now() + 6 * 3600000).toISOString(), // 6 AM
-      sunset: new Date(Date.now() + 18 * 3600000).toISOString(), // 6 PM
-      forecast: Array.from({ length: 5 }, (_, i) => ({
-        date: new Date(Date.now() + (i + 1) * 86400000).toISOString().split('T')[0],
-        temperature: {
-          min: 20 + Math.random() * 10,
-          max: 30 + Math.random() * 10
-        },
-        conditions: ['Clear', 'Cloudy', 'Partly Cloudy', 'Rainy'][Math.floor(Math.random() * 4)],
-        rainfall: Math.random() * 5,
-        sunrise: new Date(Date.now() + (i + 1) * 86400000 + 6 * 3600000).toISOString(),
-        sunset: new Date(Date.now() + (i + 1) * 86400000 + 18 * 3600000).toISOString()
-      }))
-    }));
-  }
-
-  // Fetch agricultural news
+  // Fetch agricultural news. The previous implementation fell back to a
+  // hardcoded `generateMockNews` list on failure; that has been removed
+  // so we now return [] when the News API is unavailable.
   private async fetchAgriNews(): Promise<AgriNewsData[]> {
     const results: AgriNewsData[] = [];
 
@@ -724,16 +608,12 @@ class RealTimeDataService {
       console.error('News API failed:', error);
     }
 
-    if (results.length === 0) {
-      results.push(...this.generateMockNews());
-    }
-
     return results;
   }
 
   private async fetchFromNewsAPI(): Promise<AgriNewsData[]> {
     const config = this.dataSources.get('news_api')!;
-    
+
     if (!config.enabled || !config.apiKey) {
       throw new Error('News API not configured');
     }
@@ -762,7 +642,7 @@ class RealTimeDataService {
 
   private categorizeNews(content: string): AgriNewsData['category'] {
     const lowerContent = content.toLowerCase();
-    
+
     if (lowerContent.includes('market') || lowerContent.includes('price') || lowerContent.includes('trading')) {
       return 'market';
     }
@@ -775,76 +655,36 @@ class RealTimeDataService {
     if (lowerContent.includes('technology') || lowerContent.includes('ai') || lowerContent.includes('digital')) {
       return 'technology';
     }
-    
+
     return 'general';
   }
 
   private assessNewsImpact(content: string): AgriNewsData['impact'] {
     const lowerContent = content.toLowerCase();
-    
+
     if (lowerContent.includes('crisis') || lowerContent.includes('shortage') || lowerContent.includes('ban')) {
       return 'high';
     }
     if (lowerContent.includes('change') || lowerContent.includes('new') || lowerContent.includes('increase')) {
       return 'medium';
     }
-    
+
     return 'low';
   }
 
-  private generateMockNews(): AgriNewsData[] {
-    const mockNews = [
-      {
-        source: 'Agriculture Today',
-        title: 'Cotton Prices Rally on Strong Export Demand',
-        summary: 'Cotton futures surge 5% as international buyers increase orders amid supply concerns.',
-        url: 'https://example.com/news/1',
-        publishedAt: new Date().toISOString(),
-        category: 'market' as const,
-        impact: 'high' as const
-      },
-      {
-        source: 'Farm News India',
-        title: 'New AI Technology Helps Farmers Detect Crop Diseases Early',
-        summary: 'Revolutionary AI system can identify plant diseases with 95% accuracy using smartphone photos.',
-        url: 'https://example.com/news/2',
-        publishedAt: new Date(Date.now() - 3600000).toISOString(),
-        category: 'technology' as const,
-        impact: 'medium' as const
-      },
-      {
-        source: 'Weather Bureau',
-        title: 'Monsoon Expected to Arrive Early This Year',
-        summary: 'Meteorological department predicts early monsoon arrival with normal rainfall.',
-        url: 'https://example.com/news/3',
-        publishedAt: new Date(Date.now() - 7200000).toISOString(),
-        category: 'weather' as const,
-        impact: 'high' as const
-      }
-    ];
-
-    return mockNews;
-  }
-
-  // Fetch commodity futures data
+  // Fetch commodity futures data.
+  // The original implementation returned fabricated numbers from
+  // `generateMockFuturesData`; that has been removed. We return [] until
+  // a real MCX / NCDEX feed is wired in.
   private async fetchCommodityFutures(): Promise<any[]> {
-    // This would integrate with commodity exchanges like MCX, NCDEX
-    // For now, return mock futures data
-    return this.generateMockFuturesData();
+    return [];
   }
 
-  private generateMockFuturesData(): any[] {
-    const commodities = ['Cotton', 'Soybean', 'Wheat', 'Sugar', 'Turmeric'];
-    
-    return commodities.map(commodity => ({
-      commodity,
-      contract: `${commodity.toUpperCase()}${new Date().getFullYear()}`,
-      price: Math.random() * 10000 + 1000,
-      change: (Math.random() - 0.5) * 200,
-      volume: Math.random() * 10000,
-      openInterest: Math.random() * 50000,
-      lastUpdated: new Date().toISOString()
-    }));
+  private determineQuality(price: number): string {
+    if (price > 5000) return 'Premium';
+    if (price > 3000) return 'Good';
+    if (price > 1500) return 'Average';
+    return 'Below Average';
   }
 
   // Get health status of all data sources
@@ -859,16 +699,16 @@ class RealTimeDataService {
 
       try {
         const startTime = Date.now();
-        
+
         // Simple health check - try to reach the endpoint
         const response = await axios.get(config.url, {
           timeout: 5000,
           headers: config.headers || {}
         });
-        
+
         const responseTime = Date.now() - startTime;
         const status = response.status === 200 ? 'online' : 'degraded';
-        
+
         health.set(key, {
           status,
           lastCheck: new Date().toISOString(),
@@ -910,7 +750,7 @@ class RealTimeDataService {
   // Get cache statistics
   getCacheStats(): { total: number; size: number; oldest: string | null; newest: string | null } {
     const entries = Array.from(this.cache.values());
-    
+
     return {
       total: entries.length,
       size: JSON.stringify(entries).length,

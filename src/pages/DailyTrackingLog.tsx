@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 // import { useTranslation } from 'react-i18next'; // Commented out for now
 import { Calendar, Camera, Plus, TrendingUp, AlertCircle, CheckCircle, BarChart3, CloudRain, Droplets, Sun } from 'lucide-react';
 import communityService, { DailyLog } from '../services/communityService';
+import { useAuth } from '../contexts/AuthContext';
 
 const DailyTrackingLog: React.FC = () => {
+  const { user } = useAuth();
+  const currentFarmerId = user?.uid || '';
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentFarmerId] = useState('1'); // In real app, get from auth context
 
   // Form state
   const [formData, setFormData] = useState({

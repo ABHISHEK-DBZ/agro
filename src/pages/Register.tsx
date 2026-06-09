@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  Eye, 
-  EyeOff, 
-  Mail, 
-  Lock, 
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
   User,
   Phone,
   MapPin,
   Sprout,
-  Loader2,
-  AlertCircle,
-  CheckCircle2
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
 } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
+import { Button, Input, Select, FormField, Alert } from '../components/ui';
 
 interface FormData {
   displayName: string;
@@ -29,10 +30,17 @@ interface FormData {
   acceptTerms: boolean;
 }
 
+const INDIAN_STATES = [
+  'आंध्र प्रदेश', 'अरुणाचल प्रदेश', 'असम', 'बिहार', 'छत्तीसगढ़', 'गोवा', 'गुजरात',
+  'हरियाणा', 'हिमाचल प्रदेश', 'झारखंड', 'कर्नाटक', 'केरल', 'मध्य प्रदेश', 'महाराष्ट्र',
+  'मणिपुर', 'मेघालय', 'मिजोरम', 'नागालैंड', 'ओडिशा', 'पंजाब', 'राजस्थान', 'सिक्किम',
+  'तमिलनाडु', 'तेलंगाना', 'त्रिपुरा', 'उत्तर प्रदेश', 'उत्तराखंड', 'पश्चिम बंगाल',
+];
+
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, loginWithGoogle, loginWithGitHub, loading } = useAuth();
-  
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     displayName: '',
@@ -46,75 +54,50 @@ const Register: React.FC = () => {
     acceptTerms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
-    // Clear error when user starts typing
     if (error) setError('');
   };
 
   const validateStep1 = () => {
-    if (!formData.displayName.trim()) {
-      setError('कृपया अपना नाम दर्ज करें');
-      return false;
-    }
-    if (!formData.email.trim()) {
-      setError('कृपया ईमेल पता दर्ज करें');
-      return false;
-    }
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      setError('कृपया एक वैध ईमेल पता दर्ज करें');
-      return false;
-    }
-    return true;
+    if (!formData.displayName.trim()) return 'कृपया अपना नाम दर्ज करें';
+    if (!formData.email.trim()) return 'कृपया ईमेल पता दर्ज करें';
+    if (!/\S+@\S+\.\S+/.test(formData.email)) return 'कृपया एक वैध ईमेल पता दर्ज करें';
+    return '';
   };
 
   const validateStep2 = () => {
-    if (!formData.password) {
-      setError('कृपया पासवर्ड दर्ज करें');
-      return false;
-    }
-    if (formData.password.length < 6) {
-      setError('पासवर्ड कम से कम 6 अक्षर का होना चाहिए');
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError('पासवर्ड मेल नहीं खाते');
-      return false;
-    }
-    if (!formData.acceptTerms) {
-      setError('कृपया नियम और शर्तों को स्वीकार करें');
-      return false;
-    }
-    return true;
+    if (!formData.password) return 'कृपया पासवर्ड दर्ज करें';
+    if (formData.password.length < 6) return 'पासवर्ड कम से कम 6 अक्षर का होना चाहिए';
+    if (formData.password !== formData.confirmPassword) return 'पासवर्ड मेल नहीं खाते';
+    if (!formData.acceptTerms) return 'कृपया नियम और शर्तों को स्वीकार करें';
+    return '';
   };
 
-  const handleNext = () => {
+  const handleNext = (e: React.FormEvent) => {
+    e.preventDefault();
+    const err = validateStep1();
+    if (err) { setError(err); return; }
     setError('');
-    if (step === 1 && validateStep1()) {
-      setStep(2);
-    }
+    setStep(2);
   };
 
-  const handleBack = () => {
-    setStep(1);
-    setError('');
-  };
+  const handleBack = () => { setError(''); setStep(1); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const err = validateStep2();
+    if (err) { setError(err); return; }
     setError('');
-    
-    if (!validateStep2()) return;
-    
     try {
-      const userData = {
+      await register(formData.email, formData.password, {
         displayName: formData.displayName,
         location: formData.village || formData.district || formData.state ? {
           village: formData.village,
@@ -122,455 +105,346 @@ const Register: React.FC = () => {
           state: formData.state,
         } : undefined,
         phoneNumber: formData.phone,
-        role: 'farmer' as const,
-      };
-      
-      await register(formData.email, formData.password, userData);
+        role: 'farmer',
+      });
       navigate('/verify-email');
-    } catch (error: any) {
-      setError(error.message || 'रजिस्ट्रेशन में त्रुटि हुई');
+    } catch (err: any) {
+      setError(err.message || 'रजिस्ट्रेशन में त्रुटि हुई');
     }
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     setError('');
     try {
-      if (provider === 'google') {
-        await loginWithGoogle();
-      } else {
-        await loginWithGitHub();
-      }
+      if (provider === 'google') await loginWithGoogle();
+      else await loginWithGitHub();
       navigate('/dashboard');
-    } catch (error: any) {
-      setError(error.message || 'सोशल लॉगिन में त्रुटि हुई');
+    } catch (err: any) {
+      setError(err.message || 'सोशल लॉगिन में त्रुटि हुई');
     }
   };
 
-  const getPasswordStrength = (password: string) => {
-    let strength = 0;
-    if (password.length >= 6) strength++;
-    if (password.length >= 8) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[^A-Za-z0-9]/.test(password)) strength++;
-    return strength;
-  };
-
-  const passwordStrength = getPasswordStrength(formData.password);
-
-  const indianStates = [
-    'आंध्र प्रदेश', 'अरुणाचल प्रदेश', 'असम', 'बिहार', 'छत्तीसगढ़', 'गोवा', 'गुजरात',
-    'हरियाणा', 'हिमाचल प्रदेश', 'झारखंड', 'कर्नाटक', 'केरल', 'मध्य प्रदेश', 'महाराष्ट्र',
-    'मणिपुर', 'मेघालय', 'मिजोरम', 'नागालैंड', 'ओडिशा', 'पंजाब', 'राजस्थान', 'सिक्किम',
-    'तमिलनाडु', 'तेलंगाना', 'त्रिपुरा', 'उत्तर प्रदेश', 'उत्तराखंड', 'पश्चिम बंगाल'
-  ];
+  // Password strength (0-4)
+  const strength = (() => {
+    let s = 0;
+    if (formData.password.length >= 6) s++;
+    if (formData.password.length >= 8) s++;
+    if (/[A-Z]/.test(formData.password)) s++;
+    if (/[0-9]/.test(formData.password)) s++;
+    if (/[^A-Za-z0-9]/.test(formData.password)) s++;
+    return Math.min(s, 4);
+  })();
+  const strengthTone = strength <= 1 ? 'danger' : strength <= 2 ? 'harvest' : 'success';
+  const strengthLabel = strength <= 1 ? 'कमजोर' : strength <= 2 ? 'मध्यम' : 'मजबूत';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 flex">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-600 to-green-700 p-12 items-center justify-center">
-        <div className="text-center text-white">
-          <div className="mb-8">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-white/20 rounded-full backdrop-blur-sm">
-              <Sprout className="w-12 h-12" />
-            </div>
+    <div className="min-h-screen bg-canvas flex">
+      {/* Brand panel */}
+      <aside
+        className="hidden lg:flex lg:w-[40%] xl:w-[36%] relative overflow-hidden flex-col justify-between p-10 xl:p-14"
+        style={{
+          background: 'linear-gradient(180deg, #2f4328 0%, #39542f 50%, #476a39 100%)',
+          color: '#f1efe9',
+        }}
+      >
+        <div
+          className="absolute inset-0 opacity-[0.05] pointer-events-none"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(115deg, transparent 0 80px, rgba(255,255,255,0.4) 80px 81px)',
+          }}
+        />
+        <Link to="/" className="relative flex items-center gap-2.5 z-10">
+          <div className="w-9 h-9 rounded-md bg-white/10 flex items-center justify-center">
+            <Sprout className="w-5 h-5 text-leaf-200" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">Smart Krishi Sahayak</h1>
-          <p className="text-xl opacity-90 mb-8">किसान समुदाय में शामिल हों</p>
-          <div className="text-left space-y-4">
-            <div className="flex items-center space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-green-300" />
-              <span>मुफ्त मौसम की जानकारी</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-green-300" />
-              <span>रियल-टाइम बाजार की कीमतें</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-green-300" />
-              <span>AI फसल सलाहकार</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-green-300" />
-              <span>किसान समुदाय सपोर्ट</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-green-300" />
-              <span>सरकारी योजनाओं की जानकारी</span>
-            </div>
-          </div>
+          <span className="text-base font-semibold tracking-tight">Smart Krishi Sahayak</span>
+        </Link>
+
+        <div className="relative z-10 max-w-md">
+          <h1 className="text-3xl xl:text-4xl font-semibold leading-tight tracking-tight mb-3">
+            किसान समुदाय में<br />शामिल हों
+          </h1>
+          <p className="text-leaf-200/70 text-sm leading-relaxed mb-8">
+            मुफ्त में अपना किसान खाता बनाएं और स्मार्ट खेती की ओर पहला कदम बढ़ाएं।
+          </p>
+          <ul className="space-y-2.5 text-sm text-leaf-100/90">
+            {[
+              'मुफ्त मौसम और बाजार अपडेट',
+              'AI फसल रोग पहचान स्कैनर',
+              'सरकारी योजनाओं की पूरी जानकारी',
+              'स्थानीय किसान समूह से जुड़ें',
+            ].map((line) => (
+              <li key={line} className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-leaf-300 flex-shrink-0 mt-0.5" />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
 
-      {/* Right Side - Registration Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
-          {/* Mobile Header */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-              <Sprout className="w-8 h-8 text-green-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">Smart Krishi Sahayak</h1>
-            <p className="text-gray-600">किसान समुदाय में शामिल हों</p>
-          </div>
+        <div className="relative z-10 text-xs text-leaf-200/50">
+          मुफ्त · किसी भी समय रद्द करें
+        </div>
+      </aside>
 
-          {/* Progress Indicator */}
-          <div className="flex items-center justify-center space-x-4 mb-8">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step >= 1 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
-              1
-            </div>
-            <div className={`w-12 h-1 ${step >= 2 ? 'bg-green-600' : 'bg-gray-200'}`}></div>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-              step >= 2 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
-              2
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 text-center mb-2">
-              {step === 1 ? 'खाता बनाएं' : 'पासवर्ड सेट करें'}
-            </h2>
-            <p className="text-center text-gray-600">
-              {step === 1 ? 'अपनी जानकारी दर्ज करें' : 'अपना खाता सुरक्षित करें'}
-            </p>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
-              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <span className="text-red-700 text-sm">{error}</span>
-            </div>
-          )}
-
-          {step === 1 && (
-            <>
-              {/* Social Login Buttons */}
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={() => handleSocialLogin('google')}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <FcGoogle className="w-5 h-5 mr-3" />
-                  Google से साइन अप करें
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => handleSocialLogin('github')}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <FaGithub className="w-5 h-5 mr-3" />
-                  GitHub से साइन अप करें
-                </button>
+      {/* Form panel */}
+      <main className="flex-1 flex flex-col">
+        <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
+          <div className="w-full max-w-[480px]">
+            {/* Mobile brand */}
+            <Link to="/" className="lg:hidden flex items-center gap-2 mb-8">
+              <div className="w-10 h-10 rounded-md bg-leaf-700 text-white flex items-center justify-center">
+                <Sprout className="w-5 h-5" />
               </div>
-
-              {/* Divider */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">या</span>
-                </div>
+              <div>
+                <div className="text-base font-semibold text-strong">Smart Krishi Sahayak</div>
+                <div className="text-xs text-muted">किसान सहायक</div>
               </div>
+            </Link>
 
-              {/* Step 1 Form */}
-              <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-4">
-                <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-2">
-                    पूरा नाम *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
+            {/* Step indicator */}
+            <div className="flex items-center gap-3 mb-7">
+              {[1, 2].map((n, idx) => (
+                <React.Fragment key={n}>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                      step >= n ? 'bg-leaf-700 text-white' : 'bg-sunken text-muted border border-subtle'
+                    }`}
+                  >
+                    {n}
+                  </div>
+                  {idx === 0 && <div className={`flex-1 h-px transition-colors ${step >= 2 ? 'bg-leaf-700' : 'bg-default'}`} />}
+                </React.Fragment>
+              ))}
+              <div className="text-sm text-muted ml-1">चरण {step} / 2</div>
+            </div>
+
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold text-strong tracking-tight">
+                {step === 1 ? 'खाता बनाएं' : 'पासवर्ड सेट करें'}
+              </h2>
+              <p className="text-sm text-muted mt-1.5">
+                {step === 1 ? 'अपनी जानकारी दर्ज करें' : 'अपना खाता सुरक्षित करें'}
+              </p>
+            </div>
+
+            {error && <div className="mb-5"><Alert tone="danger" title={error} /></div>}
+
+            {step === 1 && (
+              <>
+                <div className="grid grid-cols-2 gap-2.5 mb-5">
+                  <Button type="button" variant="secondary" onClick={() => handleSocialLogin('google')} disabled={loading}>
+                    <FcGoogle className="w-4 h-4" /> Google
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => handleSocialLogin('github')} disabled={loading}>
+                    <FaGithub className="w-4 h-4" /> GitHub
+                  </Button>
+                </div>
+
+                <div className="relative my-5">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-subtle" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="px-3 bg-canvas text-xs text-muted uppercase tracking-wider">या</span>
+                  </div>
+                </div>
+
+                <form onSubmit={handleNext} className="space-y-4" noValidate>
+                  <FormField label="पूरा नाम" htmlFor="displayName" required>
+                    <Input
                       id="displayName"
                       name="displayName"
                       type="text"
                       required
                       value={formData.displayName}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      onChange={handleChange}
+                      leftIcon={<User className="w-4 h-4" />}
                       placeholder="आपका पूरा नाम"
                     />
-                  </div>
-                </div>
+                  </FormField>
 
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    ईमेल पता *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
+                  <FormField label="ईमेल पता" htmlFor="email" required>
+                    <Input
                       id="email"
                       name="email"
                       type="email"
                       autoComplete="email"
                       required
                       value={formData.email}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      onChange={handleChange}
+                      leftIcon={<Mail className="w-4 h-4" />}
                       placeholder="आपका ईमेल पता"
                     />
-                  </div>
-                </div>
+                  </FormField>
 
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    मोबाइल नंबर
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Phone className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
+                  <FormField label="मोबाइल नंबर" htmlFor="phone" hint="वैकल्पिक — OTP सत्यापन के लिए">
+                    <Input
                       id="phone"
                       name="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      onChange={handleChange}
+                      leftIcon={<Phone className="w-4 h-4" />}
                       placeholder="+91 XXXXX XXXXX"
                     />
-                  </div>
-                </div>
+                  </FormField>
 
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
-                      राज्य
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <MapPin className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <select
-                        id="state"
-                        name="state"
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                      >
-                        <option value="">राज्य चुनें</option>
-                        {indianStates.map((state) => (
-                          <option key={state} value={state}>{state}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+                  <FormField label="राज्य" htmlFor="state">
+                    <Select
+                      id="state"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleChange}
+                    >
+                      <option value="">राज्य चुनें</option>
+                      {INDIAN_STATES.map((state) => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </Select>
+                  </FormField>
 
-                  <div>
-                    <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-2">
-                      जिला
-                    </label>
-                    <input
-                      id="district"
-                      name="district"
-                      type="text"
-                      value={formData.district}
-                      onChange={handleInputChange}
-                      className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                      placeholder="आपका जिला"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <FormField label="जिला" htmlFor="district">
+                      <Input
+                        id="district"
+                        name="district"
+                        type="text"
+                        value={formData.district}
+                        onChange={handleChange}
+                        placeholder="आपका जिला"
+                      />
+                    </FormField>
+                    <FormField label="गांव/शहर" htmlFor="village">
+                      <Input
+                        id="village"
+                        name="village"
+                        type="text"
+                        value={formData.village}
+                        onChange={handleChange}
+                        placeholder="आपका गांव"
+                      />
+                    </FormField>
                   </div>
 
-                  <div>
-                    <label htmlFor="village" className="block text-sm font-medium text-gray-700 mb-2">
-                      गांव/शहर
-                    </label>
-                    <input
-                      id="village"
-                      name="village"
-                      type="text"
-                      value={formData.village}
-                      onChange={handleInputChange}
-                      className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                      placeholder="आपका गांव/शहर"
-                    />
-                  </div>
-                </div>
+                  <Button type="submit" variant="primary" block size="lg" className="mt-2">
+                    आगे बढ़ें <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </form>
+              </>
+            )}
 
-                <button
-                  type="submit"
-                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 font-medium transition-colors"
-                >
-                  आगे बढ़ें
-                </button>
-              </form>
-            </>
-          )}
-
-          {step === 2 && (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  पासवर्ड *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
+            {step === 2 && (
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                <FormField label="पासवर्ड" htmlFor="password" required hint="कम से कम 6 अक्षर">
+                  <Input
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     required
                     value={formData.password}
-                    onChange={handleInputChange}
-                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                    placeholder="कम से कम 6 अक्षर का पासवर्ड"
+                    onChange={handleChange}
+                    leftIcon={<Lock className="w-4 h-4" />}
+                    placeholder="नया पासवर्ड"
+                    rightSlot={
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="text-ink-400 hover:text-ink-700 p-1"
+                        aria-label="Toggle password"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    }
                   />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-                
-                {/* Password Strength Indicator */}
+                </FormField>
+
                 {formData.password && (
-                  <div className="mt-2">
-                    <div className="flex space-x-1">
-                      {[1, 2, 3, 4, 5].map((level) => (
+                  <div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4].map((level) => (
                         <div
                           key={level}
-                          className={`h-1 flex-1 rounded ${
-                            level <= passwordStrength
-                              ? passwordStrength <= 2
-                                ? 'bg-red-500'
-                                : passwordStrength <= 3
-                                ? 'bg-yellow-500'
-                                : 'bg-green-500'
-                              : 'bg-gray-200'
+                          className={`h-1 flex-1 rounded-full transition-colors ${
+                            level <= strength
+                              ? strengthTone === 'danger' ? 'bg-danger-500'
+                              : strengthTone === 'harvest' ? 'bg-harvest-500'
+                              : 'bg-success-500'
+                              : 'bg-sunken'
                           }`}
                         />
                       ))}
                     </div>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {passwordStrength <= 2 && 'कमजोर'}
-                      {passwordStrength === 3 && 'मध्यम'}
-                      {passwordStrength >= 4 && 'मजबूत'}
-                    </p>
+                    <p className="text-xs text-muted mt-1.5">{strengthLabel}</p>
                   </div>
                 )}
-              </div>
 
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  पासवर्ड की पुष्टि करें *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
+                <FormField label="पासवर्ड की पुष्टि" htmlFor="confirmPassword" required>
+                  <Input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirm ? 'text' : 'password'}
                     autoComplete="new-password"
                     required
                     value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                    onChange={handleChange}
+                    leftIcon={<Lock className="w-4 h-4" />}
                     placeholder="पासवर्ड दोबारा दर्ज करें"
+                    rightSlot={
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirm((v) => !v)}
+                        className="text-ink-400 hover:text-ink-700 p-1"
+                        aria-label="Toggle confirm password"
+                      >
+                        {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    }
                   />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
+                </FormField>
+
                 {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                  <p className="text-xs text-red-600 mt-1">पासवर्ड मेल नहीं खाते</p>
+                  <p className="text-xs text-danger">पासवर्ड मेल नहीं खाते</p>
                 )}
-              </div>
 
-              <div className="flex items-start">
-                <input
-                  id="acceptTerms"
-                  name="acceptTerms"
-                  type="checkbox"
-                  checked={formData.acceptTerms}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mt-1"
-                />
-                <label htmlFor="acceptTerms" className="ml-3 block text-sm text-gray-700">
-                  मैं{' '}
-                  <Link to="/terms" className="text-green-600 hover:text-green-500 font-medium">
-                    नियम और शर्तों
-                  </Link>{' '}
-                  और{' '}
-                  <Link to="/privacy" className="text-green-600 hover:text-green-500 font-medium">
-                    प्राइवेसी पॉलिसी
-                  </Link>{' '}
-                  से सहमत हूं।
+                <label className="flex items-start gap-2.5 cursor-pointer pt-1">
+                  <input
+                    type="checkbox"
+                    name="acceptTerms"
+                    checked={formData.acceptTerms}
+                    onChange={handleChange}
+                    className="mt-0.5 rounded"
+                  />
+                  <span className="text-sm text-ink-700 leading-relaxed">
+                    मैं{' '}
+                    <Link to="/terms" className="text-leaf font-medium hover:underline">नियम और शर्तों</Link>
+                    {' '}और{' '}
+                    <Link to="/privacy" className="text-leaf font-medium hover:underline">प्राइवेसी पॉलिसी</Link>
+                    {' '}से सहमत हूं।
+                  </span>
                 </label>
-              </div>
 
-              <div className="flex space-x-4">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="flex-1 flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 font-medium transition-colors"
-                >
-                  वापस
-                </button>
-                
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      रजिस्टर हो रहे हैं...
-                    </>
-                  ) : (
-                    'खाता बनाएं'
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button type="button" variant="secondary" onClick={handleBack} className="sm:w-1/3">
+                    <ArrowLeft className="w-4 h-4" /> वापस
+                  </Button>
+                  <Button type="submit" variant="primary" loading={loading} className="sm:flex-1">
+                    खाता बनाएं
+                  </Button>
+                </div>
+              </form>
+            )}
 
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-center text-sm text-muted mt-6">
               पहले से खाता है?{' '}
-              <Link
-                to="/login"
-                className="font-medium text-green-600 hover:text-green-500"
-              >
+              <Link to="/login" className="text-leaf font-medium hover:underline">
                 यहां लॉगिन करें
               </Link>
             </p>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

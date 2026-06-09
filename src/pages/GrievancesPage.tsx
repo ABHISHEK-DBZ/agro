@@ -239,26 +239,26 @@ const GrievancesPage: React.FC = () => {
 
   if (loading && grievances.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-[#F9F9F6] to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-emerald-950 py-8 px-4">
         <div className="max-w-6xl mx-auto text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">{i18n.language === 'hi' ? 'लोड हो रहा है...' : 'Loading...'}</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">{i18n.language === 'hi' ? 'लोड हो रहा है...' : 'Loading...'}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-[#F9F9F6] to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-emerald-950 py-8 px-4 font-sans">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div className="card light-mode dark-mode bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-xl p-6 border border-white/40 dark:border-slate-700/50">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">
+              <h1 className="text-3xl font-extrabold bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
                 {i18n.language === 'hi' ? '🎯 शिकायत प्रबंधन' : '🎯 Grievance Management'}
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 dark:text-gray-300 mt-2">
                 {i18n.language === 'hi' 
                   ? 'अपनी शिकायतें दर्ज करें और उनकी स्थिति ट्रैक करें' 
                   : 'Register your complaints and track their status'}
@@ -266,7 +266,7 @@ const GrievancesPage: React.FC = () => {
             </div>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md"
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition shadow-md"
             >
               {showForm 
                 ? (i18n.language === 'hi' ? '✕ बंद करें' : '✕ Close')
@@ -277,8 +277,8 @@ const GrievancesPage: React.FC = () => {
 
         {/* New Complaint Form */}
         {showForm && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          <div className="card light-mode dark-mode bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-xl p-6 border border-white/40 dark:border-slate-700/50">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
               {i18n.language === 'hi' ? '📝 नई शिकायत दर्ज करें' : '📝 Register New Complaint'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -410,10 +410,10 @@ const GrievancesPage: React.FC = () => {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div className="card light-mode dark-mode bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-xl p-6 border border-white/40 dark:border-slate-700/50">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <Search className="w-4 h-4 inline mr-2" />
                 {i18n.language === 'hi' ? 'खोजें' : 'Search'}
               </label>
@@ -422,18 +422,18 @@ const GrievancesPage: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder={i18n.language === 'hi' ? 'शिकायत ID या विवरण खोजें...' : 'Search by ID or description...'}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <Filter className="w-4 h-4 inline mr-2" />
                 {i18n.language === 'hi' ? 'स्थिति फ़िल्टर' : 'Status Filter'}
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as GrievanceStatus | 'All')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-transparent"
               >
                 <option value="All">{i18n.language === 'hi' ? 'सभी' : 'All'}</option>
                 <option value="Pending">{statusTranslations['Pending'][i18n.language as 'hi' | 'en']}</option>
@@ -448,9 +448,9 @@ const GrievancesPage: React.FC = () => {
         {/* Grievances List */}
         <div className="space-y-4">
           {filteredGrievances.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <div className="card light-mode dark-mode bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-xl p-12 text-center border border-white/40 dark:border-slate-700/50">
               <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
                 {i18n.language === 'hi' ? 'कोई शिकायत नहीं मिली' : 'No Complaints Found'}
               </h3>
               <p className="text-gray-500">
@@ -461,10 +461,10 @@ const GrievancesPage: React.FC = () => {
             </div>
           ) : (
             filteredGrievances.map((grievance) => (
-              <div key={grievance.complaint_id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition">
+              <div key={grievance.complaint_id} className="card light-mode dark-mode bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-xl p-6 hover:shadow-2xl transition border border-white/40 dark:border-slate-700/50">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-800">
+                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
                       {i18n.language === 'hi' ? 'शिकायत ID: ' : 'Complaint ID: '}{grievance.complaint_id}
                     </h3>
                     <p className="text-sm text-gray-500">{formatDate(grievance.created_at)}</p>

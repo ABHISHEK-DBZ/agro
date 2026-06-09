@@ -1,51 +1,101 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Cpu, 
-  Zap, 
-  Battery, 
-  MapPin, 
-  Calendar, 
-  TrendingUp, 
-  Droplet, 
-  Thermometer, 
-  Gauge, 
+import {
+  Cpu,
+  Zap,
+  Battery,
+  Calendar,
+  TrendingUp,
+  Droplet,
+  Thermometer,
+  Gauge,
   Compass,
   ArrowLeft,
-  Navigation,
-  Wind
+  Navigation
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { doc, getDoc, Timestamp } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { useSwarmTelemetry } from '../hooks/useSwarmTelemetry';
 import { useSafeTranslation } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
+import { Button, EmptyState } from '../components/ui';
 import toast from 'react-hot-toast';
 
 const FarmOperationsTelemetry: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { isLowBandwidthMode } = useSafeTranslation();
-  
+  const { user } = useAuth();
+
   // Real-time telemetric calculations & machinery telemetry (Module D & B)
   const { soilStats, equipment } = useSwarmTelemetry();
-  
-  // Complex functional math model tracking GDD (Growing Degree Days) for Wheat harvest prediction
+
+  // Complex functional math model tracking GDD (Growing Degree Days) for Wheat harvest prediction.
+  // The sowing date is sourced from `users/{uid}.activeCrop.sowingDate` in Firestore.
+  // If absent, we render an honest empty state instead of faking a value.
   const baseTemp = 4.0; // Wheat base temperature in Celsius
-  const daysSown = 175; // Sowing completed 175 days ago
-  const dailyAverageTemp = soilStats.temperature; 
-  
-  // Growing Degree Days Equation: GDD = Sum(T_average - T_base)
-  const gddAccumulated = Math.floor((dailyAverageTemp - baseTemp) * daysSown);
+  const [sowingDate, setSowingDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.uid) {
+      setSowingDate(null);
+      return;
+    }
+    (async () => {
+      try {
+        const userSnap = await getDoc(doc(db, 'users', user.uid));
+        if (cancelled) return;
+        const data = userSnap.exists() ? (userSnap.data() as { activeCrop?: { sowingDate?: Date | Timestamp | string | null } }) : null;
+        const raw = data?.activeCrop?.sowingDate ?? null;
+        let parsed: Date | null = null;
+        if (raw instanceof Timestamp) parsed = raw.toDate();
+        else if (raw instanceof Date) parsed = raw;
+        else if (typeof raw === 'string') {
+          const d = new Date(raw);
+          if (!Number.isNaN(d.getTime())) parsed = d;
+        }
+        setSowingDate(parsed);
+      } catch (err) {
+        console.warn('FarmOperationsTelemetry: failed to read activeCrop.sowingDate', err);
+        if (!cancelled) setSowingDate(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
+
+  const daysSown: number | null = sowingDate
+    ? Math.max(
+        0,
+        Math.floor((Date.now() - sowingDate.getTime()) / (1000 * 60 * 60 * 24))
+      )
+    : null;
+  const dailyAverageTemp: number | null = soilStats.temperature;
+
+  // Growing Degree Days Equation: GDD = Sum(T_average - T_base) — only when daysSown is known
+  const gddAccumulated =
+    daysSown !== null && dailyAverageTemp !== null
+      ? Math.floor((dailyAverageTemp - baseTemp) * daysSown)
+      : null;
   const targetGdd = 4200; // Target cumulative GDD for harvest maturity
-  const maturityPercent = Math.min(100, Math.floor((gddAccumulated / targetGdd) * 100));
+  const maturityPercent = gddAccumulated !== null
+    ? Math.min(100, Math.floor((gddAccumulated / targetGdd) * 100))
+    : null;
 
   // Determine predicted harvest date dynamically
-  const getPredictedHarvestDate = () => {
+  const getPredictedHarvestDate = (): string => {
+    if (gddAccumulated === null) return '—';
     const today = new Date();
     const remainingGdd = targetGdd - gddAccumulated;
-    const estimatedDaysRemaining = Math.max(1, Math.ceil(remainingGdd / (dailyAverageTemp - baseTemp)));
+    const denom = dailyAverageTemp - baseTemp;
+    if (denom <= 0) return '—';
+    const estimatedDaysRemaining = Math.max(1, Math.ceil(remainingGdd / denom));
     const harvestDate = new Date();
     harvestDate.setDate(today.getDate() + estimatedDaysRemaining);
-    
+
     return harvestDate.toLocaleDateString(i18n.language === 'hi' ? 'hi-IN' : i18n.language === 'mr' ? 'mr-IN' : 'en-IN', {
       year: 'numeric',
       month: 'long',
@@ -54,26 +104,26 @@ const FarmOperationsTelemetry: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-green-50 via-[#F9F9F6] to-emerald-50 p-4 ${
+    <div className={`min-h-screen bg-gradient-to-br from-green-50 via-[#F9F9F6] to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-emerald-950 p-4 pb-24 md:pb-6 ${
       isLowBandwidthMode ? 'low-bandwidth-mode' : ''
     }`}>
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Top Header Navigation */}
-        <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col md:flex-row items-center justify-between border border-emerald-100">
+        <div className="card light-mode dark-mode bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-xl p-6 flex flex-col md:flex-row items-center justify-between border border-white/40 dark:border-slate-700/50">
           <div className="flex items-center space-x-4 mb-4 md:mb-0">
             <button
               onClick={() => navigate(-1)}
-              className="p-3 bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition-all active:scale-95"
+              className="p-3 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full hover:bg-green-100 dark:hover:bg-green-900/50 transition-all active:scale-95"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800 tracking-tight flex items-center gap-2">
-                <Cpu className="text-green-600" />
+              <h1 className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent tracking-tight flex items-center gap-2">
+                <Cpu className="text-green-600 dark:text-green-400" />
                 थेट शेत नियंत्रण कक्ष (Operations & Telemetry Control)
               </h1>
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
                 (Real-time machinery telemetry, soil moisture vectors & predictive scheduling)
               </p>
             </div>
@@ -84,8 +134,8 @@ const FarmOperationsTelemetry: React.FC = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
             </span>
-            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 uppercase tracking-wider">
-              Telemetry Channel Connected
+            <span className="text-xs font-bold text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 uppercase tracking-wider">
+              Telemetry: simulated (no real channel)
             </span>
           </div>
         </div>
@@ -94,11 +144,13 @@ const FarmOperationsTelemetry: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* Gauge 1: Moisture */}
-          <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 flex items-center justify-between hover:shadow-2xl transition-all duration-300">
+          <div className="card light-mode dark-mode bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-xl p-6 flex items-center justify-between hover:shadow-2xl transition-all duration-300 border border-white/40 dark:border-slate-700/50">
             <div className="space-y-2">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">मातीची नमी (Soil Moisture)</p>
-              <h3 className="text-3xl font-extrabold text-gray-800">{soilStats.moisture}%</h3>
-              <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">मातीची नमी (Soil Moisture)</p>
+              <h3 className="text-3xl font-extrabold text-gray-800 dark:text-slate-100">
+                {soilStats.moisture !== null ? `${soilStats.moisture}%` : '—'}
+              </h3>
+              <p className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
                 <Droplet className="w-3.5 h-3.5 text-blue-500" /> Optimal root zone saturation
               </p>
             </div>
@@ -111,7 +163,9 @@ const FarmOperationsTelemetry: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 flex items-center justify-between hover:shadow-2xl transition-all duration-300">
             <div className="space-y-2">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">हवामान तापमान (Air Temp)</p>
-              <h3 className="text-3xl font-extrabold text-gray-800">{soilStats.temperature}°C</h3>
+              <h3 className="text-3xl font-extrabold text-gray-800">
+                {soilStats.temperature !== null ? `${soilStats.temperature}°C` : '—'}
+              </h3>
               <p className="text-xs text-orange-600 font-medium flex items-center gap-1">
                 <Thermometer className="w-3.5 h-3.5 text-orange-500" /> Regular thermal accumulation
               </p>
@@ -125,7 +179,7 @@ const FarmOperationsTelemetry: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 flex items-center justify-between hover:shadow-2xl transition-all duration-300">
             <div className="space-y-2">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">संचित उष्मामान (Cumulative GDD)</p>
-              <h3 className="text-3xl font-extrabold text-gray-800">{gddAccumulated} GDD</h3>
+              <h3 className="text-3xl font-extrabold text-gray-800">{gddAccumulated !== null ? `${gddAccumulated} GDD` : '—'}</h3>
               <p className="text-xs text-purple-600 font-medium flex items-center gap-1">
                 <TrendingUp className="w-3.5 h-3.5 text-purple-500" /> GDD calculation: Σ(T_avg - T_base)
               </p>
@@ -197,7 +251,7 @@ const FarmOperationsTelemetry: React.FC = () => {
           {/* Right Column: Predictive Harvest Timeline & Math Model */}
           <div className="bg-gradient-to-br from-green-900 to-emerald-950 text-white rounded-2xl shadow-xl p-6 border border-emerald-800 space-y-6 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
-            
+
             <div className="flex items-center justify-between border-b border-emerald-800 pb-4">
               <h3 className="text-xl font-bold tracking-wide uppercase flex items-center gap-2">
                 <Calendar className="text-emerald-400" />
@@ -206,72 +260,91 @@ const FarmOperationsTelemetry: React.FC = () => {
               <span className="text-xs text-emerald-400">GDD Mathematical Model</span>
             </div>
 
-            <div className="space-y-6">
-              {/* Equation Explainer Card */}
-              <div className="bg-emerald-900/40 border border-emerald-800/80 rounded-xl p-4 text-xs leading-relaxed text-emerald-100 space-y-2">
-                <p className="font-extrabold text-emerald-300 uppercase tracking-wider text-[10px]">Harvest Equation Math Model:</p>
-                <code className="block bg-emerald-950/70 p-2.5 rounded font-mono text-center text-sm font-bold text-white border border-emerald-900">
-                  GDD Accumulated = Σ(T_avg - T_base) × Days
-                </code>
-                <p>या मॉडेलनुसार, गहू काढणी परिपक्वतेसाठी ४२०० GDD ची आवश्यकता असते. सद्याचे GDD प्रमाण {gddAccumulated} आहे.</p>
+            {sowingDate === null ? (
+              <div className="bg-emerald-900/40 border border-emerald-800/80 rounded-xl p-2">
+                <EmptyState
+                  icon={<Calendar className="w-7 h-7" />}
+                  title="No sowing date set"
+                  description="Add your sowing date in Crop Calendar to see harvest predictions based on Growing Degree Days."
+                  action={
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => navigate('/crop-calendar')}
+                    >
+                      Open Crop Calendar
+                    </Button>
+                  }
+                />
               </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Equation Explainer Card */}
+                <div className="bg-emerald-900/40 border border-emerald-800/80 rounded-xl p-4 text-xs leading-relaxed text-emerald-100 space-y-2">
+                  <p className="font-extrabold text-emerald-300 uppercase tracking-wider text-[10px]">Harvest Equation Math Model:</p>
+                  <code className="block bg-emerald-950/70 p-2.5 rounded font-mono text-center text-sm font-bold text-white border border-emerald-900">
+                    GDD Accumulated = Σ(T_avg - T_base) × Days
+                  </code>
+                  <p>या मॉडेलनुसार, गहू काढणी परिपक्वतेसाठी ४२०० GDD ची आवश्यकता असते. सद्याचे GDD प्रमाण {gddAccumulated !== null ? gddAccumulated : '—'} आहे.</p>
+                </div>
 
-              {/* Progress Tracker */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm font-bold">
-                  <span className="text-emerald-300">कापणी परिपक्वता पातळी (Maturity level)</span>
-                  <span>{maturityPercent}%</span>
+                {/* Progress Tracker */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm font-bold">
+                    <span className="text-emerald-300">कापणी परिपक्वता पातळी (Maturity level)</span>
+                    <span>{maturityPercent !== null ? `${maturityPercent}%` : '—'}</span>
+                  </div>
+                  <div className="w-full bg-emerald-950 rounded-full h-3.5 border border-emerald-900 p-0.5">
+                    <div
+                      className="bg-gradient-to-r from-emerald-500 to-green-400 h-full rounded-full transition-all duration-1000"
+                      style={{ width: `${maturityPercent !== null ? maturityPercent : 0}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="w-full bg-emerald-950 rounded-full h-3.5 border border-emerald-900 p-0.5">
-                  <div 
-                    className="bg-gradient-to-r from-emerald-500 to-green-400 h-full rounded-full transition-all duration-1000"
-                    style={{ width: `${maturityPercent}%` }}
-                  ></div>
+
+                {/* Milestones timeline */}
+                <div className="relative pl-6 border-l-2 border-emerald-800 space-y-4 text-xs">
+                  <div className="relative">
+                    <span className="absolute -left-[30px] top-0.5 bg-emerald-600 text-white rounded-full h-4 w-4 flex items-center justify-center font-bold">1</span>
+                    <div>
+                      <span className="font-bold text-white">पेरणी (Sowing Phase completed) - {sowingDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                      <p className="text-emerald-300/80">Germination index resolved successfully.</p>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute -left-[30px] top-0.5 bg-emerald-600 text-white rounded-full h-4 w-4 flex items-center justify-center font-bold">2</span>
+                    <div>
+                      <span className="font-bold text-white">वेजिटेटिव्ह (Vegetative Development)</span>
+                      <p className="text-emerald-300/80">Maximum tillering reached during GDD target.</p>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute -left-[30px] top-0.5 bg-emerald-600 text-white rounded-full h-4 w-4 flex items-center justify-center font-bold">3</span>
+                    <div>
+                      <span className="font-bold text-white">दाणे भरणे (Flowering phase)</span>
+                      <p className="text-emerald-300/80">Grain filling indexes verified.</p>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute -left-[30px] top-0.5 bg-amber-500 text-white rounded-full h-4 w-4 flex items-center justify-center font-bold">4</span>
+                    <div>
+                      <span className="font-bold text-white">कापणी अंदाज (Harvest Prediction Matrix)</span>
+                      <p className="text-amber-300 font-extrabold uppercase mt-0.5">📅 {getPredictedHarvestDate()}</p>
+                    </div>
+                  </div>
                 </div>
+
+                <button
+                  onClick={() => {
+                    toast.success('कापणी अंदाज अहवाल तुमच्या शेतकरी समुदायावर थेट सामायिक केला गेला! 🌾');
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white font-extrabold rounded-xl transition-all shadow-lg text-sm"
+                >
+                  📊 अहवाल सामायिक करा (Publish Harvest Schedule)
+                </button>
+
               </div>
-
-              {/* Milestones timeline */}
-              <div className="relative pl-6 border-l-2 border-emerald-800 space-y-4 text-xs">
-                <div className="relative">
-                  <span className="absolute -left-[30px] top-0.5 bg-emerald-600 text-white rounded-full h-4 w-4 flex items-center justify-center font-bold">1</span>
-                  <div>
-                    <span className="font-bold text-white">पेरणी (Sowing Phase completed) - १५ नोव्हेंबर २०२५</span>
-                    <p className="text-emerald-300/80">Germination index resolved successfully.</p>
-                  </div>
-                </div>
-                <div className="relative">
-                  <span className="absolute -left-[30px] top-0.5 bg-emerald-600 text-white rounded-full h-4 w-4 flex items-center justify-center font-bold">2</span>
-                  <div>
-                    <span className="font-bold text-white">वेजिटेटिव्ह (Vegetative Development) - जानेवारी २०२६</span>
-                    <p className="text-emerald-300/80">Maximum tillering reached during GDD target.</p>
-                  </div>
-                </div>
-                <div className="relative">
-                  <span className="absolute -left-[30px] top-0.5 bg-emerald-600 text-white rounded-full h-4 w-4 flex items-center justify-center font-bold">3</span>
-                  <div>
-                    <span className="font-bold text-white">दाणे भरणे (Flowering phase completed) - मार्च २०२६</span>
-                    <p className="text-emerald-300/80">Grain filling indexes verified.</p>
-                  </div>
-                </div>
-                <div className="relative">
-                  <span className="absolute -left-[30px] top-0.5 bg-amber-500 text-white rounded-full h-4 w-4 flex items-center justify-center font-bold">4</span>
-                  <div>
-                    <span className="font-bold text-white">कापणी अंदाज (Harvest Prediction Matrix)</span>
-                    <p className="text-amber-300 font-extrabold uppercase mt-0.5">📅 {getPredictedHarvestDate()}</p>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  toast.success('कापणी अंदाज अहवाल तुमच्या शेतकरी समुदायावर थेट सामायिक केला गेला! 🌾');
-                }}
-                className="w-full py-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white font-extrabold rounded-xl transition-all shadow-lg text-sm"
-              >
-                📊 अहवाल सामायिक करा (Publish Harvest Schedule)
-              </button>
-
-            </div>
+            )}
           </div>
 
         </div>

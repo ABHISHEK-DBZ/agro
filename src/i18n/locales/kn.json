@@ -1,10 +1,212 @@
 {
-  "app_title": "ಸ್ಮಾರ್ಟ್ ಕೃಷಿ ಸಹಾಯಕ",
-  "welcome": "ಸ್ವಾಗತ",
-  "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
-  "weather": "ಹವಾಮಾನ",
-  "crop_info": "ಬೆಳೆ ಮಾಹಿತಿ",
-  "disease_detection": "ರೋಗ ಪತ್ತೆ",
-  "market_prices": "ಮಾರುಕಟ್ಟೆ ಬೆಲೆ",
-  "government_schemes": "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು"
+  "app": {
+    "title": "ಸ್ಮಾರ್ಟ್ ಕೃಷಿ ಸಹಾಯಕ",
+    "subtitle": "ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ"
+  },
+  "words": {
+    "smart": "ಸ್ಮಾರ್ಟ್", "agriculture": "ಕೃಷಿ", "assistant": "ಸಹಾಯಕ",
+    "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", "weather": "ಹವಾಮಾನ", "crops": "ಬೆಳೆಗಳು",
+    "diseases": "ರೋಗಗಳು", "prices": "ಬೆಲೆಗಳು", "schemes": "ಯೋಜನೆಗಳು",
+    "agent": "ಏಜೆಂಟ್", "profile": "ಪ್ರೊಫೈಲ್", "live": "ಲೈವ್",
+    "market": "ಮಾರುಕಟ್ಟೆ", "community": "ಸಮುದಾಯ", "settings": "ಸೆಟ್ಟಿಂಗ್ಸ್",
+    "notifications": "ಸೂಚನೆಗಳು", "logout": "ಲಾಗ್ ಔಟ್", "login": "ಲಾಗಿನ್",
+    "register": "ನೋಂದಣಿ", "search": "ಹುಡುಕಿ", "filter": "ಫಿಲ್ಟರ್",
+    "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ", "error": "ದೋಷ", "success": "ಯಶಸ್ಸು",
+    "submit": "ಸಲ್ಲಿಸು", "cancel": "ರದ್ದು", "save": "ಉಳಿಸಿ",
+    "edit": "ಸಂಪಾದಿಸಿ", "delete": "ಅಳಿಸು", "view": "ವೀಕ್ಷಿಸಿ",
+    "add": "ಸೇರಿಸಿ", "update": "ನವೀಕರಿಸಿ", "close": "ಮುಚ್ಚಿ", "open": "ತೆರೆಯಿರಿ",
+    "yes": "ಹೌದು", "no": "ಇಲ್ಲ", "today": "ಇಂದು",
+    "yesterday": "ನಿನ್ನೆ", "tomorrow": "ನಾಳೆ", "week": "ವಾರ",
+    "month": "ತಿಂಗಳು", "year": "ವರ್ಷ", "temperature": "ತಾಪಮಾನ",
+    "humidity": "ಆರ್ದ್ರತೆ", "rainfall": "ಮಳೆ", "wind": "ಗಾಳಿ",
+    "speed": "ವೇಗ", "forecast": "ಮುನ್ಸೂಚನೆ", "location": "ಸ್ಥಳ",
+    "information": "ಮಾಹಿತಿ", "detection": "ಪತ್ತೆ", "government": "ಸರ್ಕಾರಿ",
+    "photos": "ಫೋಟೋಗಳು", "upload": "ಅಪ್‌ಲೋಡ್", "download": "ಡೌನ್‌ಲೋಡ್",
+    "share": "ಹಂಚಿಕೊಳ್ಳಿ", "like": "ಇಷ್ಟ", "comment": "ಕಾಮೆಂಟ್",
+    "post": "ಪೋಸ್ಟ್", "admin": "ಅಡ್ಮಿನ್", "user": "ಬಳಕೆದಾರ",
+    "data": "ಡೇಟಾ", "report": "ವರದಿ", "analytics": "ವಿಶ್ಲೇಷಣೆ",
+    "help": "ಸಹಾಯ", "about": "ಬಗ್ಗೆ", "contact": "ಸಂಪರ್ಕ",
+    "support": "ಬೆಂಬಲ", "terms": "ನಿಯಮಗಳು", "privacy": "ಗೌಪ್ಯತೆ"
+  },
+  "navigation": {
+    "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", "weather": "ಹವಾಮಾನ",
+    "crops": "ಬೆಳೆ ಮಾಹಿತಿ", "diseases": "ರೋಗ ಪತ್ತೆ",
+    "prices": "ಮಂಡಿ ಬೆಲೆ", "schemes": "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು",
+    "agent": "AI ಏಜೆಂಟ್", "profile": "ಪ್ರೊಫೈಲ್"
+  },
+  "nav": {
+    "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", "live": "ಲೈವ್ ವೈಶಿಷ್ಟ್ಯಗಳು",
+    "dataManagement": "ಡೇಟಾ ನಿರ್ವಹಣೆ", "tools": "ಕೃಷಿ ಸಾಧನಗಳು",
+    "community": "ಸಮುದಾಯ", "liveDashboard": "ಲೈವ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+    "liveWeather": "ಲೈವ್ ಹವಾಮಾನ", "liveMarket": "ಲೈವ್ ಮಾರುಕಟ್ಟೆ ಬೆಲೆ",
+    "realTimeDashboard": "ನೈಜ-ಸಮಯದ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", "farmTelemetry": "ಫಾರ್ಮ್ ಟೆಲಿಮೆಟ್ರಿ",
+    "dataSources": "ಡೇಟಾ ಮೂಲಗಳು", "analytics": "ವಿಶ್ಲೇಷಣೆ",
+    "cropInfo": "ಬೆಳೆ ಮಾಹಿತಿ", "cropCalendar": "ಬೆಳೆ ಕ್ಯಾಲೆಂಡರ್",
+    "soilTesting": "ಮಣ್ಣು ಪರೀಕ್ಷೆ", "loanCalculator": "ಸಾಲ ಕ್ಯಾಲ್ಕುಲೇಟರ್",
+    "dailyTracking": "ದೈನಂದಿನ ಲಾಗ್", "diseaseDetection": "ರೋಗ ಪತ್ತೆ",
+    "aiAgent": "AI ಸಹಾಯಕ", "communityHub": "ಸಮುದಾಯ",
+    "grievances": "ದೂರುಗಳು", "grievancesAdmin": "ದೂರು ನಿರ್ವಹಣೆ",
+    "schemes": "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು", "profile": "ಪ್ರೊಫೈಲ್",
+    "settings": "ಸೆಟ್ಟಿಂಗ್ಸ್", "notifications": "ಸೂಚನೆಗಳು", "logout": "ಲಾಗ್ ಔಟ್"
+  },
+  "locationContext": {
+    "title": "ಸ್ಥಳೀಯ ಕೃಷಿ ಸನ್ನಿವೇಶ", "locationNotFound": "ಸ್ಥಳ ಲಭ್ಯವಿಲ್ಲ",
+    "kharifSeason": "ಖರೀಫ್ ಋತು (ಜೂನ್-ಅಕ್ಟೋಬರ್)",
+    "rabiSeason": "ರಬಿ ಋತು (ಅಕ್ಟೋಬರ್-ಮಾರ್ಚ್)",
+    "zaidSeason": "ಜಾಯ್ದ್ ಋತು (ಮಾರ್ಚ್-ಜೂನ್)",
+    "agroClimaticZone": "ಕೃಷಿ-ಹವಾಮಾನ ವಲಯ", "rainfall": "ಮಳೆ",
+    "temperature": "ತಾಪಮಾನ", "zoneNotFound": "ವಲಯದ ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ",
+    "seasonalCrops": "ಋತುಮಾನ ಬೆಳೆಗಳು",
+    "actions": {
+      "checkWeather": "ಹವಾಮಾನ ಪರಿಶೀಲಿಸಿ", "checkSoil": "ಮಣ್ಣಿನ ಆರೋಗ್ಯ ಪರಿಶೀಲಿಸಿ",
+      "viewCropCalendar": "ಬೆಳೆ ಕ್ಯಾಲೆಂಡರ್ ವೀಕ್ಷಿಸಿ"
+    },
+    "queries": {
+      "weather": "ಇಂದಿನ ಹವಾಮಾನ ಹೇಗಿದೆ ಮತ್ತು ಯಾವ ಮುನ್ನೆಚ್ಚರಿಕೆ ವಹಿಸಬೇಕು?",
+      "soilHealth": "ನನ್ನ ಮಣ್ಣಿಗೆ ಯಾವ ಗೊಬ್ಬರ ಸೂಕ್ತ?",
+      "cropCalendar": "ಈ ಋತುವಿನಲ್ಲಿ ನಾನು ಯಾವ ಬೆಳೆಗಳನ್ನು ಬೆಳೆಯಬೇಕು?"
+    }
+  },
+  "dashboard": {
+    "welcome": "ಸ್ಮಾರ್ಟ್ ಕೃಷಿ ಸಹಾಯಕಕ್ಕೆ ಸ್ವಾಗತ", "todayWeather": "ಇಂದಿನ ಹವಾಮಾನ",
+    "quickActions": "ತ್ವರಿತ ಕ್ರಿಯೆಗಳು", "recentAlerts": "ಇತ್ತೀಚಿನ ಎಚ್ಚರಿಕೆಗಳು",
+    "marketPrices": "ಮಾರುಕಟ್ಟೆ ಬೆಲೆಗಳು", "viewAllPrices": "ಎಲ್ಲಾ ಬೆಲೆಗಳನ್ನು ವೀಕ್ಷಿಸಿ"
+  },
+  "weather": {
+    "title": "ಹವಾಮಾನ ಮುನ್ಸೂಚನೆ", "temperature": "ತಾಪಮಾನ", "humidity": "ಆರ್ದ್ರತೆ",
+    "rainfall": "ಮಳೆ", "windSpeed": "ಗಾಳಿಯ ವೇಗ", "forecast": "7-ದಿನಗಳ ಮುನ್ಸೂಚನೆ",
+    "location": "ಸ್ಥಳ", "fetching": "ಹವಾಮಾನ ಡೇಟಾ ಪಡೆಯಲಾಗುತ್ತಿದೆ...",
+    "fetchError": "ಹವಾಮಾನ ಡೇಟಾ ಪಡೆಯಲಾಗಲಿಲ್ಲ",
+    "locationError": "ಸ್ಥಳ ಪ್ರವೇಶ ನಿರಾಕರಿಸಲಾಗಿದೆ. ದಯವಿಟ್ಟು ಸ್ಥಳ ಪ್ರವೇಶಕ್ಕೆ ಅನುಮತಿಸಿ.",
+    "noGeolocation": "ಈ ಬ್ರೌಸರ್ ಜಿಯೋಲೋಕೇಶನ್ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ",
+    "visibility": "ಗೋಚರತೆ", "feelsLike": "ಅನುಭವ", "recommendations": "ಬೆಳೆ ಶಿಫಾರಸುಗಳು",
+    "recommendationText": "ಪ್ರಸ್ತುತ ಹವಾಮಾನ ಪರಿಸ್ಥಿತಿಗಳ ಆಧಾರದ ಮೇಲೆ:",
+    "rec1": "ನೀರಾವರಿಗೆ ಉತ್ತಮ ಪರಿಸ್ಥಿತಿಗಳು", "rec2": "ಕೀಟ ಚಟುವಟಿಕೆಗಾಗಿ ಬೆಳೆಗಳನ್ನು ಮೇಲ್ವಿಚಾರಣೆ ಮಾಡಿ",
+    "rec3": "ಸಿದ್ಧವಿದ್ದರೆ ಕೊಯ್ಲು ಮಾಡಲು ಪರಿಗಣಿಸಿ",
+    "searchPlaceholder": "ನಗರ ಅಥವಾ ಸ್ಥಳವನ್ನು ಹುಡುಕಿ...",
+    "popularCities": "ಜನಪ್ರಿಯ ನಗರಗಳು", "favoriteLocations": "ಮೆಚ್ಚಿನ ಸ್ಥಳಗಳು",
+    "useCurrentLocation": "ಪ್ರಸ್ತುತ ಸ್ಥಳ ಬಳಸಿ"
+  },
+  "crops": {
+    "title": "ಬೆಳೆ ಮಾಹಿತಿ", "subtitle": "ವಿವಿಧ ಬೆಳೆಗಳಿಗೆ ವಿಸ್ತೃತ ಮಾರ್ಗದರ್ಶನ.",
+    "seedTypes": "ಬೀಜದ ವಿಧಗಳು", "bestPractices": "ಉತ್ತಮ ಅಭ್ಯಾಸಗಳು",
+    "soilCompatibility": "ಮಣ್ಣಿನ ಹೊಂದಿಕೆಯಾಗುವಿಕೆ", "fertilizer": "ಗೊಬ್ಬರ ಮಾರ್ಗದರ್ಶನ",
+    "searchPlaceholder": "ಬೆಳೆಯ ಹೆಸರಿನಿಂದ ಹುಡುಕಿ...",
+    "allSeasons": "ಎಲ್ಲಾ ಋತುಗಳು",
+    "seasons": { "kharif": "ಖರೀಫ್", "rabi": "ರಬಿ", "zaid": "ಜಾಯ್ದ್", "annual": "ವಾರ್ಷಿಕ" },
+    "viewDetails": "ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಿ", "growingInfo": "ಬೆಳೆಯುವ ಮಾಹಿತಿ",
+    "season": "ಋತು", "growthPeriod": "ಬೆಳವಣಿಗೆ ಅವಧಿ",
+    "soilType": "ಮಣ್ಣಿನ ವಿಧ", "waterRequirement": "ನೀರಿನ ಅಗತ್ಯ",
+    "seedsAndFertilizers": "ಬೀಜ ಮತ್ತು ಗೊಬ್ಬರಗಳು", "seedVarieties": "ಬೀಜದ ತಳಿಗಳು",
+    "fertilizers": "ಗೊಬ್ಬರಗಳು", "noResults": "ಆಯ್ಕೆ ಮಾಡಿದ ಫಿಲ್ಟರ್‌ಗಳಿಗೆ ಯಾವುದೇ ಬೆಳೆಗಳು ಸಿಗಲಿಲ್ಲ."
+  },
+  "diseases": {
+    "title": "ಸಸ್ಯ ರೋಗ ಪತ್ತೆ", "subtitle": "ಬೆಳೆ ರೋಗಗಳನ್ನು ಗುರುತಿಸಲು ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+    "detectDisease": "ಪತ್ತೆ ಪ್ರಾರಂಭಿಸಿ", "instructions": "ಉತ್ತಮ ಫಲಿತಾಂಶಗಳಿಗಾಗಿ, ಪೀಡಿತ ಸಸ್ಯ ಭಾಗದ ಸ್ಪಷ್ಟ, ಕ್ಲೋಸ್-ಅಪ್ ಚಿತ್ರವನ್ನು ಬಳಸಿ.",
+    "errorTitle": "ದೋಷ", "errorFileSize": "ಫೈಲ್ ಗಾತ್ರವು 5MB ಮೀರಬಾರದು.",
+    "chooseImage": "ಚಿತ್ರ ಆಯ್ಕೆಮಾಡಿ", "analyze": "ರೋಗ ವಿಶ್ಲೇಷಿಸಿ",
+    "analyzing": "ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...", "selectedCropAlt": "ಆಯ್ಕೆಮಾಡಿದ ಬೆಳೆ",
+    "removeImage": "ತೆಗೆದುಹಾಕಿ", "uploadPrompt": "ನಿಮ್ಮ ಚಿತ್ರ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.",
+    "aiWorking": "ನಮ್ಮ AI ನಿಮ್ಮ ಚಿತ್ರವನ್ನು ವಿಶ್ಲೇಷಿಸುತ್ತಿದೆ...",
+    "diseaseDetected": "ರೋಗ ಪತ್ತೆಯಾಗಿದೆ", "resultDisclaimer": "ಇದು AI-ರಚಿತ ಫಲಿತಾಂಶ. ದಯವಿಟ್ಟು ಸ್ಥಳೀಯ ಕೃಷಿ ತಜ್ಞರನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+    "symptoms": "ಲಕ್ಷಣಗಳು", "causes": "ಸಂಭಾವ್ಯ ಕಾರಣಗಳು",
+    "treatment": "ಚಿಕಿತ್ಸೆ ಶಿಫಾರಸುಗಳು", "prevention": "ತಡೆ ತಂತ್ರಗಳು",
+    "environment": "ಅನುಕೂಲಕರ ಪರಿಸರ", "humidity": "ಆರ್ದ್ರತೆ",
+    "temperature": "ತಾಪಮಾನ", "wind": "ಗಾಳಿ", "pesticides": "ಕೀಟನಾಶಕ ಸಲಹೆಗಳು",
+    "dosage": "ಡೋಸ್", "safety": "ಸುರಕ್ಷತಾ ಮುನ್ನೆಚ್ಚರಿಕೆಗಳು",
+    "commonDiseases": "ಸಾಮಾನ್ಯ ಬೆಳೆ ರೋಗಗಳು", "affects": "ಪರಿಣಾಮ ಬೀರುತ್ತದೆ:",
+    "safetyGuidelines": "ಕೀಟನಾಶಕ ಸುರಕ್ಷತಾ ಮಾರ್ಗಸೂಚಿಗಳು",
+    "safetyPoints": [
+      "ಕೀಟನಾಶಕಗಳನ್ನು ನಿರ್ವಹಿಸುವಾಗ ಯಾವಾಗಲೂ ರಕ್ಷಣಾತ್ಮಕ ಬಟ್ಟೆ ಧರಿಸಿ.",
+      "ಉತ್ಪನ್ನ ಲೇಬಲ್‌ನ ಡೋಸ್ ಮತ್ತು ಅನ್ವಯ ಸೂಚನೆಗಳನ್ನು ಕಟ್ಟುನಿಟ್ಟಾಗಿ ಅನುಸರಿಸಿ.",
+      "ಕೀಟನಾಶಕಗಳನ್ನು ಮಕ್ಕಳಿಂದ ಮತ್ತು ಆಹಾರದಿಂದ ದೂರವಿಡಿ.",
+      "ಗಾಳಿ ಅಥವಾ ಮಳೆಯ ಸಮಯದಲ್ಲಿ ಸಿಂಪಡಣೆ ಮಾಡಬೇಡಿ."
+    ],
+    "db": {
+      "1": { "name": "ಎಲೆ ಬ್ಲಾಸ್ಟ್", "crop": "ಭತ್ತ" },
+      "2": { "name": "ತುಕ್ಕು", "crop": "ಗೋಧಿ" },
+      "3": { "name": "ಬಾಲ್ವರ್ಮ್", "crop": "ಹತ್ತಿ" }
+    }
+  },
+  "prices": {
+    "title": "ಮಂಡಿ ಬೆಲೆಗಳು", "subtitle": "ವಿವಿಧ ಮಾರುಕಟ್ಟೆಗಳಿಂದ ತಾಜಾ ಕೃಷಿ ಬೆಲೆಗಳು.",
+    "todayPrices": "ಇಂದಿನ ಬೆಲೆಗಳು", "priceHistory": "ಬೆಲೆ ಇತಿಹಾಸ",
+    "cropFilter": "ಬೆಳೆ ಮೂಲಕ ಫಿಲ್ಟರ್ ಮಾಡಿ", "locationFilter": "ಸ್ಥಳ ಮೂಲಕ ಫಿಲ್ಟರ್ ಮಾಡಿ",
+    "searchPlaceholder": "ಬೆಳೆ, ತಳಿ ಅಥವಾ ಮಾರುಕಟ್ಟೆ ಮೂಲಕ ಹುಡುಕಿ...",
+    "allCrops": "ಎಲ್ಲಾ ಬೆಳೆಗಳು", "allStates": "ಎಲ್ಲಾ ರಾಜ್ಯಗಳು",
+    "lastUpdated": "ಕೊನೆಯ ನವೀಕರಣ", "cardView": "ಕಾರ್ಡ್ ವೀಕ್ಷಣೆ",
+    "tableView": "ಕೋಷ್ಟಕ ವೀಕ್ಷಣೆ", "noResults": "ಆಯ್ಕೆ ಮಾಡಿದ ಫಿಲ್ಟರ್‌ಗಳಿಗೆ ಯಾವುದೇ ಬೆಲೆಗಳು ಸಿಗಲಿಲ್ಲ.",
+    "marketTipsTitle": "ಮಾರುಕಟ್ಟೆ ಸಲಹೆಗಳು",
+    "marketTips": [
+      "ತರಕಾರಿಗಳಿಗೆ ಮಂಡಿಗಳಲ್ಲಿ ಮುಂಜಾನೆ ಮಾರಾಟ ಮಾಡಲು ಉತ್ತಮ ಸಮಯ.",
+      "ಮಾರಾಟ ಖಚಿತಪಡಿಸುವ ಮೊದಲು ಹಲವು ಮಾರುಕಟ್ಟೆ ಬೆಲೆಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.",
+      "ಹವಾಮಾನ ಮುನ್ಸೂಚನೆಗಳನ್ನು ಗಮನಿಸಿ.",
+      "ಬೆಲೆ ಕುಸಿತದ ಸಮಯದಲ್ಲಿ ಸಂಗ್ರಹಣೆಯನ್ನು ಪರಿಗಣಿಸಿ."
+    ],
+    "change": "ಬದಲಾವಣೆ",
+    "units": { "quintal": "ಕ್ವಿಂಟಾಲ್", "ton": "ಟನ್", "kg": "ಕೆಜಿ" },
+    "crops": {
+      "rice": "ಭತ್ತ", "wheat": "ಗೋಧಿ", "cotton": "ಹತ್ತಿ", "sugarcane": "ಕಬ್ಬು",
+      "onion": "ಈರುಳ್ಳಿ", "tomato": "ಟೊಮ್ಯಾಟೊ", "soybean": "ಸೋಯಾಬೀನ್",
+      "potato": "ಆಲೂಗಡ್ಡೆ", "mustard": "ಸಾಸಿವೆ"
+    },
+    "states": {
+      "haryana": "ಹರಿಯಾಣ", "madhyapradesh": "ಮಧ್ಯಪ್ರದೇಶ", "telangana": "ತೆಲಂಗಾಣ",
+      "maharashtra": "ಮಹಾರಾಷ್ಟ್ರ", "andhrapradesh": "ಆಂಧ್ರಪ್ರದೇಶ", "uttarpradesh": "ಉತ್ತರ ಪ್ರದೇಶ", "rajasthan": "ರಾಜಸ್ಥಾನ"
+    }
+  },
+  "schemes": {
+    "title": "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು", "subtitle": "ಕೇಂದ್ರ ಮತ್ತು ರಾಜ್ಯ ಸರ್ಕಾರಗಳಿಂದ ರೈತರಿಗೆ ಪ್ರಯೋಜನಕಾರಿ ಯೋಜನೆಗಳನ್ನು ಅನ್ವೇಷಿಸಿ.",
+    "available": "ಲಭ್ಯವಿರುವ ಯೋಜನೆಗಳು", "eligibility": "ಅರ್ಹತೆ",
+    "application": "ಅರ್ಜಿ ಪ್ರಕ್ರಿಯೆ", "subsidies": "ಸಬ್ಸಿಡಿಗಳು",
+    "searchPlaceholder": "ಯೋಜನೆಯ ಹೆಸರು ಅಥವಾ ವಿವರಣೆ ಮೂಲಕ ಹುಡುಕಿ...",
+    "allCategories": "ಎಲ್ಲಾ ವರ್ಗಗಳು",
+    "categories": {
+      "directbenefit": "ನೇರ ಲಾಭ", "soilmanagement": "ಮಣ್ಣು ನಿರ್ವಹಣೆ",
+      "insurance": "ವಿಮೆ", "credit": "ಸಾಲ", "infrastructure": "ಮೂಲಸೌಕರ್ಯ"
+    },
+    "status": { "active": "ಸಕ್ರಿಯ", "upcoming": "ಮುಂಬರುವ", "expired": "ಅವಧಿ ಮುಗಿದಿದೆ" },
+    "benefits": "ಪ್ರಯೋಜನಗಳು", "documents": "ಅಗತ್ಯ ದಾಖಲೆಗಳು",
+    "officialSite": "ಅಧಿಕೃತ ಸೈಟ್", "noResults": "ಆಯ್ಕೆ ಮಾಡಿದ ಫಿಲ್ಟರ್‌ಗಳಿಗೆ ಯಾವುದೇ ಯೋಜನೆ ಸಿಗಲಿಲ್ಲ.",
+    "close": "ಮುಚ್ಚಿ", "loading": "ಯೋಜನೆಗಳು ಲೋಡ್ ಆಗುತ್ತಿವೆ...",
+    "fetchError": "ಯೋಜನೆಗಳನ್ನು ಪಡೆಯಲು ವಿಫಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    "viewDetails": "ವಿವರಗಳನ್ನು ವೀಕ್ಷಿಸಿ", "about": "ಯೋಜನೆಯ ಬಗ್ಗೆ"
+  },
+  "common": {
+    "search": "ಹುಡುಕಿ", "filter": "ಫಿಲ್ಟರ್", "refresh": "ರಿಫ್ರೆಶ್",
+    "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ...", "error": "ದೋಷ ಸಂಭವಿಸಿದೆ", "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+    "cancel": "ರದ್ದು", "save": "ಉಳಿಸಿ", "submit": "ಸಲ್ಲಿಸು", "close": "ಮುಚ್ಚಿ"
+  },
+  "profile": {
+    "editProfile": "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ", "farmInfo": "ವೈಯಕ್ತಿಕ ಮತ್ತು ಫಾರ್ಮ್ ಮಾಹಿತಿ",
+    "name": "ಪೂರ್ಣ ಹೆಸರು", "email": "ಇಮೇಲ್ ವಿಳಾಸ", "phone": "ಫೋನ್ ಸಂಖ್ಯೆ",
+    "location": "ಸ್ಥಳ", "farmSize": "ಫಾರ್ಮ್ ಗಾತ್ರ (ಎಕರೆಗಳಲ್ಲಿ)",
+    "experience": "ಕೃಷಿ ಅನುಭವ (ವರ್ಷಗಳಲ್ಲಿ)", "primaryCrops": "ಪ್ರಾಥಮಿಕ ಬೆಳೆಗಳು",
+    "settings": "ಸೆಟ್ಟಿಂಗ್ಸ್", "language": "ಭಾಷೆ", "notifications": "ಸೂಚನೆಗಳು",
+    "notificationTypes": {
+      "weather": "ಹವಾಮಾನ ಎಚ್ಚರಿಕೆಗಳು", "prices": "ಮಂಡಿ ಬೆಲೆ ನವೀಕರಣಗಳು",
+      "diseases": "ರೋಗ ಎಚ್ಚರಿಕೆಗಳು", "schemes": "ಹೊಸ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು"
+    },
+    "account": "ಖಾತೆ ಮತ್ತು ಸುರಕ್ಷತೆ", "changePassword": "ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಿ", "logout": "ಲಾಗ್ ಔಟ್"
+  },
+  "auth": {
+    "loginTitle": "ನಿಮ್ಮ ಖಾತೆಗೆ ಲಾಗಿನ್ ಮಾಡಿ", "login": "ಲಾಗಿನ್",
+    "email": "ಇಮೇಲ್ ವಿಳಾಸ", "password": "ಪಾಸ್‌ವರ್ಡ್", "confirmPassword": "ಪಾಸ್‌ವರ್ಡ್ ದೃಢೀಕರಿಸಿ",
+    "noAccount": "ಖಾತೆ ಇಲ್ಲವೇ?", "registerHere": "ಇಲ್ಲಿ ನೋಂದಾಯಿಸಿ",
+    "registerTitle": "ಹೊಸ ಖಾತೆ ರಚಿಸಿ", "register": "ನೋಂದಾಯಿಸಿ",
+    "haveAccount": "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?", "loginHere": "ಇಲ್ಲಿ ಲಾಗಿನ್ ಮಾಡಿ"
+  },
+  "aiagent": {
+    "title": "AI ಕೃಷಿ ಏಜೆಂಟ್", "subtitle": "ಕೃಷಿಯ ಬಗ್ಗೆ ನನ್ನನ್ನು ಏನಾದರೂ ಕೇಳಿ",
+    "placeholder": "ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ...", "voiceInput": "ಧ್ವನಿ ಇನ್‌ಪುಟ್",
+    "startListening": "ಕೇಳಲು ಪ್ರಾರಂಭಿಸಿ", "stopListening": "ಕೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ",
+    "speak": "ಮಾತನಾಡಿ", "speaking": "ಮಾತನಾಡುತ್ತಿದೆ...",
+    "voiceNotSupported": "ನಿಮ್ಮ ಬ್ರೌಸರ್ ಧ್ವನಿಯನ್ನು ಬೆಂಬಲಿಸುವುದಿಲ್ಲ",
+    "categories": {
+      "cropManagement": "ಬೆಳೆ ನಿರ್ವಹಣೆ", "pestControl": "ಕೀಟ ಮತ್ತು ರೋಗ ನಿಯಂತ್ರಣ",
+      "soilHealth": "ಮಣ್ಣಿನ ಆರೋಗ್ಯ", "irrigation": "ನೀರಾವರಿ ಮತ್ತು ನೀರು ನಿರ್ವಹಣೆ",
+      "weatherImpact": "ಹವಾಮಾನ ಪರಿಣಾಮ", "marketPrices": "ಮಾರುಕಟ್ಟೆ ಮತ್ತು ಬೆಲೆಗಳು",
+      "governmentSchemes": "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು", "organicFarming": "ಸಾವಯವ ಕೃಷಿ"
+    }
+  }
 }

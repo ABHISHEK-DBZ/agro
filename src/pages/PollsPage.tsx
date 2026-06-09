@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Plus, Vote, Clock, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
+import { BarChart3, Plus, Vote, Clock, CheckCircle, X, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import communityService, { Poll } from '../services/communityService';
+import { useAuth } from '../contexts/AuthContext';
 
 const PollsPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { user, userProfile } = useAuth();
+  const currentUserId = user?.uid || '';
+  const currentUserName = userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'You';
+
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -14,31 +22,30 @@ const PollsPage: React.FC = () => {
     category: 'crops',
     expiryDays: 7
   });
-  const currentUserId = 'current_user_id'; // TODO: Get from auth
 
+  // Subscribe to active polls real-time
   useEffect(() => {
-    loadPolls();
+    setLoading(true);
+    const unsubscribe = communityService.subscribeToPolls(undefined, (fetchedPolls) => {
+      setPolls(fetchedPolls);
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const loadPolls = async () => {
-    try {
-      setLoading(true);
-      const fetchedPolls = await communityService.getActivePolls();
-      setPolls(fetchedPolls);
-    } catch (error) {
-      console.error('Error loading polls:', error);
-    } finally {
-      setLoading(false);
+  const handleCreatePoll = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUserId) {
+      toast.error(t('profile.loginRequired', 'Please log in to create a poll'));
+      return;
     }
-  };
-
-  const handleCreatePoll = async () => {
     if (!newPoll.question.trim() || newPoll.options.filter(o => o.trim()).length < 2) {
-      alert('Please provide a question and at least 2 options');
+      toast.error(t('common.error', 'Please provide a question and at least 2 options'));
       return;
     }
 
     try {
+      setLoading(true);
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + newPoll.expiryDays);
 
@@ -53,32 +60,37 @@ const PollsPage: React.FC = () => {
             voters: []
           })),
         createdBy: currentUserId,
-        createdByName: 'Current User', // TODO: Get from auth
+        createdByName: currentUserName,
         expiresAt: expiryDate,
         category: newPoll.category
       });
 
+      // Reset & Close
       setNewPoll({ question: '', options: ['', ''], category: 'crops', expiryDays: 7 });
       setShowCreateModal(false);
-      loadPolls();
-      alert('Poll created successfully! 📊');
+      toast.success(t('community.pollCreatedSuccess', 'Poll created successfully! 🎉'));
     } catch (error) {
       console.error('Error creating poll:', error);
-      alert('Failed to create poll');
+      toast.error(t('common.error', 'Failed to create poll'));
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleVote = async (pollId: string, optionId: string) => {
+    if (!currentUserId) {
+      toast.error(t('profile.loginRequired', 'Please log in to vote'));
+      return;
+    }
     try {
       await communityService.voteOnPoll(pollId, optionId, currentUserId);
-      loadPolls();
-      alert('Vote recorded! ✅');
+      toast.success(t('community.voted', 'Vote recorded!'));
     } catch (error: any) {
       if (error.message === 'User already voted') {
-        alert('You have already voted on this poll');
+        toast.error(t('community.alreadyVoted', 'You have already voted on this poll'));
       } else {
         console.error('Error voting:', error);
-        alert('Failed to vote');
+        toast.error(t('common.error', 'Failed to vote'));
       }
     }
   };
@@ -102,12 +114,14 @@ const PollsPage: React.FC = () => {
   const getTimeRemaining = (expiresAt: Date) => {
     const now = new Date();
     const diff = expiresAt.getTime() - now.getTime();
+    if (diff <= 0) return t('community.remainingSoon', 'Ending soon');
+    
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     
-    if (days > 0) return `${days}d ${hours}h remaining`;
-    if (hours > 0) return `${hours}h remaining`;
-    return 'Ending soon';
+    if (days > 0) return `${days}d ${hours}h ${t('community.remaining', 'remaining')}`;
+    if (hours > 0) return `${hours}h ${t('community.remaining', 'remaining')}`;
+    return t('community.remainingSoon', 'Ending soon');
   };
 
   const hasUserVoted = (poll: Poll) => {
@@ -119,46 +133,54 @@ const PollsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-8 shadow-lg">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold flex items-center gap-3">
-                <BarChart3 className="w-10 h-10" />
-                Community Polls
-              </h1>
-              <p className="text-blue-100 mt-2">
-                {polls.length} Active Polls • Share your opinion on farming decisions
-              </p>
-            </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-blue-50 transition-all flex items-center gap-2 shadow-lg"
-            >
-              <Plus className="w-5 h-5" />
-              Create Poll
-            </button>
+    <div className="min-h-screen bg-[#f8f7f5] dark:bg-[#14130f] text-[#26241f] dark:text-[#eeece7] pb-12 transition-colors duration-300">
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-[#2f4328] to-[#39542f] text-white py-10 px-6 shadow-md border-b border-[#2f4328]/10 relative">
+        <button
+          onClick={() => navigate('/community')}
+          className="absolute top-6 left-6 bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white p-2.5 rounded-xl border border-white/10 transition-all"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        
+        <div className="max-w-5xl mx-auto px-4 text-center mt-4">
+          <div className="flex justify-center mb-3">
+            <BarChart3 className="w-12 h-12 text-[#a3bf96]" />
           </div>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{t('community.polls', 'Polls')}</h1>
+          <p className="text-[#c7d9bf]/80 mt-1.5 text-sm sm:text-base font-medium">
+            {polls.length} {t('community.activeAlerts', 'Active Polls')} • {t('community.pollsSubText', 'Share your opinions with the farming community')}
+          </p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6">
+        <div className="flex justify-end mb-6">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-[#7ea26d] hover:bg-[#6c8e5d] text-white px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-1.5 shadow-md hover:scale-[1.01] active:scale-[0.99]"
+          >
+            <Plus className="w-4.5 h-4.5" />
+            {t('community.createPoll', 'Create Poll')}
+          </button>
+        </div>
+
         {loading ? (
           <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#39542f]"></div>
           </div>
         ) : polls.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
-            <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-xl text-gray-600 mb-2">No active polls</p>
-            <p className="text-gray-500">Be the first to create a poll!</p>
+          <div className="bg-white dark:bg-[#1f1d18] rounded-2xl border border-[rgba(38,36,31,0.06)] dark:border-[rgba(255,255,255,0.05)] p-16 text-center shadow-sm max-w-xl mx-auto">
+            <BarChart3 className="w-14 h-14 text-[#9b9482] mx-auto mb-4 opacity-55" />
+            <h3 className="text-lg font-bold mb-1.5">{t('community.noActivePolls', 'No active polls')}</h3>
+            <p className="text-sm text-[#7a7364] dark:text-[#9b9482] mb-6">
+              {t('community.createFirstPollSub', 'Be the first one to create a poll!')}
+            </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700"
+              className="bg-[#39542f] hover:bg-[#2f4328] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm"
             >
-              Create First Poll
+              {t('community.createPoll', 'Create Poll')}
             </button>
           </div>
         ) : (
@@ -168,34 +190,40 @@ const PollsPage: React.FC = () => {
               const userChoice = getUserVotedOption(poll);
 
               return (
-                <div key={poll.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-6">
-                  {/* Poll Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-800 mb-2">{poll.question}</h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Vote className="w-4 h-4" />
-                          {poll.totalVotes} votes
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {getTimeRemaining(poll.expiresAt)}
-                        </span>
-                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-semibold">
+                <div
+                  key={poll.id}
+                  className="bg-white dark:bg-[#1f1d18] rounded-2xl border border-[rgba(38,36,31,0.06)] dark:border-[rgba(255,255,255,0.05)] shadow-sm p-6 hover:shadow-md hover:border-[#c7d9bf] dark:hover:border-[#39542f] transition-all"
+                >
+                  {/* Poll Title Info */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+                    <div>
+                      <h3 className="text-lg font-bold text-[#26241f] dark:text-[#eeece7] leading-tight mb-2">
+                        {poll.question}
+                      </h3>
+                      <div className="flex items-center gap-3 text-[11px] text-[#9b9482] font-semibold uppercase tracking-wider flex-wrap">
+                        <span className="bg-[#f1efe9] dark:bg-[#181713] text-[#615b4f] dark:text-[#bfbaad] px-2 py-0.5 rounded-md">
                           {poll.category}
+                        </span>
+                        <span>•</span>
+                        <span>
+                          {poll.totalVotes} {t('community.votes', 'votes')}
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-amber-500" />
+                          {getTimeRemaining(poll.expiresAt)}
                         </span>
                       </div>
                     </div>
                     {voted && (
-                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                        <CheckCircle className="w-4 h-4" />
-                        Voted
+                      <span className="bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-green-500/10">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        {t('community.voted', 'Voted')}
                       </span>
                     )}
                   </div>
 
-                  {/* Poll Options */}
+                  {/* Poll Choices (Animated Vote Bars) */}
                   <div className="space-y-3">
                     {poll.options.map(option => {
                       const percentage = poll.totalVotes > 0 
@@ -204,48 +232,44 @@ const PollsPage: React.FC = () => {
                       const isUserChoice = userChoice?.id === option.id;
 
                       return (
-                        <div key={option.id} className="relative">
+                        <div key={option.id} className="relative overflow-hidden rounded-xl border border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)] bg-[#f8f7f5] dark:bg-[#14130f]">
+                          {/* Inner animated color block */}
+                          {voted && (
+                            <div
+                              className="absolute left-0 top-0 bottom-0 bg-[#7ea26d]/20 dark:bg-[#7ea26d]/15 transition-all duration-700 ease-out"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          )}
+
                           <button
                             onClick={() => !voted && handleVote(poll.id, option.id)}
                             disabled={voted}
-                            className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                              voted
-                                ? 'cursor-default border-gray-200'
-                                : 'cursor-pointer border-blue-200 hover:border-blue-400 hover:bg-blue-50'
-                            } ${isUserChoice ? 'border-blue-500 bg-blue-50' : ''}`}
+                            className={`w-full text-left p-4 relative z-10 flex items-center justify-between text-sm transition-all focus:outline-none ${
+                              voted ? 'cursor-default' : 'hover:bg-[#dbd8d0]/25 dark:hover:bg-[#3a3630]/25 active:scale-[0.995]'
+                            } ${isUserChoice ? 'ring-1 ring-[#39542f]/30' : ''}`}
                           >
-                            {/* Progress Bar */}
-                            {voted && (
-                              <div
-                                className="absolute inset-0 bg-blue-100 rounded-lg transition-all"
-                                style={{ width: `${percentage}%`, opacity: 0.3 }}
-                              />
-                            )}
-
-                            {/* Option Content */}
-                            <div className="relative flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-800">{option.text}</span>
-                                {isUserChoice && (
-                                  <CheckCircle className="w-4 h-4 text-blue-600" />
-                                )}
-                              </div>
-                              {voted && (
-                                <div className="flex items-center gap-3">
-                                  <span className="text-sm text-gray-600">{option.votes} votes</span>
-                                  <span className="text-lg font-bold text-blue-600">{percentage}%</span>
-                                </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">{option.text}</span>
+                              {isUserChoice && (
+                                <CheckCircle className="w-4 h-4 text-[#39542f] dark:text-[#a3bf96]" />
                               )}
                             </div>
+                            {voted && (
+                              <div className="flex items-center gap-3 text-xs font-bold text-[#7a7364] dark:text-[#9b9482]">
+                                <span>{option.votes} {t('community.votes', 'votes')}</span>
+                                <span className="text-sm font-extrabold text-[#39542f] dark:text-[#a3bf96]">{percentage}%</span>
+                              </div>
+                            )}
                           </button>
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Poll Footer */}
-                  <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500">
-                    Created by <span className="font-medium">{poll.createdByName}</span>
+                  <div className="mt-4 pt-4 border-t border-[rgba(38,36,31,0.04)] dark:border-[rgba(255,255,255,0.04)] text-[11px] text-[#9b9482] dark:text-[#615b4f] font-semibold flex justify-between">
+                    <span>
+                      {t('words.user', 'Created by')}: <span className="text-[#26241f] dark:text-[#eeece7]">{poll.createdByName}</span>
+                    </span>
                   </div>
                 </div>
               );
@@ -256,43 +280,46 @@ const PollsPage: React.FC = () => {
 
       {/* Create Poll Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-blue-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <BarChart3 className="w-7 h-7" />
-                Create New Poll
-              </h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-[#1f1d18] rounded-2xl w-full max-w-lg overflow-hidden border border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-[#2f4328] to-[#39542f] text-white flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-[#a3bf96]" />
+                <h3 className="font-bold text-lg">{t('community.createPoll', 'Create Poll')}</h3>
+              </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-white hover:bg-blue-700 p-2 rounded-full transition-all"
+                className="text-white/80 hover:text-white transition-colors p-1"
               >
-                <AlertCircle className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
-              {/* Question */}
+            {/* Modal Form */}
+            <form onSubmit={handleCreatePoll} className="p-6 space-y-4 overflow-y-auto">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Poll Question <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7a7364] dark:text-[#9b9482] mb-1.5">
+                  {t('community.question', 'Question')} *
                 </label>
                 <input
                   type="text"
+                  required
+                  placeholder="e.g. Which fertilizer gives best results for wheat?"
                   value={newPoll.question}
                   onChange={(e) => setNewPoll({ ...newPoll, question: e.target.value })}
-                  placeholder="e.g., Which fertilizer gives best results for wheat?"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f7f5] dark:bg-[#14130f] border border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)] rounded-xl text-sm focus:outline-none focus:border-[#39542f] text-[#26241f] dark:text-[#eeece7]"
                 />
               </div>
 
-              {/* Category */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7a7364] dark:text-[#9b9482] mb-1.5">
+                  {t('community.category', 'Category')}
+                </label>
                 <select
                   value={newPoll.category}
                   onChange={(e) => setNewPoll({ ...newPoll, category: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f7f5] dark:bg-[#14130f] border border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)] rounded-xl text-sm focus:outline-none focus:border-[#39542f] text-[#26241f] dark:text-[#eeece7]"
                 >
                   <option value="crops">Crops</option>
                   <option value="fertilizers">Fertilizers</option>
@@ -303,48 +330,51 @@ const PollsPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Options */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Options <span className="text-red-500">*</span> (min 2)
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7a7364] dark:text-[#9b9482] mb-1.5">
+                  {t('community.options', 'Options')} *
                 </label>
                 <div className="space-y-2">
                   {newPoll.options.map((option, idx) => (
                     <div key={idx} className="flex gap-2">
                       <input
                         type="text"
+                        required
+                        placeholder={`${t('community.option', 'Option')} ${idx + 1}`}
                         value={option}
                         onChange={(e) => updateOption(idx, e.target.value)}
-                        placeholder={`Option ${idx + 1}`}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-3.5 py-2 bg-[#f8f7f5] dark:bg-[#14130f] border border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)] rounded-xl text-xs focus:outline-none focus:border-[#39542f] text-[#26241f] dark:text-[#eeece7]"
                       />
                       {newPoll.options.length > 2 && (
                         <button
+                          type="button"
                           onClick={() => removeOption(idx)}
-                          className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-all"
+                          className="px-3 py-1 bg-red-500/10 text-red-600 rounded-xl hover:bg-red-500/15 text-xs font-semibold"
                         >
-                          Remove
+                          {t('community.remove', 'Remove')}
                         </button>
                       )}
                     </div>
                   ))}
                 </div>
                 <button
+                  type="button"
                   onClick={addOption}
-                  className="mt-2 text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+                  className="mt-2 text-xs font-bold text-[#39542f] hover:text-[#2f4328] dark:text-[#a3bf96] flex items-center gap-1"
                 >
-                  <Plus className="w-4 h-4" />
-                  Add Option
+                  <Plus className="w-3.5 h-3.5" />
+                  {t('community.addOption', 'Add Option')}
                 </button>
               </div>
 
-              {/* Expiry */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Poll Duration</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#7a7364] dark:text-[#9b9482] mb-1.5">
+                  {t('community.duration', 'Duration')}
+                </label>
                 <select
                   value={newPoll.expiryDays}
                   onChange={(e) => setNewPoll({ ...newPoll, expiryDays: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f7f5] dark:bg-[#14130f] border border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)] rounded-xl text-sm focus:outline-none focus:border-[#39542f] text-[#26241f] dark:text-[#eeece7]"
                 >
                   <option value={1}>1 Day</option>
                   <option value={3}>3 Days</option>
@@ -354,15 +384,24 @@ const PollsPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Create Button */}
-              <button
-                onClick={handleCreatePoll}
-                className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
-              >
-                <BarChart3 className="w-5 h-5" />
-                Create Poll
-              </button>
-            </div>
+              <div className="flex justify-end gap-3 pt-4 border-t border-[rgba(38,36,31,0.06)] dark:border-[rgba(255,255,255,0.05)]">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-5 py-2.5 rounded-xl border border-[rgba(38,36,31,0.1)] dark:border-[rgba(255,255,255,0.1)] hover:bg-[#f1efe9] dark:hover:bg-[#181713] text-xs font-bold text-[#7a7364] dark:text-[#9b9482] transition-colors"
+                >
+                  {t('community.cancel', 'Cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2.5 bg-[#39542f] hover:bg-[#2f4328] text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                >
+                  {loading && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>}
+                  {t('community.submit', 'Submit')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

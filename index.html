@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="./icons/app-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Smart Krishi Sahayak is a modern web application for farmers in India, providing weather forecasts, crop information, disease detection, market prices, and details on government schemes." />
     <meta name="keywords" content="agriculture, farming, india, krishi, sahayak, farmers, crop, weather, mandi prices, government schemes, plant disease" />
@@ -10,7 +10,7 @@
     
     <!-- PWA Configuration -->
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#16a34a">
+    <meta name="theme-color" content="#39542f">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -21,7 +21,7 @@
       // Single Page Apps for GitHub Pages routing
       (function(l) {
         if (l.search[1] === '/' ) {
-          var decoded = l.search.slice(1).split('&').map(function(s) { 
+          var decoded = l.search.slice(1).split('&').map(function(s) {
             return s.replace(/~and~/g, '&')
           }).join('?');
           window.history.replaceState(null, null,
@@ -29,8 +29,31 @@
           );
         }
       }(window.location))
-      
-      console.log('🌾 Loading Smart Krishi Sahayak - Full Application');
+
+      // FOUC prevention: apply theme/font-size from localStorage before React mounts.
+      // This avoids the visible "flash" when the saved theme is dark but the page first
+      // renders in light mode.
+      (function() {
+        try {
+          var saved = JSON.parse(localStorage.getItem('settings:appearance') || 'null');
+          if (saved) {
+            if (saved.theme === 'dark' ||
+                (saved.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+              document.documentElement.classList.add('dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+            }
+            if (saved.fontSize === 'small') {
+              document.documentElement.style.fontSize = '14px';
+            } else if (saved.fontSize === 'large') {
+              document.documentElement.style.fontSize = '18px';
+            } else {
+              document.documentElement.style.fontSize = '16px';
+            }
+            document.documentElement.setAttribute('lang', saved.language || 'hi');
+          }
+        } catch (e) { /* ignore */ }
+      })();
     </script>
   </head>
   <body>

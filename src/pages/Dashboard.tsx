@@ -1,405 +1,315 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Sprout, 
-  Wifi, 
-  TrendingUp, 
-  Bug, 
-  Bot, 
-  Settings, 
-  Calendar, 
-  Cpu, 
-  Users, 
-  Shield, 
-  Activity, 
-  Layers, 
-  Battery, 
-  CloudRain, 
-  Gauge, 
-  MapPin, 
-  CornerDownRight, 
-  IndianRupee,
-  Clock
+import { useTranslation } from 'react-i18next';
+import {
+  TrendingUp, TrendingDown, Bug, Bot, Settings, Cpu, Users, Shield,
+  CloudRain, ArrowRight, Calendar, Activity, Bell, Sun, Cloud, Droplets,
+  Wind, AlertTriangle, MapPin, CheckCircle2, Sprout, Clock, RefreshCw, X as XIcon
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 import { useSafeTranslation } from '../contexts/LanguageContext';
 import { useSwarmTelemetry } from '../hooks/useSwarmTelemetry';
-import { pageVariants, cardVariants, staggerContainerVariants } from '../utils/animations';
-
-const dashboardTranslations: Record<string, Record<string, string>> = {
-  en: {
-    welcome: "Enterprise Agri-Tech Platform",
-    subtitle: "Smart Krishi Sahayak - Autonomous Swarm & Telemetry Control",
-    description: "Sensing soil biochemistry, autonomous machinery coordinates, and weather vectors in real-time.",
-    weatherAlert: "🔴 Weather Alert: Heavy precipitation forecasted in your micro-region.",
-    soilAlert: "🟢 Soil Health: pH 6.5 & NPK levels optimized for sowing.",
-    quickActions: "Operations & Telemetry Control",
-    liveWeather: "Live Micro-Weather",
-    liveWeatherDesc: "Real-time weather station streams",
-    marketPrices: "Mandi Intelligence",
-    marketPricesDesc: "Live commodity price charts & arbitrage",
-    cropManagement: "Crop Lifecycle Control",
-    cropManagementDesc: "Sowing timelines & botanical guides",
-    diseaseDetection: "AI Plant Diagnostics",
-    diseaseDetectionDesc: "Spectral disease identification scanner",
-    settings: "System Calibration",
-    settingsDesc: "Nodes config & network bandwidth throttle",
-    farmTelemetry: "Live Telemetry Control",
-    farmTelemetryDesc: "GPS machinery tracking & GDD calculations",
-    community: "Swarm Cooperative",
-    communityDesc: "Cooperative renting & peer-to-peer chat",
-    grievances: "Grievance Registry",
-    grievancesDesc: "SLA-tracked support & grievance tickets",
-    recentTelemetry: "Active Telemetry Stream",
-    machineryOnline: "Machinery Fleet Online",
-    soilNPK: "Soil Organic Chemistry",
-    predictedHarvest: "Predictive Harvest Forecast",
-    activeUsers: "Active Swarm Nodes",
-    tickerWheat: "Wheat (गहू)",
-    tickerRice: "Rice (तांदूळ)",
-    tickerCotton: "Cotton (कापूस)",
-    tickerSoy: "Soybean (सोयाबीन)",
-    tickerMustard: "Mustard (मोहरी)"
-  },
-  hi: {
-    welcome: "एंटरप्राइज एग्रो-टेक प्लेटफॉर्म",
-    subtitle: "स्मार्ट कृषि सहायक - स्वायत्त स्वाम और टेलीमेट्री नियंत्रण कक्ष",
-    description: "मृदा जैव रसायन, स्वायत्त मशीनरी निर्देशांक, और मौसम वैक्टर की रीयल-टाइम निगरानी।",
-    weatherAlert: "🔴 मौसम चेतावनी: आपके क्षेत्र में भारी वर्षा का पूर्वानुमान है।",
-    soilAlert: "🟢 मृदा स्वास्थ्य: बुवाई के लिए pH 6.5 और NPK स्तर अनुकूल हैं।",
-    quickActions: "संचालन और टेलीमेट्री नियंत्रण कक्ष",
-    liveWeather: "थेट मौसम नियंत्रण",
-    liveWeatherDesc: "रीयल-टाइम मौसम स्टेशन डेटा स्ट्रीम",
-    marketPrices: "मंडी भाव खुफिया जानकारी",
-    marketPricesDesc: "लाइव जिंस मूल्य चार्ट और बाजार बुद्धि",
-    cropManagement: "फसल जीवनचक्र प्रबंधन",
-    cropManagementDesc: "बुवाई की समयसीमा और वानस्पतिक मार्गदर्शिका",
-    diseaseDetection: "AI संयंत्र निदान",
-    diseaseDetectionDesc: "स्पेक्ट्रल रोग पहचान स्कैनर",
-    settings: "सिस्टम अंशांकन",
-    settingsDesc: "नोड्स कॉन्फ़िगरेशन और 2G/3G नेटवर्क थ्रॉटल",
-    farmTelemetry: "थेट शेत नियंत्रण",
-    farmTelemetryDesc: "GPS मशीनरी ट्रैकिंग और GDD गणना",
-    community: "स्वाम सहकारी मंच",
-    communityDesc: "सहकारी किराया और पीयर-टू-पीयर चैट",
-    grievances: "शिकायत पंजीकरण",
-    grievancesDesc: "SLA-ट्रैक्ड सपोर्ट और शिकायत टिकट",
-    recentTelemetry: "सक्रिय टेलीमेट्री स्ट्रीम",
-    machineryOnline: "मशीनरी बेड़ा सक्रिय",
-    soilNPK: "मृदा कार्बनिक रसायन शास्त्र",
-    predictedHarvest: "पूर्वानुमानित फसल कटाई",
-    activeUsers: "सक्रिय स्वाम नोड्स",
-    tickerWheat: "गेहूं",
-    tickerRice: "धान",
-    tickerCotton: "कपास",
-    tickerSoy: "सोयाबीन",
-    tickerMustard: "सरसों"
-  },
-  mr: {
-    welcome: "एंटरप्राइझ ॲग्रो-टेक प्लॅटफॉर्म",
-    subtitle: "स्मार्ट कृषी सहाय्यक - स्वायत्त स्वाम आणि टेलीमेट्री नियंत्रण कक्ष",
-    description: "मातीचे बायोकेमिस्ट्री, स्वायत्त यंत्रसामग्रीचे जीपीएस निर्देशांक आणि हवामान वेक्टर्सचे थेट मॉनिटरिंग.",
-    weatherAlert: "🔴 हवामान इशारा: तुमच्या सूक्ष्म-प्रदेशात मुसळधार पावसाचा अंदाज.",
-    soilAlert: "🟢 मातीचे आरोग्य: पेरणीसाठी pH ६.५ आणि NPK पातळी उत्तम आहे.",
-    quickActions: "ऑपरेशन्स आणि टेलीमेट्री नियंत्रण कक्ष",
-    liveWeather: "थेट हवामान अंदाज",
-    liveWeatherDesc: "रीयल-टाइम हवामान केंद्र डेटा प्रवाह",
-    marketPrices: "मंडी बाजार भाव",
-    marketPricesDesc: "थेट शेतमाल बाजार भाव आणि विश्लेषण",
-    cropManagement: "पीक जीवनचक्र व्यवस्थापन",
-    cropManagementDesc: "पेरणीचे वेळापत्रक आणि वनस्पती मार्गदर्शिका",
-    diseaseDetection: "AI वनस्पती निदान",
-    diseaseDetectionDesc: "स्पेक्ट्रल रोग ओळख स्कॅनर",
-    settings: "सिस्टम कॅलिब्रेशन",
-    settingsDesc: "नोड्स कॉन्फिगरेशन आणि नेटवर्क बँडविड्थ थ्रॉटल",
-    farmTelemetry: "थेट शेत नियंत्रण कक्ष",
-    farmTelemetryDesc: "जीपीएस मशिनरी ट्रॅकिंग आणि GDD गणना",
-    community: "स्वाम सहकारी मंच",
-    communityDesc: "सहकारी भाडेतत्व आणि पीअर-टू-पीअर चॅट",
-    grievances: "तक्रार नोंदणी कक्ष",
-    grievancesDesc: "SLA-ट्रॅक सपोर्ट आणि तक्रार निवारण",
-    recentTelemetry: "सक्रिय टेलीमेट्री प्रवाह",
-    machineryOnline: "यंत्रसामग्रीचा ताफा सक्रिय",
-    soilNPK: "मातीचे सेंद्रिय रसायनशास्त्र",
-    predictedHarvest: "अंदाजित पीक काढणी",
-    activeUsers: "सक्रिय स्वाम नोड्स",
-    tickerWheat: "गहू",
-    tickerRice: "तांदूळ",
-    tickerCotton: "कापूस",
-    tickerSoy: "सोयाबीन",
-    tickerMustard: "मोहरी"
-  }
-};
+import communityService, { CommunityPost, Notification } from '../services/communityService';
+import { Kpi, Badge, Button, PageHeader, SectionTitle, Skeleton } from '../components/ui';
 
 const Dashboard: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { currentLanguage, isLowBandwidthMode } = useSafeTranslation();
+  const { user, userProfile } = useAuth();
   const { soilStats, equipment, peers } = useSwarmTelemetry();
   const [timeStr, setTimeStr] = useState('');
+  const [recentPosts, setRecentPosts] = useState<CommunityPost[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [marketPrices, setMarketPrices] = useState<{ name: string; price: number; change: number; unit: string }[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
 
-  // Localized dictionary selector
-  const dict = dashboardTranslations[currentLanguage] || dashboardTranslations['hi'];
-
+  // Update clock
   useEffect(() => {
-    const updateTime = () => {
+    const update = () => {
       const d = new Date();
-      setTimeStr(d.toLocaleTimeString(currentLanguage === 'hi' ? 'hi-IN' : currentLanguage === 'mr' ? 'mr-IN' : 'en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      }));
+      setTimeStr(
+        d.toLocaleTimeString(
+          currentLanguage === 'hi' ? 'hi-IN' : currentLanguage === 'mr' ? 'mr-IN' : 'en-IN',
+          { hour: '2-digit', minute: '2-digit' },
+        ),
+      );
     };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
+    update();
+    const id = setInterval(update, 30000);
+    return () => clearInterval(id);
   }, [currentLanguage]);
 
+  // Load real data from services
+  useEffect(() => {
+    let mounted = true;
+    Promise.allSettled([
+      communityService.getPosts?.() || Promise.resolve([]),
+      communityService.getUserNotifications?.(user?.uid || '') || Promise.resolve([]),
+    ]).then(([postsRes, notifRes]) => {
+      if (!mounted) return;
+      if (postsRes.status === 'fulfilled') {
+        setRecentPosts((postsRes.value as CommunityPost[]).slice(0, 5));
+      }
+      if (notifRes.status === 'fulfilled') {
+        setNotifications((notifRes.value as Notification[]).slice(0, 3));
+      }
+      setLoadingData(false);
+    });
+    return () => { mounted = false; };
+  }, [user]);
+
+  // Real-time notifications subscription
+  useEffect(() => {
+    if (!user) return;
+    const unsub = communityService.subscribeToNotifications?.(user.uid, (data) => {
+      setNotifications((data as Notification[]).slice(0, 3));
+    });
+    return () => { if (typeof unsub === 'function') unsub(); };
+  }, [user]);
+
+  // Build market ticker from real prices when available, otherwise show minimal placeholder
+  const ticker = useMemo(() => {
+    if (marketPrices.length > 0) {
+      return marketPrices.map((p, i) => ({
+        id: `mkt-${i}`,
+        name: p.name,
+        price: `₹${p.price.toLocaleString('en-IN')}/${p.unit}`,
+        change: `${p.change > 0 ? '+' : ''}${p.change.toFixed(1)}%`,
+        up: p.change >= 0,
+      }));
+    }
+    return []; // No data — render nothing rather than fake numbers
+  }, [marketPrices]);
+
+  // Real derived stats from auth and swarm data
+  const stats = useMemo(() => {
+    const displayName = userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'Farmer';
+    const activeEquipment = equipment.filter((e) => e.status === 'Active').length;
+    const onlinePeers = peers.filter((p) => p.status === 'Online' || p.status === 'In-Field').length;
+    return [
+      {
+        label: t('dashboard.onlineFarmers', 'Online farmers'),
+        value: onlinePeers > 0 ? onlinePeers : '—',
+        hint: onlinePeers > 0 ? t('dashboard.onlineNow', 'Connected now') : t('dashboard.connectingPeers', 'Discovering peers...'),
+        icon: <Users className="w-4 h-4" />,
+        tone: 'leaf' as const,
+      },
+      {
+        label: t('dashboard.equipmentOnline', 'Equipment online'),
+        value: activeEquipment,
+        hint: activeEquipment > 0 ? t('dashboard.activeUnits', 'Active units') : t('dashboard.noEquipment', 'No equipment reporting'),
+        icon: <Cpu className="w-4 h-4" />,
+        tone: 'soil' as const,
+      },
+      {
+        label: t('dashboard.soilHealth', 'Soil health'),
+        value: soilStats.ph ? `pH ${soilStats.ph.toFixed(1)}` : '—',
+        hint: soilStats.nitrogen ? `N: ${Math.round(soilStats.nitrogen)} mg/kg` : t('dashboard.noSensorData', 'Connect a sensor for live data'),
+        icon: <Activity className="w-4 h-4" />,
+        tone: 'harvest' as const,
+      },
+      {
+        label: t('dashboard.notifications', 'Notifications'),
+        value: notifications.length,
+        hint: notifications.filter((n) => !n.read).length > 0
+          ? `${notifications.filter((n) => !n.read).length} unread`
+          : t('dashboard.allCaughtUp', 'All caught up'),
+        icon: <Bell className="w-4 h-4" />,
+        tone: 'sky' as const,
+      },
+    ];
+  }, [equipment, peers, soilStats, notifications, t, user, userProfile]);
+
+  // Quick actions — clean professional list
+  const actions = [
+    { to: '/live-weather', icon: CloudRain, tone: 'sky' as const, titleKey: 'nav.liveWeather', descKey: 'dashboard.weatherDesc' },
+    { to: '/market-prices', icon: TrendingUp, tone: 'leaf' as const, titleKey: 'nav.liveMarket', descKey: 'dashboard.marketDesc' },
+    { to: '/community', icon: Users, tone: 'harvest' as const, titleKey: 'nav.community', descKey: 'dashboard.communityDesc' },
+    { to: '/ai-agent', icon: Bot, tone: 'sky' as const, titleKey: 'nav.aiAgent', descKey: 'dashboard.aiDesc', badge: 'AI' as const },
+    { to: '/crop-calendar', icon: Calendar, tone: 'leaf' as const, titleKey: 'nav.cropCalendar', descKey: 'dashboard.calendarDesc' },
+    { to: '/disease-detection', icon: Bug, tone: 'danger' as const, titleKey: 'nav.diseaseDetection', descKey: 'dashboard.diseaseDesc' },
+    { to: '/grievances', icon: Shield, tone: 'harvest' as const, titleKey: 'nav.grievances', descKey: 'dashboard.grievancesDesc' },
+    { to: '/settings', icon: Settings, tone: 'default' as const, titleKey: 'nav.settings', descKey: 'dashboard.settingsDesc' },
+  ];
+
+  const actionToneClass: Record<string, { bg: string; fg: string }> = {
+    sky:     { bg: 'bg-sky-50',     fg: 'text-sky-700' },
+    leaf:    { bg: 'bg-leaf-50',    fg: 'text-leaf-700' },
+    soil:    { bg: 'bg-soil-50',    fg: 'text-soil-700' },
+    harvest: { bg: 'bg-harvest-50', fg: 'text-harvest-700' },
+    danger:  { bg: 'bg-[#fef2f2]',  fg: 'text-danger-600' },
+    default: { bg: 'bg-sunken',     fg: 'text-ink-700' },
+  };
+
+  // Soil recommendation based on real soilStats
+  const soilAdvisory = useMemo(() => {
+    if (!soilStats.ph) return null;
+    if (soilStats.ph < 6) {
+      return { tone: 'warn' as const, title: t('dashboard.soilAcidic', 'Soil is acidic'), body: t('dashboard.soilAcidicRec', 'Add lime to raise pH. Target 6.0-7.0 for most crops.') };
+    }
+    if (soilStats.ph > 7.5) {
+      return { tone: 'warn' as const, title: t('dashboard.soilAlkaline', 'Soil is alkaline'), body: t('dashboard.soilAlkalineRec', 'Add gypsum or organic matter. Target 6.0-7.0.') };
+    }
+    return { tone: 'success' as const, title: t('dashboard.soilOptimal', 'Soil is optimal'), body: t('dashboard.soilOptimalRec', 'pH within ideal range. Continue current fertilization.') };
+  }, [soilStats, t]);
+
+  const displayName = userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || t('common.farmer', 'Farmer');
+
   return (
-    <motion.div 
-      className={`min-h-screen bg-gradient-to-br from-green-50 via-[#F9F9F6] to-emerald-50 p-4 lg:p-6 ${
-        isLowBandwidthMode ? 'low-bandwidth-mode' : ''
-      }`}
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-    >
-      
-      {/* 📈 REAL-TIME TICKER: Mandi Price Arbitrage Stream */}
-      <div className="w-full bg-white/70 backdrop-blur-md border border-emerald-100 rounded-2xl p-3 overflow-hidden shadow-sm mb-6 relative">
-        <div className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#F9F9F6] to-transparent w-10 z-10 pointer-events-none"></div>
-        <div className="absolute right-0 top-0 bottom-0 bg-gradient-to-l from-[#F9F9F6] to-transparent w-10 z-10 pointer-events-none"></div>
-        
-        <div className="flex animate-marquee whitespace-nowrap gap-8 text-xs font-bold text-gray-700">
-          <span className="flex items-center gap-1.5 text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-100">
-            🌾 {dict.tickerWheat}: ₹2,450/Q <span className="text-xs text-green-600">▲ +1.2%</span>
-          </span>
-          <span className="flex items-center gap-1.5 text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-            🌾 {dict.tickerRice}: ₹3,100/Q <span className="text-xs text-green-600">▲ +0.8%</span>
-          </span>
-          <span className="flex items-center gap-1.5 text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-100">
-            🌱 {dict.tickerCotton}: ₹7,200/Q <span className="text-xs text-red-600">▼ -0.3%</span>
-          </span>
-          <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
-            🌱 {dict.tickerSoy}: ₹4,850/Q <span className="text-xs text-green-600">▲ +1.5%</span>
-          </span>
-          <span className="flex items-center gap-1.5 text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
-            🌿 {dict.tickerMustard}: ₹5,600/Q <span className="text-xs text-green-600">▲ +2.1%</span>
-          </span>
-        </div>
-      </div>
+    <div className={`min-h-screen bg-canvas ${isLowBandwidthMode ? 'low-bandwidth-mode' : ''}`}>
+      <div className="container-app py-5 md:py-8">
+        <PageHeader
+          eyebrow={`${t('dashboard.welcome', 'Welcome back')}, ${displayName}`}
+          title={t('dashboard.subtitle', 'Your farm at a glance')}
+          description={t('dashboard.description', 'Real-time weather, market prices, crop health, and equipment status — all in one place.')}
+          actions={
+            <>
+              {timeStr && (
+                <span className="hidden sm:inline-flex items-center gap-1.5 text-sm text-muted font-mono">
+                  <Clock className="w-3.5 h-3.5" /> {timeStr}
+                </span>
+              )}
+              <Link to="/notifications">
+                <Button variant="secondary" size="sm">
+                  <Bell className="w-4 h-4" />
+                  <span className="hidden sm:inline ml-1.5">{t('dashboard.alertsTitle', `Today's advisories`)}</span>
+                  {notifications.filter((n) => !n.read).length > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-danger-600 text-white text-[10px] font-bold">
+                      {notifications.filter((n) => !n.read).length}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            </>
+          }
+        />
 
-      {/* 🌾 ENTERPRISE HEADER SECTION */}
-      <div className="max-w-7xl mx-auto mb-8 bg-white rounded-3xl shadow-xl overflow-hidden border border-emerald-100/50">
-        <div className="bg-gradient-to-r from-green-900 to-emerald-950 px-6 py-10 lg:px-12 text-white relative">
-          <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial-gradient from-emerald-500/20 to-transparent blur-2xl"></div>
-          
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-            <div className="space-y-3 text-center md:text-left">
-              <span className="px-3.5 py-1 bg-green-500/20 text-green-300 font-extrabold rounded-full text-xs uppercase tracking-widest border border-green-500/30">
-                {dict.welcome}
+        {/* Price ticker — only if real data exists */}
+        {ticker.length > 0 && (
+          <div className="hidden md:block card mb-6 overflow-hidden">
+            <div className="px-4 py-2.5 flex items-center gap-6 overflow-hidden">
+              <span className="text-xs font-semibold text-muted uppercase tracking-wider shrink-0">
+                {t('dashboard.marketTicker', 'Mandi prices today')}
               </span>
-              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight">{dict.subtitle}</h1>
-              <p className="text-green-100/80 text-sm max-w-2xl font-medium">{dict.description}</p>
-            </div>
-
-            <div className="flex flex-col items-center bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 text-center min-w-[12rem] shadow-lg">
-              <Clock className="text-green-400 mb-1.5" size={24} />
-              <p className="text-[10px] text-green-300 uppercase tracking-widest font-extrabold">Telemetry Time</p>
-              <p className="text-xl font-mono font-bold tracking-wider mt-0.5">{timeStr || "LOADING..."}</p>
+              <div className="flex-1 overflow-hidden">
+                <div className="flex gap-7 whitespace-nowrap text-sm animate-marquee">
+                  {[...ticker, ...ticker].map((item, i) => (
+                    <span key={`${item.id}-${i}`} className="flex items-center gap-2 shrink-0">
+                      <span className="font-medium text-strong">{item.name}</span>
+                      <span className="text-ink-700">{item.price}</span>
+                      <span className={item.up ? 'text-success-600' : 'text-danger-600'}>{item.change}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Scrolling System Notifications */}
-          <div className="mt-8 pt-6 border-t border-white/10 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-bold">
-            <div className="flex items-center gap-2 text-amber-300 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
-              <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping"></span>
-              {dict.weatherAlert}
+        {/* Advisories — real */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+          {soilAdvisory ? (
+            <div className={`alert alert-${soilAdvisory.tone}`}>
+              <Sprout className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-medium">{soilAdvisory.title}</div>
+                <div className="text-sm opacity-90 mt-0.5">{soilAdvisory.body}</div>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-green-300 bg-green-500/10 p-2.5 rounded-lg border border-green-500/20">
-              <span className="h-2 w-2 rounded-full bg-green-400"></span>
-              {dict.soilAlert}
+          ) : (
+            <div className="alert alert-info">
+              <Sprout className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-medium">{t('dashboard.connectSensor', 'Connect a soil sensor')}</div>
+                <div className="text-sm opacity-90 mt-0.5">
+                  {t('dashboard.connectSensorDesc', 'Pair an IoT sensor to get live pH, NPK, and moisture readings.')}
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="alert alert-info">
+            <Bell className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="font-medium">
+                {notifications.length > 0
+                  ? `${notifications.filter((n) => !n.read).length} ${t('dashboard.unreadLabel', 'unread notifications')}`
+                  : t('dashboard.noAlerts', 'You are all caught up')}
+              </div>
+              <div className="text-sm opacity-90 mt-0.5">
+                {notifications[0]?.title || t('dashboard.openInboxDesc', 'Open the inbox to see advisories, replies, and alerts.')}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* KPIs — real */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
+          {stats.map((s) => (
+            <Kpi key={s.label} label={s.label} value={s.value} hint={s.hint} icon={s.icon} />
+          ))}
+        </div>
+
+        {/* Quick actions */}
+        <SectionTitle title={t('dashboard.quickActions', 'Quick actions')} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          {actions.map((a) => {
+            const tone = actionToneClass[a.tone] || actionToneClass.default;
+            return (
+              <Link key={a.to} to={a.to} className="card card-interactive card-padded group block">
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-9 h-9 rounded-md ${tone.bg} ${tone.fg} flex items-center justify-center`}>
+                    <a.icon className="w-4.5 h-4.5" />
+                  </div>
+                  {'badge' in a && a.badge && <Badge tone="sky">{a.badge}</Badge>}
+                </div>
+                <h3 className="text-sm font-semibold text-strong leading-snug">{t(a.titleKey, a.titleKey)}</h3>
+                <p className="text-xs text-muted mt-1 leading-relaxed line-clamp-2">{t(a.descKey, a.descKey)}</p>
+                <div className={`mt-3 text-xs font-medium ${tone.fg} flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
+                  {t('common.open', 'Open')} <ArrowRight className="w-3 h-3" />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Recent activity / latest posts */}
+        {recentPosts.length > 0 && (
+          <div className="mt-8">
+            <SectionTitle
+              title={t('dashboard.recentPosts', 'Recent community posts')}
+              description={t('dashboard.recentPostsDesc', 'Latest questions and discussions from farmers.')}
+              action={
+                <Link to="/community" className="text-xs font-medium text-leaf-700 hover:text-leaf-800 inline-flex items-center gap-1">
+                  {t('common.viewAll', 'View all')} <ArrowRight className="w-3 h-3" />
+                </Link>
+              }
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+              {recentPosts.slice(0, 3).map((post) => (
+                <Link key={post.id} to="/community" className="card card-interactive card-padded block">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge tone="default">{post.category || 'general'}</Badge>
+                    {post.urgency === 'high' && <Badge tone="danger">{t('dashboard.urgent', 'Urgent')}</Badge>}
+                  </div>
+                  <h4 className="text-sm font-semibold text-strong line-clamp-2">{post.title}</h4>
+                  <p className="text-xs text-muted mt-1 line-clamp-2">{post.description}</p>
+                  <div className="flex items-center gap-2 mt-2 text-[10px] text-ink-500">
+                    <Users className="w-3 h-3" />
+                    <span>{post.farmerName || t('dashboard.anonymous', 'Anonymous')}</span>
+                    {(post as any).createdAt && (
+                      <>
+                        <span>·</span>
+                        <span>{new Date((post as any).createdAt).toLocaleDateString()}</span>
+                      </>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* 📊 TELEMETRY REAL-TIME DASH SUMMARY */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 flex items-center justify-between hover:shadow-lg transition-shadow">
-          <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider font-extrabold">{dict.activeUsers}</p>
-            <h4 className="text-2xl font-extrabold text-gray-800 mt-1">{peers.length + 1} Nodes</h4>
-            <span className="text-xs text-green-600 font-semibold">📡 Cross-tab telemetry active</span>
-          </div>
-          <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
-            <Users size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 flex items-center justify-between hover:shadow-lg transition-shadow">
-          <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider font-extrabold">{dict.machineryOnline}</p>
-            <h4 className="text-2xl font-extrabold text-gray-800 mt-1">{equipment.filter(e => e.status === 'Active').length} Active</h4>
-            <span className="text-xs text-blue-600 font-semibold">🚜 Drones & tractors dispatched</span>
-          </div>
-          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-            <Cpu size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 flex items-center justify-between hover:shadow-lg transition-shadow">
-          <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider font-extrabold">{dict.soilNPK}</p>
-            <h4 className="text-2xl font-extrabold text-gray-800 mt-1">pH {soilStats.ph || 6.5}</h4>
-            <span className="text-xs text-emerald-600 font-semibold">🧪 Nitrogen: {soilStats.nitrogen || 140} mg/kg</span>
-          </div>
-          <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
-            <Layers size={24} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 flex items-center justify-between hover:shadow-lg transition-shadow">
-          <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider font-extrabold">{dict.predictedHarvest}</p>
-            <h4 className="text-2xl font-extrabold text-gray-800 mt-1">94% GDD</h4>
-            <span className="text-xs text-amber-600 font-semibold">🌾 Harvesting window optimal</span>
-          </div>
-          <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
-            <Sprout size={24} />
-          </div>
-        </div>
-
-      </div>
-
-      {/* 🚀 QUICK ACTIONS GRID: Operations Control */}
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
-          <Activity className="text-green-600" />
-          <h3 className="text-xl font-bold text-gray-800">{dict.quickActions}</h3>
-        </div>
-
-        <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-          variants={staggerContainerVariants}
-          initial="initial"
-          animate="animate"
-        >
-          {/* Card 1: Micro-Weather */}
-          <motion.div variants={cardVariants} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="active-scale">
-            <Link to="/live-weather" className="enhanced-card p-6 flex flex-col hover:border-blue-200 smooth-transition block h-full group">
-              <div className="p-3.5 rounded-2xl bg-blue-50 text-blue-600 w-fit mb-4 group-hover:scale-110 smooth-transition">
-                <CloudRain size={24} />
-              </div>
-              <h4 className="font-extrabold text-gray-800 text-lg mb-1">{dict.liveWeather}</h4>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4">{dict.liveWeatherDesc}</p>
-              <span className="text-xs font-bold text-blue-600 flex items-center gap-1 mt-auto">
-                {dict.liveWeather} <CornerDownRight size={14} />
-              </span>
-            </Link>
-          </motion.div>
-
-          {/* Card 2: Mandi Price Intelligence */}
-          <motion.div variants={cardVariants} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="active-scale">
-            <Link to="/market-prices" className="enhanced-card p-6 flex flex-col hover:border-green-200 smooth-transition block h-full group">
-              <div className="p-3.5 rounded-2xl bg-green-50 text-green-600 w-fit mb-4 group-hover:scale-110 smooth-transition">
-                <TrendingUp size={24} />
-              </div>
-              <h4 className="font-extrabold text-gray-800 text-lg mb-1">{dict.marketPrices}</h4>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4">{dict.marketPricesDesc}</p>
-              <span className="text-xs font-bold text-green-600 flex items-center gap-1 mt-auto">
-                {dict.marketPrices} <CornerDownRight size={14} />
-              </span>
-            </Link>
-          </motion.div>
-
-          {/* Card 3: Live Farm Telemetry */}
-          <motion.div variants={cardVariants} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="active-scale">
-            <Link to="/farm-telemetry" className="enhanced-card p-6 flex flex-col hover:border-emerald-200 smooth-transition block h-full group">
-              <div className="p-3.5 rounded-2xl bg-emerald-50 text-emerald-600 w-fit mb-4 group-hover:scale-110 smooth-transition">
-                <Cpu size={24} />
-              </div>
-              <h4 className="font-extrabold text-gray-800 text-lg mb-1">{dict.farmTelemetry}</h4>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4">{dict.farmTelemetryDesc}</p>
-              <span className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-auto">
-                {dict.farmTelemetry} <CornerDownRight size={14} />
-              </span>
-            </Link>
-          </motion.div>
-
-          {/* Card 4: Swarm Cooperative */}
-          <motion.div variants={cardVariants} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="active-scale">
-            <Link to="/community" className="enhanced-card p-6 flex flex-col hover:border-purple-200 smooth-transition block h-full group">
-              <div className="p-3.5 rounded-2xl bg-purple-50 text-purple-600 w-fit mb-4 group-hover:scale-110 smooth-transition">
-                <Users size={24} />
-              </div>
-              <h4 className="font-extrabold text-gray-800 text-lg mb-1">{dict.community}</h4>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4">{dict.communityDesc}</p>
-              <span className="text-xs font-bold text-purple-600 flex items-center gap-1 mt-auto">
-                {dict.community} <CornerDownRight size={14} />
-              </span>
-            </Link>
-          </motion.div>
-
-          {/* Card 5: AI Botanical Advisor */}
-          <motion.div variants={cardVariants} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="active-scale">
-            <Link to="/ai-agent" className="enhanced-card p-6 flex flex-col hover:border-purple-200 smooth-transition block h-full group">
-              <div className="p-3.5 rounded-2xl bg-purple-50 text-purple-700 w-fit mb-4 group-hover:scale-110 smooth-transition">
-                <Bot size={24} />
-              </div>
-              <h4 className="font-extrabold text-purple-700 text-lg mb-1">AI Botanist</h4>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4">Chat with enterprise-level botanical agronomy AI</p>
-              <span className="text-xs font-bold text-purple-700 flex items-center gap-1 mt-auto">
-                AI Botanist <CornerDownRight size={14} />
-              </span>
-            </Link>
-          </motion.div>
-
-          {/* Card 6: AI Diagnostics Scanner */}
-          <motion.div variants={cardVariants} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="active-scale">
-            <Link to="/disease-detection" className="enhanced-card p-6 flex flex-col hover:border-red-200 smooth-transition block h-full group">
-              <div className="p-3.5 rounded-2xl bg-red-50 text-red-600 w-fit mb-4 group-hover:scale-110 smooth-transition">
-                <Bug size={24} />
-              </div>
-              <h4 className="font-extrabold text-gray-800 text-lg mb-1">{dict.diseaseDetection}</h4>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4">{dict.diseaseDetectionDesc}</p>
-              <span className="text-xs font-bold text-red-600 flex items-center gap-1 mt-auto">
-                {dict.diseaseDetection} <CornerDownRight size={14} />
-              </span>
-            </Link>
-          </motion.div>
-
-          {/* Card 7: Grievances Registry */}
-          <motion.div variants={cardVariants} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="active-scale">
-            <Link to="/grievances" className="enhanced-card p-6 flex flex-col hover:border-orange-200 smooth-transition block h-full group">
-              <div className="p-3.5 rounded-2xl bg-orange-50 text-orange-600 w-fit mb-4 group-hover:scale-110 smooth-transition">
-                <Shield size={24} />
-              </div>
-              <h4 className="font-extrabold text-gray-800 text-lg mb-1">{dict.grievances}</h4>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4">{dict.grievancesDesc}</p>
-              <span className="text-xs font-bold text-orange-600 flex items-center gap-1 mt-auto">
-                {dict.grievances} <CornerDownRight size={14} />
-              </span>
-            </Link>
-          </motion.div>
-
-          {/* Card 8: System Calibration */}
-          <motion.div variants={cardVariants} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="active-scale">
-            <Link to="/settings" className="enhanced-card p-6 flex flex-col hover:border-slate-300 smooth-transition block h-full group">
-              <div className="p-3.5 rounded-2xl bg-slate-50 text-slate-600 w-fit mb-4 group-hover:scale-110 smooth-transition">
-                <Settings size={24} />
-              </div>
-              <h4 className="font-extrabold text-gray-800 text-lg mb-1">{dict.settings}</h4>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4">{dict.settingsDesc}</p>
-              <span className="text-xs font-bold text-slate-600 flex items-center gap-1 mt-auto">
-                {dict.settings} <CornerDownRight size={14} />
-              </span>
-            </Link>
-          </motion.div>
-        </motion.div>
-      </div>
-
-    </motion.div>
+    </div>
   );
 };
 

@@ -2,47 +2,53 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { 
+import {
   Sprout,
-  Bug,
+  CloudRain,
   TrendingUp,
-  FileText,
+  Activity,
+  Cpu,
+  Database,
+  BarChart3,
+  Leaf,
+  Bug,
   Bot,
-  User,
-  Settings,
   Users,
+  FileText,
+  Shield,
+  User as UserIcon,
+  Settings as SettingsIcon,
+  LogOut,
+  Bell,
   ChevronDown,
   Menu,
   X,
-  CloudRain,
-  Leaf,
-  Activity,
-  LogOut,
-  Bell,
-  Database,
-  BarChart3,
-  Shield,
-  Cpu
+  LayoutDashboard,
+  CalendarDays,
+  Calculator,
+  FlaskConical,
+  ClipboardList,
+  ScanLine,
 } from 'lucide-react';
+import { Badge } from './ui';
 import LanguageSwitcher from './LanguageSwitcher';
 
 interface NavbarProps {
   hideLogout?: boolean;
 }
 
-interface MenuItem {
+interface NavItem {
   path: string;
   name: string;
   nameKey: string;
-  icon: React.ComponentType<any>;
-  badge?: string;
-  isLive?: boolean;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: 'LIVE' | 'AI' | 'NEW' | 'ADMIN';
 }
 
-interface MenuSection {
+interface NavSection {
   title: string;
   titleKey: string;
-  items: MenuItem[];
+  items: NavItem[];
 }
 
 const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
@@ -50,39 +56,44 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, userProfile } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [userMenu, setUserMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const menuSections: MenuSection[] = [
+  const menuSections: NavSection[] = [
     {
-      title: 'Live Features',
-      titleKey: 'nav.live',
+      title: 'Dashboard',
+      titleKey: 'nav.dashboard',
       items: [
-        { path: '/live-weather', name: 'Live Weather', nameKey: 'nav.liveWeather', icon: CloudRain, badge: 'LIVE', isLive: true },
-        { path: '/market-prices', name: 'Market Prices', nameKey: 'nav.liveMarket', icon: TrendingUp, badge: 'LIVE', isLive: true },
-        { path: '/real-time-dashboard', name: 'Real-Time Dashboard', nameKey: 'nav.realTimeDashboard', icon: Activity, badge: 'LIVE', isLive: true },
-        { path: '/farm-telemetry', name: 'Farm Telemetry', nameKey: 'nav.farmTelemetry', icon: Cpu, badge: 'NEW', isLive: true },
-      ]
+        { path: '/dashboard', name: 'Dashboard', nameKey: 'nav.dashboard', icon: LayoutDashboard },
+      ],
     },
     {
-      title: 'Data Management',
-      titleKey: 'nav.dataManagement',
+      title: 'Live Data',
+      titleKey: 'nav.live',
       items: [
+        { path: '/live-weather', name: 'Live Weather', nameKey: 'nav.liveWeather', icon: CloudRain, badge: 'LIVE' },
+        { path: '/market-prices', name: 'Market Prices', nameKey: 'nav.market', icon: TrendingUp, badge: 'LIVE' },
+        { path: '/real-time-dashboard', name: 'Real-Time', nameKey: 'nav.realTimeDashboard', icon: Activity, badge: 'LIVE' },
+        { path: '/farm-telemetry', name: 'Farm Telemetry', nameKey: 'nav.farmTelemetry', icon: Cpu, badge: 'NEW' },
         { path: '/data-sources', name: 'Data Sources', nameKey: 'nav.dataSources', icon: Database, badge: 'NEW' },
         { path: '/analytics', name: 'Analytics', nameKey: 'nav.analytics', icon: BarChart3 },
-      ]
+      ],
     },
     {
       title: 'Farm Tools',
       titleKey: 'nav.tools',
       items: [
-        { path: '/crop-management', name: 'Crop Management', nameKey: 'nav.cropInfo', icon: Leaf },
+        { path: '/crop-management', name: 'Crop Guide', nameKey: 'nav.cropInfo', icon: Leaf },
+        { path: '/crop-calendar', name: 'Crop Calendar', nameKey: 'nav.cropCalendar', icon: CalendarDays },
         { path: '/disease-detection', name: 'Disease Detection', nameKey: 'nav.diseaseDetection', icon: Bug },
-        { path: '/ai-agent', name: 'AI Assistant', nameKey: 'nav.aiAgent', icon: Bot, badge: 'AI', isLive: false },
-      ]
+        { path: '/soil-testing', name: 'Soil Testing', nameKey: 'nav.soilTesting', icon: FlaskConical },
+        { path: '/loan-calculator', name: 'Loan Calculator', nameKey: 'nav.loanCalculator', icon: Calculator },
+        { path: '/daily-tracking', name: 'Daily Log', nameKey: 'nav.dailyTracking', icon: ClipboardList },
+        { path: '/ai-agent', name: 'AI Assistant', nameKey: 'nav.aiAgent', icon: Bot, badge: 'AI' },
+      ],
     },
     {
       title: 'Community',
@@ -91,179 +102,127 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
         { path: '/community', name: 'Community', nameKey: 'nav.communityHub', icon: Users },
         { path: '/grievances', name: 'Grievances', nameKey: 'nav.grievances', icon: FileText },
         { path: '/government-schemes', name: 'Schemes', nameKey: 'nav.schemes', icon: Shield },
-        { path: '/profile', name: 'Profile', nameKey: 'nav.profile', icon: User },
-        { path: '/settings', name: 'Settings', nameKey: 'nav.settings', icon: Settings },
-        ...(user?.email === 'admin@smartkrishi.com' ? [
-          { path: '/admin', name: 'Admin Panel', nameKey: 'nav.admin', icon: Shield, badge: 'ADMIN' },
-          { path: '/admin/grievances', name: 'Grievances Admin', nameKey: 'nav.grievancesAdmin', icon: FileText, badge: 'ADMIN' }
-        ] : [])
-      ]
-    }
+        { path: '/profile', name: 'Profile', nameKey: 'nav.profile', icon: UserIcon },
+        { path: '/settings', name: 'Settings', nameKey: 'nav.settings', icon: SettingsIcon },
+        ...(userProfile?.role === 'admin' ? [
+          { path: '/admin', name: 'Admin Panel', nameKey: 'nav.admin', icon: Shield, badge: 'ADMIN' as const },
+          { path: '/admin/grievances', name: 'Grievances Admin', nameKey: 'nav.grievancesAdmin', icon: FileText, badge: 'ADMIN' as const },
+        ] : []),
+      ],
+    },
   ];
 
-  // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setActiveDropdown(null);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setUserMenuOpen(false);
-      }
+    const onClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setOpenSection(null);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenu(false);
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
-    setMobileMenuOpen(false);
-    setActiveDropdown(null);
-    setUserMenuOpen(false);
+    setMobileOpen(false);
+    setOpenSection(null);
+    setUserMenu(false);
   }, [location.pathname]);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
+
   const isActive = (path: string) => {
-    if (path === '/') {
+    if (path === '/dashboard' || path === '/') {
       return location.pathname === '/' || location.pathname === '/dashboard';
     }
-    return location.pathname === path;
-  };
-
-  const toggleDropdown = (section: string) => {
-    setActiveDropdown(activeDropdown === section ? null : section);
+    return location.pathname.startsWith(path);
   };
 
   const handleLogout = async () => {
     try {
       await logout();
       navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    } catch (e) { console.error(e); }
   };
 
-  const getUserDisplayName = () => {
-    if (userProfile?.displayName) return userProfile.displayName;
-    if (user?.displayName) return user.displayName;
-    if (user?.email) return user.email.split('@')[0];
-    return 'किसान';
-  };
-
-  const getUserInitials = () => {
-    const name = getUserDisplayName();
-    return name.charAt(0).toUpperCase();
-  };
+  const displayName = userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'किसान';
+  const initials = displayName.charAt(0).toUpperCase();
+  const location_str = userProfile?.location
+    ? [userProfile.location.village, userProfile.location.district, userProfile.location.state].filter(Boolean).join(', ')
+    : null;
 
   return (
-    <nav className="bg-white shadow-xl border-b border-green-200/50 sticky top-0 z-50 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center space-x-4">
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-xl text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                <Sprout className="h-8 w-8" />
-              </div>
-              <div>
-                <span className="text-2xl font-bold text-gray-900">
-                  Smart Krishi Sahayak
-                </span>
-                <div className="text-xs text-green-700 font-semibold">Smart Agriculture</div>
-              </div>
-            </Link>
-          </div>
+    <nav className="app-nav">
+      <div className="container-app">
+        <div className="flex items-center justify-between h-14 md:h-16">
+          {/* Brand */}
+          <Link to="/dashboard" className="flex items-center gap-2.5 group flex-shrink-0">
+            <div className="w-8 h-8 md:w-9 md:h-9 rounded-md bg-leaf-700 text-white flex items-center justify-center group-hover:bg-leaf-800 transition-colors">
+              <Sprout className="w-4 h-4 md:w-5 md:h-5" />
+            </div>
+            <div className="hidden sm:block">
+              <div className="text-sm md:text-base font-semibold text-strong leading-tight">Smart Krishi Sahayak</div>
+              <div className="text-[10px] md:text-xs text-muted leading-tight">किसान सहायक</div>
+            </div>
+          </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden xl:flex items-center space-x-1" ref={dropdownRef}>
+          {/* Desktop nav (xl only) */}
+          <div className="hidden xl:flex items-center gap-1 flex-1 justify-center" ref={dropdownRef}>
             {menuSections.map((section) => {
-              const isDropdownActive = activeDropdown === section.title;
-              const hasActiveItem = section.items.some(item => isActive(item.path));
-              
-              // For single-item sections, show direct links
               if (section.items.length === 1) {
                 const item = section.items[0];
-                const isItemActive = isActive(item.path);
+                const active = isActive(item.path);
                 return (
                   <Link
                     key={section.title}
                     to={item.path}
-                    className={`group flex items-center px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                      isItemActive 
-                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg transform scale-105' 
-                        : 'text-gray-700 hover:text-green-700 hover:bg-green-50 hover:shadow-md'
-                    }`}
+                    className={`nav-link ${active ? 'active' : ''}`}
                   >
-                    <div className={`p-1.5 rounded-lg transition-all duration-200 ${
-                      isItemActive ? 'bg-white/20' : 'group-hover:bg-green-100'
-                    }`}>
-                      <item.icon className="h-4 w-4" />
-                    </div>
-                    <span className="ml-2">{t(item.nameKey)}</span>
-                    {item.badge && (
-                      <span className={`ml-2 px-1.5 py-0.5 text-xs rounded-full font-bold ${
-                        item.isLive 
-                          ? 'bg-red-100 text-red-600 animate-pulse' 
-                          : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        {item.badge}
-                      </span>
-                    )}
+                    <item.icon className="w-4 h-4" />
+                    <span>{t(item.nameKey)}</span>
                   </Link>
                 );
               }
 
-              // For multi-item sections, show dropdown
+              const sectionActive = section.items.some((i) => isActive(i.path));
+              const isOpen = openSection === section.title;
+
               return (
                 <div key={section.title} className="relative">
                   <button
-                    onClick={() => toggleDropdown(section.title)}
-                    className={`group flex items-center px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                      hasActiveItem || isDropdownActive
-                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg' 
-                        : 'text-gray-700 hover:text-green-700 hover:bg-green-50 hover:shadow-md'
-                    }`}
+                    type="button"
+                    onClick={() => setOpenSection(isOpen ? null : section.title)}
+                    className={`nav-link ${sectionActive ? 'active' : ''}`}
+                    aria-expanded={isOpen}
                   >
                     <span>{t(section.titleKey)}</span>
-                    <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${
-                      isDropdownActive ? 'rotate-180' : ''
-                    }`} />
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {isDropdownActive && (
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-green-100 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
-                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
-                        {t(section.titleKey)}
-                      </div>
+                  {isOpen && (
+                    <div
+                      className="absolute top-full left-0 mt-1.5 w-64 card animate-fade-in py-1.5 z-50"
+                      style={{ boxShadow: 'var(--shadow-lg)' }}
+                    >
                       {section.items.map((item) => {
-                        const isItemActive = isActive(item.path);
+                        const active = isActive(item.path);
                         return (
                           <Link
                             key={item.path}
                             to={item.path}
-                            className={`flex items-center px-3 py-2 text-sm transition-all duration-200 ${
-                              isItemActive
-                                ? 'bg-green-50 text-green-700 border-r-2 border-green-500' 
-                                : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+                            className={`flex items-center gap-2.5 px-3 py-2 text-sm rounded-sm mx-1 ${
+                              active ? 'bg-leaf-50 text-leaf-700 font-medium' : 'text-ink-700 hover:bg-sunken'
                             }`}
                           >
-                            <div className={`p-1.5 rounded-lg transition-all duration-200 ${
-                              isItemActive ? 'bg-green-100' : 'bg-gray-100 group-hover:bg-green-100'
-                            }`}>
-                              <item.icon className="h-4 w-4" />
-                            </div>
-                            <div className="ml-3 flex-1">
-                              <div className="font-medium">{t(item.nameKey)}</div>
-                              {item.badge && (
-                                <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full font-medium ${
-                                  item.isLive 
-                                    ? 'bg-red-100 text-red-600 animate-pulse' 
-                                    : 'bg-orange-100 text-orange-600'
-                                }`}>
-                                  {item.badge}
-                                </span>
-                              )}
-                            </div>
+                            <item.icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="flex-1 truncate">{t(item.nameKey)}</span>
+                            {item.badge && <Badge tone={item.badge === 'ADMIN' ? 'soil' : item.badge === 'AI' ? 'sky' : 'leaf'}>{item.badge}</Badge>}
                           </Link>
                         );
                       })}
@@ -274,90 +233,48 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
             })}
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="xl:hidden flex items-center space-x-2">
+          {/* Right cluster (desktop) */}
+          <div className="hidden xl:flex items-center gap-2">
             <LanguageSwitcher />
-            {user && !hideLogout && (
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                  {getUserInitials()}
-                </div>
-              </div>
-            )}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-gray-700 hover:text-green-700 hover:bg-green-50 transition-colors"
-            >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-
-          {/* Desktop Language Switcher and User Menu */}
-          <div className="hidden xl:flex items-center space-x-4">
-            <LanguageSwitcher />
-            
             {user && !hideLogout && (
               <div className="relative" ref={userMenuRef}>
                 <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:text-green-700 hover:bg-green-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  type="button"
+                  onClick={() => setUserMenu((v) => !v)}
+                  className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-md hover:bg-sunken transition-colors focus-ring"
                 >
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                      {getUserInitials()}
-                    </div>
-                    <span className="font-medium text-sm max-w-24 truncate">
-                      {getUserDisplayName()}
-                    </span>
+                  <div className="w-8 h-8 rounded-full bg-leaf-700 text-white flex items-center justify-center text-sm font-medium">
+                    {initials}
                   </div>
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
-                    userMenuOpen ? 'rotate-180' : ''
-                  }`} />
+                  <span className="text-sm font-medium text-strong max-w-[10rem] truncate">{displayName}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-ink-400 transition-transform ${userMenu ? 'rotate-180' : ''}`} />
                 </button>
 
-                {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-2xl border border-green-100 py-2 z-50 animate-in slide-in-from-top-2 duration-200">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-semibold text-gray-900">{getUserDisplayName()}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
-                      {userProfile?.location && (
-                        <p className="text-xs text-green-600 mt-1">
-                          📍 {userProfile.location.village || userProfile.location.district || userProfile.location.state}
-                        </p>
-                      )}
+                {userMenu && (
+                  <div className="absolute right-0 top-full mt-1.5 w-64 card animate-fade-in py-1.5 z-50" style={{ boxShadow: 'var(--shadow-lg)' }}>
+                    <div className="px-3 py-2.5 border-b border-subtle">
+                      <p className="text-sm font-medium text-strong truncate">{displayName}</p>
+                      <p className="text-xs text-muted truncate">{user.email}</p>
+                      {location_str && <p className="text-xs text-leaf mt-1 truncate">📍 {location_str}</p>}
                     </div>
-                    
                     <div className="py-1">
-                      <Link
-                        to="/profile"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
-                      >
-                        <User className="w-4 h-4 mr-3" />
-                        प्रोफाइल देखें
+                      <Link to="/profile" className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:bg-sunken mx-1 rounded-sm">
+                        <UserIcon className="w-4 h-4" /> प्रोफ़ाइल
                       </Link>
-                      <Link
-                        to="/settings"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
-                      >
-                        <Settings className="w-4 h-4 mr-3" />
-                        सेटिंग्स
+                      <Link to="/settings" className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:bg-sunken mx-1 rounded-sm">
+                        <SettingsIcon className="w-4 h-4" /> सेटिंग्स
                       </Link>
-                      <Link
-                        to="/notifications"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
-                      >
-                        <Bell className="w-4 h-4 mr-3" />
-                        सूचनाएं
+                      <Link to="/notifications" className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink-700 hover:bg-sunken mx-1 rounded-sm">
+                        <Bell className="w-4 h-4" /> सूचनाएं
                       </Link>
                     </div>
-                    
-                    <div className="border-t border-gray-100 py-1">
+                    <div className="border-t border-subtle py-1">
                       <button
+                        type="button"
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-danger hover:bg-sunken mx-1 rounded-sm"
                       >
-                        <LogOut className="w-4 h-4 mr-3" />
-                        लॉग आउट
+                        <LogOut className="w-4 h-4" /> लॉग आउट
                       </button>
                     </div>
                   </div>
@@ -365,91 +282,80 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
               </div>
             )}
           </div>
+
+          {/* Mobile: language + menu trigger */}
+          <div className="flex xl:hidden items-center gap-1.5">
+            <LanguageSwitcher />
+            {user && !hideLogout && (
+              <div className="w-8 h-8 rounded-full bg-leaf-700 text-white flex items-center justify-center text-sm font-medium sm:flex hidden">
+                {initials}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setMobileOpen((v) => !v)}
+              className="p-2 -mr-2 text-ink-700 hover:bg-sunken rounded-md focus-ring"
+              aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Navigation Menu */}
-      {mobileMenuOpen && (
-        <div className="xl:hidden border-t border-green-200/50 bg-white/95 backdrop-blur-sm">
-          <div className="px-2 pt-2 pb-3 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto">
+      {/* Mobile menu — slide-down sheet */}
+      {mobileOpen && (
+        <div className="xl:hidden fixed inset-x-0 top-14 md:top-16 bottom-0 z-40 bg-canvas overflow-y-auto animate-fade-in">
+          <div className="container-app py-4 pb-24">
+            {/* User card on mobile */}
+            {user && !hideLogout && (
+              <div className="card card-padded mb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-leaf-700 text-white flex items-center justify-center font-medium">
+                  {initials}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-strong truncate">{displayName}</p>
+                  <p className="text-xs text-muted truncate">{user.email}</p>
+                  {location_str && <p className="text-xs text-leaf mt-0.5 truncate">📍 {location_str}</p>}
+                </div>
+              </div>
+            )}
+
             {menuSections.map((section) => (
-              <div key={section.title} className="py-2">
-                <div className="px-3 py-1 text-xs font-semibold text-green-700 uppercase tracking-wider">
+              <div key={section.title} className="mb-4">
+                <div className="text-xs font-semibold text-muted uppercase tracking-wider px-2 mb-1.5">
                   {t(section.titleKey)}
                 </div>
-                {section.items.map((item) => {
-                  const isItemActive = isActive(item.path);
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`group flex items-center px-3 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
-                        isItemActive
-                          ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md'
-                          : 'text-gray-700 hover:text-green-700 hover:bg-green-50'
-                      }`}
-                    >
-                      <div className={`p-2 rounded-lg transition-all duration-200 ${
-                        isItemActive ? 'bg-white/20' : 'group-hover:bg-green-100'
-                      }`}>
-                        <item.icon className="h-5 w-5" />
-                      </div>
-                      <div className="ml-3 flex-1">
-                        <span>{t(item.nameKey)}</span>
-                        {item.badge && (
-                          <span className={`ml-2 px-2 py-0.5 text-xs rounded-full font-bold ${
-                            item.isLive 
-                              ? 'bg-red-100 text-red-600 animate-pulse' 
-                              : 'bg-blue-100 text-blue-600'
-                          }`}>
-                            {item.badge}
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
+                <div className="card p-1.5">
+                  {section.items.map((item) => {
+                    const active = isActive(item.path);
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm ${
+                          active ? 'bg-leaf-50 text-leaf-700 font-medium' : 'text-ink-800 hover:bg-sunken'
+                        }`}
+                      >
+                        <item.icon className="w-4 h-4 flex-shrink-0" />
+                        <span className="flex-1">{t(item.nameKey)}</span>
+                        {item.badge && <Badge tone={item.badge === 'ADMIN' ? 'soil' : item.badge === 'AI' ? 'sky' : 'leaf'}>{item.badge}</Badge>}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             ))}
-            
-            {/* Mobile User Menu */}
+
             {user && !hideLogout && (
-              <div className="border-t border-green-200 pt-4 mt-4">
-                <div className="px-3 py-2 text-xs font-semibold text-green-700 uppercase tracking-wider">
-                  खाता
-                </div>
-                <div className="flex items-center px-3 py-3 bg-green-50 rounded-lg mb-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    {getUserInitials()}
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-semibold text-gray-900">{getUserDisplayName()}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
-                  </div>
-                </div>
-                
-                <Link
-                  to="/profile"
-                  className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:text-green-700 hover:bg-green-50 transition-colors"
-                >
-                  <User className="w-5 h-5 mr-3" />
-                  प्रोफाइल देखें
-                </Link>
-                <Link
-                  to="/settings"
-                  className="flex items-center px-3 py-3 rounded-lg text-gray-700 hover:text-green-700 hover:bg-green-50 transition-colors"
-                >
-                  <Settings className="w-5 h-5 mr-3" />
-                  सेटिंग्स
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center w-full px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <LogOut className="w-5 h-5 mr-3" />
-                  लॉग आउट
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm text-danger bg-surface border border-subtle hover:bg-sunken"
+              >
+                <LogOut className="w-4 h-4" /> लॉग आउट
+              </button>
             )}
           </div>
         </div>

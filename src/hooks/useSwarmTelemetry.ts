@@ -1,4 +1,15 @@
 import { useEffect, useState, useRef } from 'react';
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  limit,
+  doc,
+  getDoc
+} from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface SwarmPeer {
   id: string;
@@ -26,58 +37,228 @@ export interface TelemetryEquipment {
 }
 
 export interface SoilTelemetry {
-  moisture: number;
-  temperature: number;
-  ph: number;
-  nitrogen: number;
-  phosphorus: number;
-  potassium: number;
-  updatedAt: Date;
+  moisture: number | null;
+  temperature: number | null;
+  ph: number | null;
+  nitrogen: number | null;
+  phosphorus: number | null;
+  potassium: number | null;
+  updatedAt: Date | null;
 }
 
 export const useSwarmTelemetry = () => {
+  const { user } = useAuth();
   const [peers, setPeers] = useState<SwarmPeer[]>([]);
   const [equipment, setEquipment] = useState<TelemetryEquipment[]>([]);
   const [soilStats, setSoilStats] = useState<SoilTelemetry>({
-    moisture: 42.5,
-    temperature: 28.4,
-    ph: 6.5,
-    nitrogen: 140, // mg/kg
-    phosphorus: 48,
-    potassium: 220,
-    updatedAt: new Date()
+    moisture: null,
+    temperature: null,
+    ph: null,
+    nitrogen: null,
+    phosphorus: null,
+    potassium: null,
+    updatedAt: null
   });
   const [liveMessages, setLiveMessages] = useState<{ id: string; sender: string; content: string; timestamp: Date }[]>([]);
 
   const channelRef = useRef<BroadcastChannel | null>(null);
 
-  // Initialize Swarm and Equipment
+  // Real-time Firestore subscription: swarm peers
   useEffect(() => {
-    // Initialize standard peer network
-    const initialPeers: SwarmPeer[] = [
-      { id: 'peer-1', name: 'Ramesh Patil', avatar: 'https://api.dicebear.com/8.x/initials/svg?seed=Ramesh%20Patil&backgroundColor=22c55e', status: 'In-Field', location: 'Kolhapur, MH', lat: 16.705, lng: 74.243, activity: 'Harvesting Sugarcane', role: 'farmer' },
-      { id: 'peer-2', name: 'Dr. Sunita Deshmukh', avatar: 'https://api.dicebear.com/8.x/initials/svg?seed=Sunita%20Deshmukh&backgroundColor=0284c7', status: 'Online', location: 'Pune University, MH', lat: 18.520, lng: 73.856, activity: 'Analyzing Pest Reports', role: 'expert' },
-      { id: 'peer-3', name: 'Satish Agro Rentals', avatar: 'https://api.dicebear.com/8.x/initials/svg?seed=Satish%20Agro&backgroundColor=d97706', status: 'Online', location: 'Sangli, MH', lat: 16.852, lng: 74.581, activity: 'Tractor Fleet Ready', role: 'machinery-hub' },
-      { id: 'peer-4', name: 'Aniket More', avatar: 'https://api.dicebear.com/8.x/initials/svg?seed=Aniket%20More&backgroundColor=10b981', status: 'In-Field', location: 'Satara, MH', lat: 17.680, lng: 73.991, activity: 'Drone Spraying Active', role: 'farmer' }
-    ];
+    const peersCol = collection(db, 'swarmPeers');
+    const unsubPeers = onSnapshot(
+      peersCol,
+      (snapshot) => {
+        const next: SwarmPeer[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as Partial<SwarmPeer>;
+          next.push({
+            id: docSnap.id,
+            name: data.name ?? 'Unknown',
+            avatar: data.avatar ?? '',
+            status: (data.status as SwarmPeer['status']) ?? 'Offline',
+            location: data.location ?? '',
+            lat: typeof data.lat === 'number' ? data.lat : 0,
+            lng: typeof data.lng === 'number' ? data.lng : 0,
+            activity: data.activity ?? '',
+            role: (data.role as SwarmPeer['role']) ?? 'farmer'
+          });
+        });
+        setPeers(next);
+      },
+      (err) => {
+        console.warn('useSwarmTelemetry: swarmPeers subscription error', err);
+        setPeers([]);
+      }
+    );
+    return () => unsubPeers();
+  }, []);
 
-    const initialEquipment: TelemetryEquipment[] = [
-      { id: 'eq-1', name: 'John Deere Smart Tractor', type: 'tractor', model: '5050 D Autonomous', status: 'Active', battery: 88, performance: 'Optimal (12 km/h)', coordinates: { lat: 16.706, lng: 74.244 }, rate: 450, owner: 'Satish Agro Rentals' },
-      { id: 'eq-2', name: 'Garuda Sprayer Drone v4', type: 'drone', model: 'AG-Q10 Heavy Payload', status: 'Idle', battery: 95, performance: 'Standby', coordinates: { lat: 17.681, lng: 73.992 }, rate: 300, owner: 'Aniket More' },
-      { id: 'eq-3', name: 'Soil Monitoring Node', type: 'sensor', model: 'SoilSense Multi-Spectrum v2', status: 'Active', battery: 100, performance: 'Telemetry Transmitting', coordinates: { lat: 16.705, lng: 74.243 }, rate: 50, owner: 'Ramesh Patil' }
-    ];
+  // Real-time Firestore subscription: telemetry equipment
+  useEffect(() => {
+    const eqCol = collection(db, 'telemetryEquipment');
+    const unsubEq = onSnapshot(
+      eqCol,
+      (snapshot) => {
+        const next: TelemetryEquipment[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as Partial<TelemetryEquipment>;
+          next.push({
+            id: docSnap.id,
+            name: data.name ?? 'Unknown',
+            type: (data.type as TelemetryEquipment['type']) ?? 'sensor',
+            model: data.model ?? '',
+            status: (data.status as TelemetryEquipment['status']) ?? 'Idle',
+            battery: typeof data.battery === 'number' ? data.battery : 0,
+            performance: data.performance ?? '',
+            coordinates: {
+              lat: data.coordinates?.lat ?? 0,
+              lng: data.coordinates?.lng ?? 0
+            },
+            rate: typeof data.rate === 'number' ? data.rate : 0,
+            owner: data.owner ?? ''
+          });
+        });
+        setEquipment(next);
+      },
+      (err) => {
+        console.warn('useSwarmTelemetry: telemetryEquipment subscription error', err);
+        setEquipment([]);
+      }
+    );
+    return () => unsubEq();
+  }, []);
 
-    setPeers(initialPeers);
-    setEquipment(initialEquipment);
+  // Real-time Firestore subscription: latest soil reading from user's fields
+  useEffect(() => {
+    if (!user?.uid) {
+      setSoilStats({
+        moisture: null,
+        temperature: null,
+        ph: null,
+        nitrogen: null,
+        phosphorus: null,
+        potassium: null,
+        updatedAt: null
+      });
+      return;
+    }
 
-    // Instantiate BroadcastChannel for premium multi-tab live chat simulation
+    let cancelled = false;
+    let fieldUnsubs: Array<() => void> = [];
+
+    const setup = async () => {
+      // We need to discover the user's field ids before we can listen to each
+      // soilReadings subcollection. Read the user doc to obtain the fields list.
+      try {
+        const userSnap = await getDoc(doc(db, 'users', user.uid));
+        if (cancelled) return;
+
+        const fieldIds: string[] = [];
+        if (userSnap.exists()) {
+          const data = userSnap.data() as { fields?: Array<{ id?: string } | string> };
+          if (Array.isArray(data.fields)) {
+            for (const f of data.fields) {
+              if (typeof f === 'string') fieldIds.push(f);
+              else if (f && typeof f === 'object' && typeof f.id === 'string') fieldIds.push(f.id);
+            }
+          }
+        }
+
+        // For each known field, subscribe to its latest soil reading.
+        if (fieldIds.length === 0) {
+          setSoilStats({
+            moisture: null,
+            temperature: null,
+            ph: null,
+            nitrogen: null,
+            phosphorus: null,
+            potassium: null,
+            updatedAt: null
+          });
+          return;
+        }
+
+        fieldIds.forEach((fieldId) => {
+          const readingsCol = collection(db, 'users', user.uid, 'fields', fieldId, 'soilReadings');
+          const q = query(readingsCol, orderBy('updatedAt', 'desc'), limit(1));
+          const unsub = onSnapshot(
+            q,
+            (snapshot) => {
+              if (snapshot.empty) {
+                setSoilStats((prev) => ({
+                  ...prev,
+                  moisture: null,
+                  temperature: null,
+                  ph: null,
+                  nitrogen: null,
+                  phosphorus: null,
+                  potassium: null,
+                  updatedAt: null
+                }));
+                return;
+              }
+              const data = snapshot.docs[0].data() as Partial<SoilTelemetry> & {
+                updatedAt?: { toDate?: () => Date } | Date | null;
+              };
+              const updatedAt =
+                data.updatedAt && typeof (data.updatedAt as { toDate?: () => Date }).toDate === 'function'
+                  ? (data.updatedAt as { toDate: () => Date }).toDate()
+                  : data.updatedAt instanceof Date
+                    ? data.updatedAt
+                    : null;
+              setSoilStats({
+                moisture: typeof data.moisture === 'number' ? data.moisture : null,
+                temperature: typeof data.temperature === 'number' ? data.temperature : null,
+                ph: typeof data.ph === 'number' ? data.ph : null,
+                nitrogen: typeof data.nitrogen === 'number' ? data.nitrogen : null,
+                phosphorus: typeof data.phosphorus === 'number' ? data.phosphorus : null,
+                potassium: typeof data.potassium === 'number' ? data.potassium : null,
+                updatedAt
+              });
+            },
+            (err) => {
+              console.warn('useSwarmTelemetry: soilReadings subscription error', err);
+            }
+          );
+          fieldUnsubs.push(unsub);
+        });
+      } catch (err) {
+        console.warn('useSwarmTelemetry: failed to load user fields for soilReadings', err);
+        if (!cancelled) {
+          setSoilStats({
+            moisture: null,
+            temperature: null,
+            ph: null,
+            nitrogen: null,
+            phosphorus: null,
+            potassium: null,
+            updatedAt: null
+          });
+        }
+      }
+    };
+
+    setup();
+
+    return () => {
+      cancelled = true;
+      fieldUnsubs.forEach((u) => u());
+    };
+  }, [user?.uid]);
+
+  // Cross-tab chat channel for premium multi-tab live chat simulation.
+  // The math.random() telemetry loop has been removed: we no longer fabricate
+  // deltas, position jitter, or battery depletion locally. Real telemetry is
+  // expected to land in the Firestore `telemetryEquipment` collection.
+  useEffect(() => {
     const channel = new BroadcastChannel('smart_krishi_swarm_hub');
     channelRef.current = channel;
 
     channel.onmessage = (event) => {
       const { type, data } = event.data;
       if (type === 'CHAT_MESSAGE') {
-        setLiveMessages(prev => [
+        setLiveMessages((prev) => [
           ...prev,
           { id: Date.now().toString(), sender: data.sender, content: data.content, timestamp: new Date() }
         ]);
@@ -89,60 +270,9 @@ export const useSwarmTelemetry = () => {
     };
   }, []);
 
-  // Continuous background loops driving simulated telemetry streaming data (Module B)
-  useEffect(() => {
-    const isLowBandwidth = localStorage.getItem('lowBandwidthMode') === 'true';
-    // Dynamically adjust interval rate based on network speed preference settings
-    const intervalTime = isLowBandwidth ? 8000 : 3000;
-
-    const telemetryInterval = setInterval(() => {
-      // 1. Update soil telemetry slightly (temperature, moisture fluctuations)
-      setSoilStats(prev => {
-        const moistureDelta = (Math.random() - 0.5) * 1.5;
-        const tempDelta = (Math.random() - 0.5) * 0.8;
-        return {
-          ...prev,
-          moisture: Math.max(10, Math.min(95, Number((prev.moisture + moistureDelta).toFixed(2)))),
-          temperature: Math.max(5, Math.min(50, Number((prev.temperature + tempDelta).toFixed(2)))),
-          updatedAt: new Date()
-        };
-      });
-
-      // 2. Update peer positions and machinery telemetry (Tractor coordinates & battery depletion)
-      setEquipment(prevEq => 
-        prevEq.map(eq => {
-          if (eq.status === 'Active') {
-            const latDelta = (Math.random() - 0.5) * 0.0004;
-            const lngDelta = (Math.random() - 0.5) * 0.0004;
-            const batDepletion = Math.floor(Math.random() * 2);
-            return {
-              ...eq,
-              battery: Math.max(1, eq.battery - batDepletion),
-              coordinates: {
-                lat: eq.coordinates.lat + latDelta,
-                lng: eq.coordinates.lng + lngDelta
-              }
-            };
-          }
-          return eq;
-        })
-      );
-
-      // 3. Broadcast random telemetric update packets (soft pulse notification trigger)
-      if (channelRef.current) {
-        channelRef.current.postMessage({
-          type: 'TELEMETRY_PACKET',
-          data: { timestamp: new Date().getTime() }
-        });
-      }
-    }, intervalTime);
-
-    return () => clearInterval(telemetryInterval);
-  }, []);
-
   const sendBroadcastMessage = (sender: string, content: string) => {
     if (!content.trim()) return;
-    
+
     const messagePayload = {
       id: Date.now().toString(),
       sender,
@@ -151,7 +281,7 @@ export const useSwarmTelemetry = () => {
     };
 
     // Update local state instantly (Optimistic UI)
-    setLiveMessages(prev => [...prev, messagePayload]);
+    setLiveMessages((prev) => [...prev, messagePayload]);
 
     // Dispatch payload globally over broadcast network
     if (channelRef.current) {

@@ -382,6 +382,40 @@ const seedSchemes = async () => {
 };
 
 
+// - AI Query endpoint (also available at /api/ai/query)
+app.post('/api/ai/query', async (req, res) => {
+  const { query } = req.body;
+  if (!query) {
+    return res.status(400).json({ error: 'Query is required' });
+  }
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  const lowerQuery = query.toLowerCase();
+  let response = "I'm here to help with your farming questions! Ask me about crops, weather, market prices, or government schemes.";
+
+  if (lowerQuery.includes('weather') || lowerQuery.includes('मौसम')) {
+    response = "Check the Weather section for real-time forecasts, temperature, humidity, and rainfall predictions for your location.";
+  } else if (lowerQuery.includes('wheat') || lowerQuery.includes('गेहूं')) {
+    response = "Wheat is a Rabi crop best sown in November-December. It needs cool weather (15-25°C) and moderate irrigation. Use certified seeds at 100-125 kg per hectare. Major producing states: Punjab, Haryana, UP, MP.";
+  } else if (lowerQuery.includes('rice') || lowerQuery.includes('धान')) {
+    response = "Rice thrives in hot, humid conditions with abundant water. Maintain 2-5 cm water level. Transplant 20-30 day old seedlings. Use disease-resistant varieties like IR-64 or Swarna.";
+  } else if (lowerQuery.includes('price') || lowerQuery.includes('mandi') || lowerQuery.includes('market') || lowerQuery.includes('भाव') || lowerQuery.includes('मंडी')) {
+    response = "Visit the Market Prices section to check current mandi rates for various crops across different states and districts. Compare rates across nearby mandis for the best price.";
+  } else if (lowerQuery.includes('disease') || lowerQuery.includes('रोग') || lowerQuery.includes('बीमारी')) {
+    response = "Use our Disease Detection feature to identify crop diseases by uploading a photo of affected leaves or plants. Common treatments include neem spray for fungal issues and crop rotation for soil-borne diseases.";
+  } else if (lowerQuery.includes('scheme') || lowerQuery.includes('pm-kisan') || lowerQuery.includes('योजना') || lowerQuery.includes('पीएम')) {
+    response = "Check Government Schemes section for PM-KISAN (₹6,000/year in 3 installments), Fasal Bima Yojana (crop insurance at 2% premium), KCC (loans up to ₹3 lakh at 7%), and other farmer welfare programs.";
+  } else if (lowerQuery.includes('loan') || lowerQuery.includes('ऋण') || lowerQuery.includes('kcc')) {
+    response = "Kisan Credit Card (KCC) provides loans up to ₹3 lakh at 4% interest (with subsidy). Visit your nearest bank or Common Service Centre with Aadhaar, land records, and bank account details.";
+  } else if (lowerQuery.includes('soil') || lowerQuery.includes('मिट्टी') || lowerQuery.includes('fertilizer') || lowerQuery.includes('खाद') || lowerQuery.includes('उर्वरक')) {
+    response = "Test soil pH, NPK levels annually. Wheat needs NPK 120:60:40 kg/ha. Rice needs 100:50:50 NPK. Apply organic manure 10-15 ton/ha. Use lime if pH < 5.5. For organic farming, use vermicompost, neem cake, and bio-fertilizers.";
+  } else if (lowerQuery.includes('pest') || lowerQuery.includes('कीट') || lowerQuery.includes('insect')) {
+    response = "For pest control: Use neem oil spray (5ml per liter water). Introduce beneficial insects like ladybugs. Practice crop rotation. Remove infected plants. For severe cases, consult your local Krishi Vigyan Kendra (KVK).";
+  }
+
+  res.json({ query, response, timestamp: new Date().toISOString() });
+});
+
 app.listen(PORT, () => {
   console.log(`Smart Krishi Sahayak backend running on http://localhost:${PORT}`);
   seedSchemes();

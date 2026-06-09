@@ -1,7 +1,7 @@
 // Service Worker for Smart Krishi Sahayak PWA
 // Provides offline support, caching, and background sync
 
-const CACHE_NAME = 'smart-krishi-sahayak-v1.0.0';
+const CACHE_NAME = 'smart-krishi-sahayak-v2.0.0';
 const OFFLINE_URL = '/offline.html';
 
 // Assets to cache immediately on install

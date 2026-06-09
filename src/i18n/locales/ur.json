@@ -1,10 +1,212 @@
 {
-  "app_title": "اسمارٹ کرشی سہایک",
-  "welcome": "خوش آمدید",
-  "dashboard": "ڈیش بورڈ",
-  "weather": "موسم",
-  "crop_info": "فصل کی معلومات",
-  "disease_detection": "بیماری کی شناخت",
-  "market_prices": "مارکیٹ کی قیمتیں",
-  "government_schemes": "حکومتی اسکیمیں"
+  "app": {
+    "title": "سمارٹ کرشی سہایک",
+    "subtitle": "آپ کا زراعت معاون"
+  },
+  "words": {
+    "smart": "سمارٹ", "agriculture": "زراعت", "assistant": "معاون",
+    "dashboard": "ڈیش بورڈ", "weather": "موسم", "crops": "فصلیں",
+    "diseases": "بیماریاں", "prices": "قیمتیں", "schemes": "اسکیمیں",
+    "agent": "ایجنٹ", "profile": "پروفائل", "live": "لائیو",
+    "market": "بازار", "community": "کمیونٹی", "settings": "ترتیبات",
+    "notifications": "اطلاعات", "logout": "لاگ آؤٹ", "login": "لاگ ان",
+    "register": "رجسٹر", "search": "تلاش", "filter": "فلٹر",
+    "loading": "لوڈ ہو رہا ہے", "error": "خرابی", "success": "کامیابی",
+    "submit": "جمع کریں", "cancel": "منسوخ", "save": "محفوظ",
+    "edit": "ترمیم", "delete": "حذف", "view": "دیکھیں",
+    "add": "شامل", "update": "اپ ڈیٹ", "close": "بند", "open": "کھولیں",
+    "yes": "ہاں", "no": "نہیں", "today": "آج",
+    "yesterday": "کل", "tomorrow": "کل", "week": "ہفتہ",
+    "month": "مہینہ", "year": "سال", "temperature": "درجہ حرارت",
+    "humidity": "نمی", "rainfall": "بارش", "wind": "ہوا",
+    "speed": "رفتار", "forecast": "پیشگوئی", "location": "مقام",
+    "information": "معلومات", "detection": "شناخت", "government": "سرکاری",
+    "photos": "تصاویر", "upload": "اپ لوڈ", "download": "ڈاؤن لوڈ",
+    "share": "شیئر", "like": "پسند", "comment": "تبصرہ",
+    "post": "پوسٹ", "admin": "ایڈمن", "user": "صارف",
+    "data": "ڈیٹا", "report": "رپورٹ", "analytics": "تجزیات",
+    "help": "مدد", "about": "بارے میں", "contact": "رابطہ",
+    "support": "سپورٹ", "terms": "شرائط", "privacy": "رازداری"
+  },
+  "navigation": {
+    "dashboard": "ڈیش بورڈ", "weather": "موسم",
+    "crops": "فصل کی معلومات", "diseases": "بیماری کی شناخت",
+    "prices": "منڈی قیمتیں", "schemes": "سرکاری اسکیمیں",
+    "agent": "AI ایجنٹ", "profile": "پروفائل"
+  },
+  "nav": {
+    "dashboard": "ڈیش بورڈ", "live": "لائیو خصوصیات",
+    "dataManagement": "ڈیٹا کا انتظام", "tools": "کھیتی کے اوزار",
+    "community": "کمیونٹی", "liveDashboard": "لائیو ڈیش بورڈ",
+    "liveWeather": "لائیو موسم", "liveMarket": "لائیو منڈی قیمتیں",
+    "realTimeDashboard": "ریئل ٹائم ڈیش بورڈ", "farmTelemetry": "فارم ٹیلی میٹری",
+    "dataSources": "ڈیٹا ذرائع", "analytics": "تجزیات",
+    "cropInfo": "فصل کی معلومات", "cropCalendar": "فصل کیلنڈر",
+    "soilTesting": "مٹی ٹیسٹ", "loanCalculator": "قرض کیلکولیٹر",
+    "dailyTracking": "روزانہ لاگ", "diseaseDetection": "بیماری کی شناخت",
+    "aiAgent": "AI معاون", "communityHub": "کمیونٹی",
+    "grievances": "شکایات", "grievancesAdmin": "شکایت انتظام",
+    "schemes": "سرکاری اسکیمیں", "profile": "پروفائل",
+    "settings": "ترتیبات", "notifications": "اطلاعات", "logout": "لاگ آؤٹ"
+  },
+  "locationContext": {
+    "title": "مقامی زراعتی سیاق", "locationNotFound": "مقام دستیاب نہیں",
+    "kharifSeason": "خریف کا موسم (جون-اکتوبر)",
+    "rabiSeason": "ربیع کا موسم (اکتوبر-مارچ)",
+    "zaidSeason": "زاید کا موسم (مارچ-جون)",
+    "agroClimaticZone": "زرعی آب و ہوا کا علاقہ", "rainfall": "بارش",
+    "temperature": "درجہ حرارت", "zoneNotFound": "علاقے کی معلومات دستیاب نہیں",
+    "seasonalCrops": "موسمی فصلیں",
+    "actions": {
+      "checkWeather": "موسم چیک کریں", "checkSoil": "مٹی کی جانچ کریں",
+      "viewCropCalendar": "فصل کیلنڈر دیکھیں"
+    },
+    "queries": {
+      "weather": "آج کا موسم کیسا ہے اور کیا احتیاط کرنی چاہیے؟",
+      "soilHealth": "میری مٹی کے لیے کون سی کھاد موزوں ہے؟",
+      "cropCalendar": "اس موسم میں مجھے کون سی فصلیں لگانی چاہئیں؟"
+    }
+  },
+  "dashboard": {
+    "welcome": "سمارٹ کرشی سہایک میں خوش آمدید", "todayWeather": "آج کا موسم",
+    "quickActions": "فوری اقدامات", "recentAlerts": "حالیہ انتباہات",
+    "marketPrices": "منڈی قیمتیں", "viewAllPrices": "تمام قیمتیں دیکھیں"
+  },
+  "weather": {
+    "title": "موسم کی پیشگوئی", "temperature": "درجہ حرارت", "humidity": "نمی",
+    "rainfall": "بارش", "windSpeed": "ہوا کی رفتار", "forecast": "7 دن کی پیشگوئی",
+    "location": "مقام", "fetching": "موسم کا ڈیٹا لایا جا رہا ہے...",
+    "fetchError": "موسم کا ڈیٹا نہیں لایا جا سکا",
+    "locationError": "مقام تک رسائی مسترد۔ براہ کرم مقام تک رسائی کی اجازت دیں۔",
+    "noGeolocation": "یہ براؤزر جغرافیائی محل وقوع کی حمایت نہیں کرتا",
+    "visibility": "مرئیت", "feelsLike": "محسوس ہوتا ہے", "recommendations": "فصل کی سفارشات",
+    "recommendationText": "موجودہ موسمی حالات کی بنیاد پر:",
+    "rec1": "آبپاشی کے لیے اچھے حالات", "rec2": "کیڑوں کی سرگرمی کے لیے فصلوں کی نگرانی کریں",
+    "rec3": "تیار ہو تو کٹائی پر غور کریں",
+    "searchPlaceholder": "شہر یا مقام تلاش کریں...",
+    "popularCities": "مقبول شہر", "favoriteLocations": "پسندیدہ مقامات",
+    "useCurrentLocation": "موجودہ مقام استعمال کریں"
+  },
+  "crops": {
+    "title": "فصل کی معلومات", "subtitle": "مختلف فصلوں کے لیے تفصیلی گائیڈز۔",
+    "seedTypes": "بیج کی اقسام", "bestPractices": "بہترین طریقے",
+    "soilCompatibility": "مٹی کی مطابقت", "fertilizer": "کھاد گائیڈ",
+    "searchPlaceholder": "فصل کے نام سے تلاش کریں...",
+    "allSeasons": "تمام موسم",
+    "seasons": { "kharif": "خریف", "rabi": "ربیع", "zaid": "زاید", "annual": "سالانہ" },
+    "viewDetails": "تفصیلات دیکھیں", "growingInfo": "کاشت کی معلومات",
+    "season": "موسم", "growthPeriod": "نشوونما کی مدت",
+    "soilType": "مٹی کی قسم", "waterRequirement": "پانی کی ضرورت",
+    "seedsAndFertilizers": "بیج اور کھادیں", "seedVarieties": "بیج کی اقسام",
+    "fertilizers": "کھادیں", "noResults": "منتخب فلٹرز کے لیے کوئی فصل نہیں ملی۔"
+  },
+  "diseases": {
+    "title": "پودوں کی بیماری کی شناخت", "subtitle": "فصل کی بیماری کی شناخت کے لیے تصویر اپ لوڈ کریں",
+    "detectDisease": "شناخت شروع کریں", "instructions": "بہترین نتائج کے لیے، متاثرہ پودے کے حصے کی واضح، قریبی تصویر استعمال کریں۔",
+    "errorTitle": "خرابی", "errorFileSize": "فائل کا سائز 5MB سے زیادہ نہیں ہونا چاہیے۔",
+    "chooseImage": "تصویر منتخب کریں", "analyze": "بیماری کا تجزیہ کریں",
+    "analyzing": "تجزیہ ہو رہا ہے...", "selectedCropAlt": "منتخب فصل",
+    "removeImage": "ہٹائیں", "uploadPrompt": "آپ کی تصویر یہاں نظر آئے گی۔",
+    "aiWorking": "ہمارا AI آپ کی تصویر کا تجزیہ کر رہا ہے...",
+    "diseaseDetected": "بیماری کی شناخت ہوئی", "resultDisclaimer": "یہ AI سے تیار کردہ نتیجہ ہے۔ تصدیق کے لیے مقامی زراعتی ماہر سے مشورہ کریں۔",
+    "symptoms": "علامات", "causes": "ممکنہ وجوہات",
+    "treatment": "علاج کی سفارشات", "prevention": "روک تھام کی حکمت عملی",
+    "environment": "موافق ماحول", "humidity": "نمی",
+    "temperature": "درجہ حرارت", "wind": "ہوا", "pesticides": "کیڑے مار دواؤں کی سفارشات",
+    "dosage": "خوراک", "safety": "حفاظتی احتیاط",
+    "commonDiseases": "عام فصل کی بیماریاں", "affects": "متاثر کرتا ہے:",
+    "safetyGuidelines": "کیڑے مار دواؤں کی حفاظتی ہدایات",
+    "safetyPoints": [
+      "کیڑے مار دوائیں ہینڈل کرتے وقت ہمیشہ حفاظتی لباس پہنیں۔",
+      "پروڈکٹ لیبل پر خوراک اور استعمال کی ہدایات پر سختی سے عمل کریں۔",
+      "کیڑے مار دوائیں بچوں اور کھانے سے دور رکھیں۔",
+      "ہواؤں یا بارش کے وقت سپرے سے گریز کریں۔"
+    ],
+    "db": {
+      "1": { "name": "لیف بلاسٹ", "crop": "چاول" },
+      "2": { "name": "رسٹ", "crop": "گندم" },
+      "3": { "name": "بُل وَرم", "crop": "کپاس" }
+    }
+  },
+  "prices": {
+    "title": "منڈی قیمتیں", "subtitle": "مختلف بازاروں سے تازہ ترین زرعی قیمتیں۔",
+    "todayPrices": "آج کی قیمتیں", "priceHistory": "قیمت کی تاریخ",
+    "cropFilter": "فصل کے مطابق فلٹر", "locationFilter": "مقام کے مطابق فلٹر",
+    "searchPlaceholder": "فصل، قسم یا بازار سے تلاش کریں...",
+    "allCrops": "تمام فصلیں", "allStates": "تمام ریاستیں",
+    "lastUpdated": "آخری اپ ڈیٹ", "cardView": "کارڈ ویو",
+    "tableView": "ٹیبل ویو", "noResults": "منتخب فلٹرز کے لیے کوئی قیمت نہیں ملی۔",
+    "marketTipsTitle": "بازار کی تجاویز",
+    "marketTips": [
+      "سبزیوں کے لیے صبح جلدی منڈی میں بیچنے کا بہترین وقت ہے۔",
+      "فروخت کو حتمی شکل دینے سے پہلے کئی بازاروں کی قیمتیں چیک کریں۔",
+      "موسم کی پیشگوئیوں پر نظر رکھیں۔",
+      "قیمت گرنے پر ذخیرہ کرنے کے اختیارات پر غور کریں۔"
+    ],
+    "change": "تبدیلی",
+    "units": { "quintal": "کوئنٹل", "ton": "ٹن", "kg": "کلوگرام" },
+    "crops": {
+      "rice": "چاول", "wheat": "گندم", "cotton": "کپاس", "sugarcane": "گنا",
+      "onion": "پیاز", "tomato": "ٹماٹر", "soybean": "سویا بین",
+      "potato": "آلو", "mustard": "سرسوں"
+    },
+    "states": {
+      "haryana": "ہریانہ", "madhyapradesh": "مدھیہ پردیش", "telangana": "تلنگانہ",
+      "maharashtra": "مہاراشٹر", "andhrapradesh": "آندھرا پردیش", "uttarpradesh": "اتر پردیش", "rajasthan": "راجستھان"
+    }
+  },
+  "schemes": {
+    "title": "سرکاری اسکیمیں", "subtitle": "مرکزی اور ریاستی حکومتوں سے کسانوں کے لیے فائدہ مند اسکیمیں دریافت کریں۔",
+    "available": "دستیاب اسکیمیں", "eligibility": "اہلیت",
+    "application": "درخواست کا عمل", "subsidies": "سبسڈی",
+    "searchPlaceholder": "اسکیم کے نام یا تفصیل سے تلاش کریں...",
+    "allCategories": "تمام زمرے",
+    "categories": {
+      "directbenefit": "براہ راست فائدہ", "soilmanagement": "مٹی کا انتظام",
+      "insurance": "انشورنس", "credit": "قرض", "infrastructure": "بنیادی ڈھانچہ"
+    },
+    "status": { "active": "فعال", "upcoming": "آنے والا", "expired": "ختم" },
+    "benefits": "فوائد", "documents": "ضروری دستاویزات",
+    "officialSite": "سرکاری سائٹ", "noResults": "منتخب فلٹرز کے لیے کوئی اسکیم نہیں ملی۔",
+    "close": "بند", "loading": "اسکیمیں لوڈ ہو رہی ہیں...",
+    "fetchError": "اسکیمیں حاصل کرنے میں ناکامی۔ دوبارہ کوشش کریں۔",
+    "viewDetails": "تفصیلات دیکھیں", "about": "اسکیم کے بارے میں"
+  },
+  "common": {
+    "search": "تلاش", "filter": "فلٹر", "refresh": "تازہ کریں",
+    "loading": "لوڈ ہو رہا ہے...", "error": "خرابی پیش آئی", "retry": "دوبارہ کوشش کریں",
+    "cancel": "منسوخ", "save": "محفوظ", "submit": "جمع کریں", "close": "بند"
+  },
+  "profile": {
+    "editProfile": "پروفائل میں ترمیم", "farmInfo": "ذاتی اور فارم کی معلومات",
+    "name": "پورا نام", "email": "ای میل ایڈریس", "phone": "فون نمبر",
+    "location": "مقام", "farmSize": "فارم کا سائز (ایکڑ میں)",
+    "experience": "کاشت کا تجربہ (سالوں میں)", "primaryCrops": "بنیادی فصلیں",
+    "settings": "ترتیبات", "language": "زبان", "notifications": "اطلاعات",
+    "notificationTypes": {
+      "weather": "موسم کی انتباہات", "prices": "منڈی قیمت کی تازہ کاریاں",
+      "diseases": "بیماری کی انتباہات", "schemes": "نئی سرکاری اسکیمیں"
+    },
+    "account": "اکاؤنٹ اور حفاظت", "changePassword": "پاس ورڈ تبدیل کریں", "logout": "لاگ آؤٹ"
+  },
+  "auth": {
+    "loginTitle": "اپنے اکاؤنٹ میں لاگ ان کریں", "login": "لاگ ان",
+    "email": "ای میل ایڈریس", "password": "پاس ورڈ", "confirmPassword": "پاس ورڈ کی تصدیق کریں",
+    "noAccount": "اکاؤنٹ نہیں ہے؟", "registerHere": "یہاں رجسٹر کریں",
+    "registerTitle": "نیا اکاؤنٹ بنائیں", "register": "رجسٹر",
+    "haveAccount": "پہلے سے اکاؤنٹ ہے؟", "loginHere": "یہاں لاگ ان کریں"
+  },
+  "aiagent": {
+    "title": "AI زراعتی ایجنٹ", "subtitle": "کاشتکاری کے بارے میں مجھ سے کچھ بھی پوچھیں",
+    "placeholder": "اپنا سوال یہاں ٹائپ کریں...", "voiceInput": "آواز ان پٹ",
+    "startListening": "سننا شروع کریں", "stopListening": "سننا بند کریں",
+    "speak": "بولیں", "speaking": "بول رہا ہے...",
+    "voiceNotSupported": "آپ کا براؤزر آواز کی حمایت نہیں کرتا",
+    "categories": {
+      "cropManagement": "فصل کا انتظام", "pestControl": "کیڑے اور بیماری کا کنٹرول",
+      "soilHealth": "مٹی کی صحت", "irrigation": "آبپاشی اور پانی کا انتظام",
+      "weatherImpact": "موسم کا اثر", "marketPrices": "بازار اور قیمتیں",
+      "governmentSchemes": "سرکاری اسکیمیں", "organicFarming": "نامیاتی کاشتکاری"
+    }
+  }
 }

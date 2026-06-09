@@ -1,10 +1,212 @@
 {
-  "app_title": "ସ୍ମାର୍ଟ କୃଷି ସହାୟକ",
-  "welcome": "ସ୍ୱାଗତମ୍",
-  "dashboard": "ଡ୍ୟାଶବୋର୍ଡ୍",
-  "weather": "ପାଗା",
-  "crop_info": "ଫସଲ ସୂଚନା",
-  "disease_detection": "ରୋଗ ଚିହ୍ନଟ",
-  "market_prices": "ବଜାର ଦର",
-  "government_schemes": "ସରକାରୀ ଯୋଜନା"
+  "app": {
+    "title": "ସ୍ମାର୍ଟ କୃଷି ସହାୟକ",
+    "subtitle": "ଆପଣଙ୍କ କୃଷି ସହାୟକ"
+  },
+  "words": {
+    "smart": "ସ୍ମାର୍ଟ", "agriculture": "କୃଷି", "assistant": "ସହାୟକ",
+    "dashboard": "ଡ୍ୟାଶବୋର୍ଡ", "weather": "ପାଗ", "crops": "ଫସଲ",
+    "diseases": "ରୋଗ", "prices": "ଦର", "schemes": "ଯୋଜନା",
+    "agent": "ଏଜେଣ୍ଟ", "profile": "ପ୍ରୋଫାଇଲ", "live": "ଲାଇଭ",
+    "market": "ବଜାର", "community": "ସମ୍ପ୍ରଦାୟ", "settings": "ସେଟିଂସ",
+    "notifications": "ବିଜ୍ଞପ୍ତି", "logout": "ଲଗ ଆଉଟ", "login": "ଲଗ ଇନ",
+    "register": "ପଞ୍ଜୀକରଣ", "search": "ସନ୍ଧାନ", "filter": "ଫିଲ୍ଟର",
+    "loading": "ଲୋଡ୍ ହେଉଛି", "error": "ତ୍ରୁଟି", "success": "ସଫଳତା",
+    "submit": "ଦାଖଲ", "cancel": "ବାତିଲ", "save": "ସଂରକ୍ଷଣ",
+    "edit": "ସମ୍ପାଦନ", "delete": "ବିଲୋପ", "view": "ଦେଖନ୍ତୁ",
+    "add": "ଯୋଗ", "update": "ଅଦ୍ୟତନ", "close": "ବନ୍ଦ", "open": "ଖୋଲ",
+    "yes": "ହଁ", "no": "ନା", "today": "ଆଜି",
+    "yesterday": "ଗତକାଲି", "tomorrow": "ଆସନ୍ତାକାଲି", "week": "ସପ୍ତାହ",
+    "month": "ମାସ", "year": "ବର୍ଷ", "temperature": "ତାପମାତ୍ରା",
+    "humidity": "ଆର୍ଦ୍ରତା", "rainfall": "ବର୍ଷା", "wind": "ପବନ",
+    "speed": "ଗତି", "forecast": "ପୂର୍ବାନୁମାନ", "location": "ସ୍ଥାନ",
+    "information": "ସୂଚନା", "detection": "ଚିହ୍ନଟ", "government": "ସରକାରୀ",
+    "photos": "ଫଟୋ", "upload": "ଅପଲୋଡ୍", "download": "ଡାଉନଲୋଡ୍",
+    "share": "ସେୟାର", "like": "ପସନ୍ଦ", "comment": "ମନ୍ତବ୍ୟ",
+    "post": "ପୋଷ୍ଟ", "admin": "ଆଡମିନ", "user": "ବ୍ୟବହାରକାରୀ",
+    "data": "ଡାଟା", "report": "ରିପୋର୍ଟ", "analytics": "ବିଶ୍ଳେଷଣ",
+    "help": "ସାହାୟ୍ୟ", "about": "ବିଷୟରେ", "contact": "ଯୋଗାଯୋଗ",
+    "support": "ସହଯୋଗ", "terms": "ସର୍ତ୍ତାବଳୀ", "privacy": "ଗୋପନୀୟତା"
+  },
+  "navigation": {
+    "dashboard": "ଡ୍ୟାଶବୋର୍ଡ", "weather": "ପାଗ",
+    "crops": "ଫସଲ ସୂଚନା", "diseases": "ରୋଗ ଚିହ୍ନଟ",
+    "prices": "ମଣ୍ଡି ଦର", "schemes": "ସରକାରୀ ଯୋଜନା",
+    "agent": "AI ଏଜେଣ୍ଟ", "profile": "ପ୍ରୋଫାଇଲ"
+  },
+  "nav": {
+    "dashboard": "ଡ୍ୟାଶବୋର୍ଡ", "live": "ଲାଇଭ ବୈଶିଷ୍ଟ୍ୟ",
+    "dataManagement": "ଡାଟା ପରିଚାଳନା", "tools": "କୃଷି ସାଧନ",
+    "community": "ସମ୍ପ୍ରଦାୟ", "liveDashboard": "ଲାଇଭ ଡ୍ୟାଶବୋର୍ଡ",
+    "liveWeather": "ଲାଇଭ ପାଗ", "liveMarket": "ଲାଇଭ ବଜାର ଦର",
+    "realTimeDashboard": "ରିଅଲ-ଟାଇମ ଡ୍ୟାଶବୋର୍ଡ", "farmTelemetry": "ଫାର୍ମ ଟେଲିମେଟ୍ରି",
+    "dataSources": "ଡାଟା ଉତ୍ସ", "analytics": "ବିଶ୍ଳେଷଣ",
+    "cropInfo": "ଫସଲ ସୂଚନା", "cropCalendar": "ଫସଲ କ୍ୟାଲେଣ୍ଡର",
+    "soilTesting": "ମାଟି ପରୀକ୍ଷା", "loanCalculator": "ଋଣ କ୍ୟାଲକୁଲେଟର",
+    "dailyTracking": "ଦୈନିକ ଲଗ", "diseaseDetection": "ରୋଗ ଚିହ୍ନଟ",
+    "aiAgent": "AI ସହାୟକ", "communityHub": "ସମ୍ପ୍ରଦାୟ",
+    "grievances": "ଅଭିଯୋଗ", "grievancesAdmin": "ଅଭିଯୋଗ ପରିଚାଳନା",
+    "schemes": "ସରକାରୀ ଯୋଜନା", "profile": "ପ୍ରୋଫାଇଲ",
+    "settings": "ସେଟିଂସ", "notifications": "ବିଜ୍ଞପ୍ତି", "logout": "ଲଗ ଆଉଟ"
+  },
+  "locationContext": {
+    "title": "ସ୍ଥାନୀୟ କୃଷି ପ୍ରସଙ୍ଗ", "locationNotFound": "ସ୍ଥାନ ଉପଲବ୍ଧ ନାହିଁ",
+    "kharifSeason": "ଖରିଫ ଋତୁ (ଜୁନ-ଅକ୍ଟୋବର)",
+    "rabiSeason": "ରବି ଋତୁ (ଅକ୍ଟୋବର-ମାର୍ଚ୍ଚ)",
+    "zaidSeason": "ଜାୟଦ ଋତୁ (ମାର୍ଚ୍ଚ-ଜୁନ)",
+    "agroClimaticZone": "କୃଷି-ଜଳବାୟୁ କ୍ଷେତ୍ର", "rainfall": "ବର୍ଷା",
+    "temperature": "ତାପମାତ୍ରା", "zoneNotFound": "କ୍ଷେତ୍ର ସୂଚନା ଉପଲବ୍ଧ ନାହିଁ",
+    "seasonalCrops": "ଋତୁକାଳୀନ ଫସଲ",
+    "actions": {
+      "checkWeather": "ପାଗ ଯାଞ୍ଚ", "checkSoil": "ମାଟି ସ୍ୱାସ୍ଥ୍ୟ ଯାଞ୍ଚ",
+      "viewCropCalendar": "ଫସଲ କ୍ୟାଲେଣ୍ଡର ଦେଖନ୍ତୁ"
+    },
+    "queries": {
+      "weather": "ଆଜିର ପାଗ କେମିତି ଓ କ'ଣ ସାବଧାନତା ନେବା ଉଚିତ?",
+      "soilHealth": "ମୋ ମାଟି ପାଇଁ କେଉଁ ସାର ଉପଯୁକ୍ତ?",
+      "cropCalendar": "ଏହି ଋତୁରେ ମୁଁ କେଉଁ ଫସଲ ରୋଇବା ଉଚିତ?"
+    }
+  },
+  "dashboard": {
+    "welcome": "ସ୍ମାର୍ଟ କୃଷି ସହାୟକରେ ସ୍ୱାଗତ", "todayWeather": "ଆଜିର ପାଗ",
+    "quickActions": "ଦ୍ରୁତ କାର୍ଯ୍ୟ", "recentAlerts": "ସାମ୍ପ୍ରତିକ ସତର୍କତା",
+    "marketPrices": "ବଜାର ଦର", "viewAllPrices": "ସମସ୍ତ ଦର ଦେଖନ୍ତୁ"
+  },
+  "weather": {
+    "title": "ପାଗ ପୂର୍ବାନୁମାନ", "temperature": "ତାପମାତ୍ରା", "humidity": "ଆର୍ଦ୍ରତା",
+    "rainfall": "ବର୍ଷା", "windSpeed": "ପବନର ଗତି", "forecast": "7-ଦିନର ପୂର୍ବାନୁମାନ",
+    "location": "ସ୍ଥାନ", "fetching": "ପାଗ ଡାଟା ଆଣୁଛି...",
+    "fetchError": "ପାଗ ଡାଟା ଆଣିହେଲା ନାହିଁ",
+    "locationError": "ସ୍ଥାନ ପ୍ରବେଶ ଅସ୍ୱୀକୃତ। ଦୟାକରି ସ୍ଥାନ ଅନୁମତି ଦିଅନ୍ତୁ।",
+    "noGeolocation": "ଏହି ବ୍ରାଉଜର ଜିଓଲୋକେସନ ସମର୍ଥିତ ନୁହେଁ",
+    "visibility": "ଦୃଶ୍ୟତା", "feelsLike": "ଅନୁଭବ ହୁଏ", "recommendations": "ଫସଲ ସୁପାରିଶ",
+    "recommendationText": "ବର୍ତ୍ତମାନର ପାଗ ସ୍ଥିତି ଆଧାରରେ:",
+    "rec1": "ସେଚନ ପାଇଁ ଭଲ ସ୍ଥିତି", "rec2": "କୀଟ କାର୍ଯ୍ୟକଳାପ ପାଇଁ ଫସଲ ନୀରୀକ୍ଷଣ କରନ୍ତୁ",
+    "rec3": "ପ୍ରସ୍ତୁତ ଥିଲେ ଅମଳ ବିଚାର କରନ୍ତୁ",
+    "searchPlaceholder": "ସହର କିମ୍ବା ସ୍ଥାନ ସନ୍ଧାନ...",
+    "popularCities": "ଲୋକପ୍ରିୟ ସହର", "favoriteLocations": "ପ୍ରିୟ ସ୍ଥାନ",
+    "useCurrentLocation": "ବର୍ତ୍ତମାନର ସ୍ଥାନ ବ୍ୟବହାର କରନ୍ତୁ"
+  },
+  "crops": {
+    "title": "ଫସଲ ସୂଚନା", "subtitle": "ବିଭିନ୍ନ ଫସଲ ପାଇଁ ବିସ୍ତୃତ ଗାଇଡ୍।",
+    "seedTypes": "ବିହନ ପ୍ରକାର", "bestPractices": "ସର୍ବୋତ୍ତମ ଅଭ୍ୟାସ",
+    "soilCompatibility": "ମାଟି ଅନୁକୂଳତା", "fertilizer": "ସାର ଗାଇଡ୍",
+    "searchPlaceholder": "ଫସଲ ନାମରେ ସନ୍ଧାନ...",
+    "allSeasons": "ସମସ୍ତ ଋତୁ",
+    "seasons": { "kharif": "ଖରିଫ", "rabi": "ରବି", "zaid": "ଜାୟଦ", "annual": "ବାର୍ଷିକ" },
+    "viewDetails": "ବିବରଣୀ ଦେଖନ୍ତୁ", "growingInfo": "ଚାଷ ସୂଚନା",
+    "season": "ଋତୁ", "growthPeriod": "ବୃଦ୍ଧି ସମୟସୀମା",
+    "soilType": "ମାଟି ପ୍ରକାର", "waterRequirement": "ଜଳ ଆବଶ୍ୟକତା",
+    "seedsAndFertilizers": "ବିହନ ଓ ସାର", "seedVarieties": "ବିହନ ଜାତ",
+    "fertilizers": "ସାର", "noResults": "ଚୟନିତ ଫିଲ୍ଟର ପାଇଁ କୌଣସି ଫସଲ ମିଳିଲା ନାହିଁ।"
+  },
+  "diseases": {
+    "title": "ଉଦ୍ଭିଦ ରୋଗ ଚିହ୍ନଟ", "subtitle": "ଫସଲ ରୋଗ ଚିହ୍ନଟ କରିବାକୁ ଏକ ଚିତ୍ର ଅପଲୋଡ୍ କରନ୍ତୁ",
+    "detectDisease": "ଚିହ୍ନଟ ଆରମ୍ଭ କରନ୍ତୁ", "instructions": "ସର୍ବୋତ୍ତମ ଫଳାଫଳ ପାଇଁ, ପ୍ରଭାବିତ ଉଦ୍ଭିଦ ଭାଗର ସ୍ପଷ୍ଟ କ୍ଲୋଜ-ଅପ୍ ଚିତ୍ର ବ୍ୟବହାର କରନ୍ତୁ।",
+    "errorTitle": "ତ୍ରୁଟି", "errorFileSize": "ଫାଇଲ ଆକାର 5MB ରୁ ଅଧିକ ହେବା ଉଚିତ ନୁହେଁ।",
+    "chooseImage": "ଚିତ୍ର ବାଛନ୍ତୁ", "analyze": "ରୋଗ ବିଶ୍ଳେଷଣ କରନ୍ତୁ",
+    "analyzing": "ବିଶ୍ଳେଷଣ ଚାଲିଛି...", "selectedCropAlt": "ଚୟନିତ ଫସଲ",
+    "removeImage": "କାଢ଼ନ୍ତୁ", "uploadPrompt": "ଆପଣଙ୍କ ଚିତ୍ର ଏଠାରେ ଦେଖାଯିବ।",
+    "aiWorking": "ଆମର AI ଆପଣଙ୍କ ଚିତ୍ର ବିଶ୍ଳେଷଣ କରୁଛି...",
+    "diseaseDetected": "ରୋଗ ଚିହ୍ନଟ ହୋଇଛି", "resultDisclaimer": "ଏହା AI-ଜାରି ଫଳାଫଳ। ସ୍ଥାନୀୟ କୃଷି ବିଶେଷଜ୍ଞଙ୍କ ସହିତ ପରାମର୍ଶ କରନ୍ତୁ।",
+    "symptoms": "ଲକ୍ଷଣ", "causes": "ସମ୍ଭାବ୍ୟ କାରଣ",
+    "treatment": "ଚିକିତ୍ସା ସୁପାରିଶ", "prevention": "ପ୍ରତିରୋଧ ରଣନୀତି",
+    "environment": "ଅନୁକୂଳ ପରିବେଶ", "humidity": "ଆର୍ଦ୍ରତା",
+    "temperature": "ତାପମାତ୍ରା", "wind": "ପବନ", "pesticides": "କୀଟନାଶକ ସୁପାରିଶ",
+    "dosage": "ଡୋଜ୍", "safety": "ସୁରକ୍ଷା ସାବଧାନତା",
+    "commonDiseases": "ସାଧାରଣ ଫସଲ ରୋଗ", "affects": "ପ୍ରଭାବିତ କରେ:",
+    "safetyGuidelines": "କୀଟନାଶକ ସୁରକ୍ଷା ନିର୍ଦ୍ଦେଶନା",
+    "safetyPoints": [
+      "କୀଟନାଶକ ସହିତ କାମ କରିବା ବେଳେ ସର୍ବଦା ସୁରକ୍ଷା ପୋଷାକ ପିନ୍ଧନ୍ତୁ।",
+      "ଉତ୍ପାଦ ଲେବଲ ଉପରେ ଡୋଜ ଓ ପ୍ରୟୋଗ ନିର୍ଦ୍ଦେଶ କଡ଼ାକଡ଼ି ପାଳନ କରନ୍ତୁ।",
+      "କୀଟନାଶକ ପିଲା ଓ ଖାଦ୍ୟଠାରୁ ଦୂରରେ ରଖନ୍ତୁ।",
+      "ପବନ ବା ବର୍ଷା ବେଳେ ସ୍ପ୍ରେ କରିବା ଏଡ଼ାନ୍ତୁ।"
+    ],
+    "db": {
+      "1": { "name": "ପତ୍ର ବ୍ଲାଷ୍ଟ", "crop": "ଚାଉଳ" },
+      "2": { "name": "ରସ୍ଟ", "crop": "ଗହମ" },
+      "3": { "name": "ବଲୱାର୍ମ", "crop": "କପା" }
+    }
+  },
+  "prices": {
+    "title": "ମଣ୍ଡି ଦର", "subtitle": "ବିଭିନ୍ନ ବଜାରରୁ ନୂଆ କୃଷି ଦର।",
+    "todayPrices": "ଆଜିର ଦର", "priceHistory": "ଦର ଇତିହାସ",
+    "cropFilter": "ଫସଲ ଅନୁସାରେ ଫିଲ୍ଟର", "locationFilter": "ସ୍ଥାନ ଅନୁସାରେ ଫିଲ୍ଟର",
+    "searchPlaceholder": "ଫସଲ, ଜାତ କିମ୍ବା ବଜାର ଦେଖାନ୍ତୁ...",
+    "allCrops": "ସମସ୍ତ ଫସଲ", "allStates": "ସମସ୍ତ ରାଜ୍ୟ",
+    "lastUpdated": "ଶେଷ ଅଦ୍ୟତନ", "cardView": "କାର୍ଡ ଭ୍ୟୁ",
+    "tableView": "ସାରଣୀ ଭ୍ୟୁ", "noResults": "ଚୟନିତ ଫିଲ୍ଟର ପାଇଁ କୌଣସି ଦର ମିଳିଲା ନାହିଁ।",
+    "marketTipsTitle": "ବଜାର ଟିପ୍ସ",
+    "marketTips": [
+      "ପଚଳି ପାଇଁ ସକାଳେ ମଣ୍ଡିରେ ବିକ୍ରି କରିବା ସର୍ବୋତ୍ତମ।",
+      "ବିକ୍ରି ନିଶ୍ଚିତ କରିବା ପୂର୍ବରୁ ଅନେକ ବଜାର ଦର ଯାଞ୍ଚ କରନ୍ତୁ।",
+      "ପାଗ ପୂର୍ବାନୁମାନ ଦେଖନ୍ତୁ।",
+      "ଦର ହ୍ରାସ ସମୟରେ ସଂରକ୍ଷଣ ବିକଳ୍ପ ବିଚାର କରନ୍ତୁ।"
+    ],
+    "change": "ପରିବର୍ତ୍ତନ",
+    "units": { "quintal": "କ୍ୱିଣ୍ଟାଲ", "ton": "ଟନ୍", "kg": "କିଗ୍ରା" },
+    "crops": {
+      "rice": "ଚାଉଳ", "wheat": "ଗହମ", "cotton": "କପା", "sugarcane": "ଆଖୁ",
+      "onion": "ପିଆଜ", "tomato": "ଟମାଟୋ", "soybean": "ସୋୟାବିନ",
+      "potato": "ଆଳୁ", "mustard": "ସରଷା"
+    },
+    "states": {
+      "haryana": "ହରିୟାଣା", "madhyapradesh": "ମଧ୍ୟପ୍ରଦେଶ", "telangana": "ତେଲେଙ୍ଗାନା",
+      "maharashtra": "ମହାରାଷ୍ଟ୍ର", "andhrapradesh": "ଆନ୍ଧ୍ରପ୍ରଦେଶ", "uttarpradesh": "ଉତ୍ତରପ୍ରଦେଶ", "rajasthan": "ରାଜସ୍ଥାନ"
+    }
+  },
+  "schemes": {
+    "title": "ସରକାରୀ ଯୋଜନା", "subtitle": "କେନ୍ଦ୍ର ଓ ରାଜ୍ୟ ସରକାରଙ୍କ କୃଷକ ପାଇଁ ଲାଭଦାୟକ ଯୋଜନା ଅନ୍ୱେଷଣ କରନ୍ତୁ।",
+    "available": "ଉପଲବ୍ଧ ଯୋଜନା", "eligibility": "ଯୋଗ୍ୟତା",
+    "application": "ଆବେଦନ ପ୍ରକ୍ରିୟା", "subsidies": "ସବସିଡି",
+    "searchPlaceholder": "ଯୋଜନା ନାମ କିମ୍ବା ବିବରଣୀ ଦେଖାନ୍ତୁ...",
+    "allCategories": "ସମସ୍ତ ବିଭାଗ",
+    "categories": {
+      "directbenefit": "ସିଧାସଳଖ ଲାଭ", "soilmanagement": "ମାଟି ପରିଚାଳନା",
+      "insurance": "ବୀମା", "credit": "ଋଣ", "infrastructure": "ଭିତ୍ତିଭୂମି"
+    },
+    "status": { "active": "ସକ୍ରିୟ", "upcoming": "ଆଗାମୀ", "expired": "ମିଆଦ ସରିଛି" },
+    "benefits": "ଲାଭ", "documents": "ଆବଶ୍ୟକ ଦସ୍ତାବେଜ",
+    "officialSite": "ସରକାରୀ ସାଇଟ", "noResults": "ଚୟନିତ ଫିଲ୍ଟର ପାଇଁ ଯୋଜନା ମିଳିଲା ନାହିଁ।",
+    "close": "ବନ୍ଦ", "loading": "ଯୋଜନା ଲୋଡ୍ ହେଉଛି...",
+    "fetchError": "ଯୋଜନା ଆଣିବାରେ ବିଫଳ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+    "viewDetails": "ବିବରଣୀ ଦେଖନ୍ତୁ", "about": "ଯୋଜନା ବିଷୟରେ"
+  },
+  "common": {
+    "search": "ସନ୍ଧାନ", "filter": "ଫିଲ୍ଟର", "refresh": "ରିଫ୍ରେସ",
+    "loading": "ଲୋଡ୍ ହେଉଛି...", "error": "ତ୍ରୁଟି ଘଟିଲା", "retry": "ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ",
+    "cancel": "ବାତିଲ", "save": "ସଂରକ୍ଷଣ", "submit": "ଦାଖଲ", "close": "ବନ୍ଦ"
+  },
+  "profile": {
+    "editProfile": "ପ୍ରୋଫାଇଲ ସମ୍ପାଦନ", "farmInfo": "ବ୍ୟକ୍ତିଗତ ଓ ଫାର୍ମ ସୂଚନା",
+    "name": "ପୁରା ନାମ", "email": "ଇମେଲ ଠିକଣା", "phone": "ଫୋନ ନମ୍ବର",
+    "location": "ସ୍ଥାନ", "farmSize": "ଫାର୍ମ ଆକାର (ଏକରରେ)",
+    "experience": "କୃଷି ଅଭିଜ୍ଞତା (ବର୍ଷରେ)", "primaryCrops": "ପ୍ରାଥମିକ ଫସଲ",
+    "settings": "ସେଟିଂସ", "language": "ଭାଷା", "notifications": "ବିଜ୍ଞପ୍ତି",
+    "notificationTypes": {
+      "weather": "ପାଗ ସତର୍କତା", "prices": "ମଣ୍ଡି ଦର ଅଦ୍ୟତନ",
+      "diseases": "ରୋଗ ସତର୍କତା", "schemes": "ନୂଆ ସରକାରୀ ଯୋଜନା"
+    },
+    "account": "ଖାତା ଓ ସୁରକ୍ଷା", "changePassword": "ପାସୱାର୍ଡ ବଦଳାନ୍ତୁ", "logout": "ଲଗ ଆଉଟ"
+  },
+  "auth": {
+    "loginTitle": "ଆପଣଙ୍କ ଖାତାକୁ ଲଗ ଇନ କରନ୍ତୁ", "login": "ଲଗ ଇନ",
+    "email": "ଇମେଲ ଠିକଣା", "password": "ପାସୱାର୍ଡ", "confirmPassword": "ପାସୱାର୍ଡ ନିଶ୍ଚିତ କରନ୍ତୁ",
+    "noAccount": "ଖାତା ନାହିଁ?", "registerHere": "ଏଠାରେ ପଞ୍ଜୀକରଣ କରନ୍ତୁ",
+    "registerTitle": "ନୂଆ ଖାତା ତିଆରି କରନ୍ତୁ", "register": "ପଞ୍ଜୀକରଣ",
+    "haveAccount": "ପୂର୍ବରୁ ଖାତା ଅଛି?", "loginHere": "ଏଠାରେ ଲଗ ଇନ କରନ୍ତୁ"
+  },
+  "aiagent": {
+    "title": "AI କୃଷି ଏଜେଣ୍ଟ", "subtitle": "କୃଷି ବିଷୟରେ ମୋତେ କିଛି ପଚାରନ୍ତୁ",
+    "placeholder": "ଆପଣଙ୍କ ପ୍ରଶ୍ନ ଏଠାରେ ଟାଇପ କରନ୍ତୁ...", "voiceInput": "ଭଏସ ଇନପୁଟ",
+    "startListening": "ଶୁଣିବା ଆରମ୍ଭ କରନ୍ତୁ", "stopListening": "ଶୁଣିବା ବନ୍ଦ କରନ୍ତୁ",
+    "speak": "କୁହ", "speaking": "କହୁଛି...",
+    "voiceNotSupported": "ଆପଣଙ୍କ ବ୍ରାଉଜର ଭଏସ ସମର୍ଥିତ ନୁହେଁ",
+    "categories": {
+      "cropManagement": "ଫସଲ ପରିଚାଳନା", "pestControl": "କୀଟ ଓ ରୋଗ ନିୟନ୍ତ୍ରଣ",
+      "soilHealth": "ମାଟି ସ୍ୱାସ୍ଥ୍ୟ", "irrigation": "ଜଳସେଚନ ଓ ଜଳ ପରିଚାଳନା",
+      "weatherImpact": "ପାଗର ପ୍ରଭାବ", "marketPrices": "ବଜାର ଓ ଦର",
+      "governmentSchemes": "ସରକାରୀ ଯୋଜନା", "organicFarming": "ଜୈବିକ କୃଷି"
+    }
+  }
 }

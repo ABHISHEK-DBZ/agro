@@ -1214,6 +1214,94 @@ class CommunityService {
     });
   }
 
+  // Subscribe to user conversations (real-time list)
+  subscribeToUserConversations(userId: string, callback: (conversations: any[]) => void): () => void {
+    const q1 = query(this.messagesCollection, where('senderId', '==', userId));
+    const q2 = query(this.messagesCollection, where('recipientId', '==', userId));
+
+    let sentMsgs: DirectMessage[] = [];
+    let receivedMsgs: DirectMessage[] = [];
+
+    const handleUpdates = () => {
+      const allMsgs = [...sentMsgs, ...receivedMsgs];
+      const convMap = new Map<string, DirectMessage[]>();
+      allMsgs.forEach(m => {
+        const list = convMap.get(m.conversationId) || [];
+        list.push(m);
+        convMap.set(m.conversationId, list);
+      });
+
+      const conversationsList = Array.from(convMap.keys()).map(convId => {
+        const msgs = convMap.get(convId)!.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        const lastMsg = msgs[msgs.length - 1];
+        
+        // Find other participant information
+        const firstMsg = msgs[0];
+        const otherId = firstMsg.senderId === userId ? firstMsg.recipientId : firstMsg.senderId;
+        const otherMsg = msgs.find(m => m.senderId !== userId);
+        const otherName = otherMsg ? otherMsg.senderName : `Farmer ${otherId.substring(0, 4)}`;
+
+        return {
+          conversationId: convId,
+          participants: [
+            { uid: userId, name: 'You' },
+            { uid: otherId, name: otherName }
+          ],
+          lastMessage: {
+            text: lastMsg.message,
+            senderId: lastMsg.senderId,
+            timestamp: lastMsg.timestamp
+          },
+          unreadCount: msgs.filter(m => m.recipientId === userId && !m.read).length
+        };
+      });
+
+      // Sort conversations by last message timestamp desc
+      conversationsList.sort((a, b) => {
+        const tA = a.lastMessage?.timestamp?.getTime() || 0;
+        const tB = b.lastMessage?.timestamp?.getTime() || 0;
+        return tB - tA;
+      });
+
+      callback(conversationsList);
+    };
+
+    const unsub1 = onSnapshot(q1, (snap) => {
+      sentMsgs = [];
+      snap.forEach(d => {
+        const data = d.data();
+        sentMsgs.push({
+          id: d.id,
+          ...data,
+          timestamp: data.timestamp?.toDate() || new Date()
+        } as DirectMessage);
+      });
+      handleUpdates();
+    }, (error) => {
+      console.error('Error in sender messages listener:', error);
+    });
+
+    const unsub2 = onSnapshot(q2, (snap) => {
+      receivedMsgs = [];
+      snap.forEach(d => {
+        const data = d.data();
+        receivedMsgs.push({
+          id: d.id,
+          ...data,
+          timestamp: data.timestamp?.toDate() || new Date()
+        } as DirectMessage);
+      });
+      handleUpdates();
+    }, (error) => {
+      console.error('Error in recipient messages listener:', error);
+    });
+
+    return () => {
+      unsub1();
+      unsub2();
+    };
+  }
+
   // Upload voice message
   async uploadVoiceMessage(audioBlob: Blob, folder: string = 'voice'): Promise<string> {
     try {
@@ -1627,6 +1715,106 @@ class CommunityService {
       console.error('Error adding daily log:', error);
       throw error;
     }
+  }
+
+  // Get group posts
+  async getGroupPosts(groupId: string): Promise<CommunityPost[]> {
+    try {
+      const q = query(
+        this.postsCollection,
+        where('groupId', '==', groupId),
+        orderBy('timestamp', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      const posts: CommunityPost[] = [];
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        posts.push({
+          id: docSnap.id,
+          ...data,
+          timestamp: data.timestamp?.toDate() || new Date()
+        } as CommunityPost);
+      });
+      return posts;
+    } catch (error) {
+      console.error('Error getting group posts:', error);
+      return [];
+    }
+  }
+
+  // Subscribe to groups
+  subscribeToGroups(category: string | undefined, callback: (groups: FarmerGroup[]) => void): () => void {
+    let q = query(this.groupsCollection, orderBy('createdAt', 'desc'));
+    if (category && category !== 'all') {
+      q = query(this.groupsCollection, where('category', '==', category), orderBy('createdAt', 'desc'));
+    }
+    return onSnapshot(q, (snapshot) => {
+      const groups: FarmerGroup[] = [];
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        groups.push({
+          id: docSnap.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date()
+        } as FarmerGroup);
+      });
+      callback(groups);
+    }, (error) => {
+      console.error('Error subscribing to groups:', error);
+    });
+  }
+
+  // Subscribe to polls
+  subscribeToPolls(category: string | undefined, callback: (polls: Poll[]) => void): () => void {
+    let q = query(
+      this.pollsCollection,
+      where('expiresAt', '>', Timestamp.now()),
+      orderBy('expiresAt', 'desc')
+    );
+    if (category) {
+      q = query(
+        this.pollsCollection,
+        where('category', '==', category),
+        where('expiresAt', '>', Timestamp.now()),
+        orderBy('expiresAt', 'desc')
+      );
+    }
+    return onSnapshot(q, (snapshot) => {
+      const polls: Poll[] = [];
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        polls.push({
+          id: docSnap.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          expiresAt: data.expiresAt?.toDate() || new Date()
+        } as Poll);
+      });
+      callback(polls);
+    }, (error) => {
+      console.error('Error subscribing to polls:', error);
+    });
+  }
+
+  // Subscribe to leaderboard
+  subscribeToTopContributors(limitCount: number = 10, callback: (contributors: FarmerProfile[]) => void): () => void {
+    const q = query(
+      this.farmersCollection,
+      orderBy('contributionPoints', 'desc'),
+      limit(limitCount)
+    );
+    return onSnapshot(q, (snapshot) => {
+      const contributors: FarmerProfile[] = [];
+      snapshot.forEach(docSnap => {
+        contributors.push({
+          id: docSnap.id,
+          ...docSnap.data()
+        } as FarmerProfile);
+      });
+      callback(contributors);
+    }, (error) => {
+      console.error('Error subscribing to top contributors:', error);
+    });
   }
 }
 

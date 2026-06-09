@@ -5,24 +5,19 @@ import './index.css';
 import './styles/mobile-responsive.css';
 import './i18n';
 
-console.log('🌾 Starting Smart Krishi Sahayak...');
-
 const container = document.getElementById('root');
 
 if (container) {
   try {
-    console.log('🔧 Creating React root...');
-    
     // Ensure only one app instance
     if (container.children.length > 1) {
-      // Remove all children except loading screen
       const loadingScreen = document.getElementById('loading-screen');
       container.innerHTML = '';
       if (loadingScreen) {
         container.appendChild(loadingScreen);
       }
     }
-    
+
     // Hide the loading screen with smooth transition
     const hideLoadingScreen = () => {
       const loadingScreen = document.getElementById('loading-screen');
@@ -34,31 +29,30 @@ if (container) {
           loadingScreen.remove();
         }, 500);
       }
-      // Enable body scroll
       document.body.style.overflow = 'auto';
       document.body.classList.remove('loading');
     };
-    
+
     const root = ReactDOM.createRoot(container);
     root.render(
       <React.StrictMode>
         <App />
       </React.StrictMode>
     );
-    
-    // Hide loading screen after app renders
+
     setTimeout(hideLoadingScreen, 1500);
-    
-    console.log('✅ Smart Krishi Sahayak loaded successfully!');
+
+    if (import.meta.env.DEV) {
+      console.log('[Smart Krishi Sahayak] app rendered');
+    }
   } catch (error) {
-    console.error('❌ Error loading app:', error);
-    
-    // Remove loading screen on error
+    console.error('Error loading app:', error);
+
     const loadingScreen = document.getElementById('loading-screen');
     if (loadingScreen) {
       loadingScreen.remove();
     }
-    
+
     container.innerHTML = `
       <div style="text-align: center; padding: 50px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); color: #333; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0;">
         <h2 style="color: #16a34a; margin-bottom: 20px; font-size: 2rem;">🌾 Smart Krishi Sahayak</h2>
@@ -70,5 +64,5 @@ if (container) {
     `;
   }
 } else {
-  console.error('❌ No root container found');
+  console.error('No root container found');
 }

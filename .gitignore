@@ -67,6 +67,8 @@ config/keys.js
 src/config/firebase.ts
 firebaseConfig.json
 serviceAccountKey.json
+*-firebase-adminsdk-*.json
+smart-krishi-sahayak-6871c-firebase-adminsdk-fbsvc-27a187a8fa.json
 .firebase/
 
 # Local Netlify folder
@@ -86,3 +88,4 @@ build/
 # Lock files with potential vulnerabilities
 package-lock.json
 yarn.lock
+.claude
