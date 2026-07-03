@@ -33,8 +33,12 @@ app.use(express.json());
 // Firestore reference
 const db = admin.firestore();
 
-// JWT secret (in production, use Firebase Config)
-const JWT_SECRET = process.env.JWT_SECRET || 'krishi-sahayak-secret-key';
+// JWT secret — MUST be set in Firebase Config for production
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('FATAL: JWT_SECRET environment variable is not set.');
+}
 
 // Middleware for authentication
 const authenticateToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {

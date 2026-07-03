@@ -5,7 +5,15 @@ export class ModernGeminiService {
   private apiKey: string;
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyB2zUc0WHNGyontEzkFjvBcetPlrXlk1PY';
+    this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || (typeof localStorage !== 'undefined' ? localStorage.getItem('gemini:apiKey') || '' : '');
+  }
+
+  /** Allow the user to set a runtime API key from Settings */
+  setApiKey(key: string) {
+    this.apiKey = key;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('gemini:apiKey', key);
+    }
   }
 
   async generateContent(prompt: string): Promise<string> {

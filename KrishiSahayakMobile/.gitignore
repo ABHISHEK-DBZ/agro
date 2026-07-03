@@ -38,4 +38,13 @@ yarn-error.*
 
 # generated native folders
 /ios
-/android
+/android/*
+!/android/app/google-services.json
+
+# build outputs & large local artifacts (never commit)
+*.apk
+*.aab
+*.keystore
+android-sdk/
+cmdline-tools.zip
+*.keystore.bak

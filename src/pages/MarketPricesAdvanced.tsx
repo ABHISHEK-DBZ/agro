@@ -513,20 +513,15 @@ const MarketPricesAdvanced: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4">
+        <div className="flex flex-col items-center space-y-4 max-w-sm text-center">
           <div className="relative">
-            <RefreshCw className="w-12 h-12 text-green-600 animate-spin" />
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+            <RefreshCw className="w-10 h-10 sm:w-12 sm:h-12 text-green-600 animate-spin" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full animate-pulse"></div>
           </div>
-          <div className="text-center">
-            <p className="text-gray-700 text-xl font-semibold mb-2">Loading Live Market Prices</p>
-            <p className="text-gray-500">Fetching latest rates from mandis across India...</p>
-          </div>
-          <div className="flex space-x-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+          <div>
+            <p className="text-gray-700 text-lg sm:text-xl font-semibold mb-1 sm:mb-2">Loading Live Market Prices</p>
+            <p className="text-gray-500 text-sm">Fetching latest rates from mandis across India...</p>
           </div>
         </div>
       </div>
@@ -765,16 +760,14 @@ const MarketPricesAdvanced: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-
-        {/* View Mode Toggle */}
-        <div className="flex items-center justify-between mb-6">
+        </div>            {/* View Mode Toggle */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
           <div className="flex items-center space-x-2">
-            <span className="text-gray-700 font-medium">View:</span>
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <span className="text-gray-700 font-medium text-sm">View:</span>
+            <div className="flex bg-gray-100 rounded-lg p-0.5">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   viewMode === 'grid' 
                     ? 'bg-white text-green-600 shadow-sm' 
                     : 'text-gray-600 hover:text-gray-900'
@@ -784,7 +777,7 @@ const MarketPricesAdvanced: React.FC = () => {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   viewMode === 'list' 
                     ? 'bg-white text-green-600 shadow-sm' 
                     : 'text-gray-600 hover:text-gray-900'
@@ -794,7 +787,7 @@ const MarketPricesAdvanced: React.FC = () => {
               </button>
               <button
                 onClick={() => setViewMode('chart')}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   viewMode === 'chart' 
                     ? 'bg-white text-green-600 shadow-sm' 
                     : 'text-gray-600 hover:text-gray-900'
@@ -805,16 +798,16 @@ const MarketPricesAdvanced: React.FC = () => {
             </div>
           </div>
           
-          <div className="text-sm text-gray-600">
+          <div className="text-xs sm:text-sm text-gray-600">
             Showing {filteredAndSortedPrices.length} of {prices.length} commodities
           </div>
         </div>
 
         {/* Market Prices Display */}
         {viewMode === 'grid' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             {filteredAndSortedPrices.map((price) => (
-              <div key={price.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+              <div key={price.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-4 sm:p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{price.commodity}</h3>
@@ -960,12 +953,10 @@ const MarketPricesAdvanced: React.FC = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-2">No prices found</h3>
             <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
           </div>
-        )}
-
-        {/* Market Insights */}
-        <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Market Insights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        )}            {/* Market Insights */}
+        <div className="mt-8 bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Market Insights</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-lg">
               <div className="flex items-center">
                 <TrendingUp className="w-8 h-8 text-green-600 mr-3" />
@@ -1017,7 +1008,7 @@ const MarketPricesAdvanced: React.FC = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center">
               <Globe className="w-8 h-8 text-green-600 mr-3" />

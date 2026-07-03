@@ -158,7 +158,7 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
     : null;
 
   return (
-    <nav className="app-nav">
+    <nav className="app-nav relative">
       <div className="container-app">
         <div className="flex items-center justify-between h-14 md:h-16">
           {/* Brand */}
@@ -172,8 +172,8 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
             </div>
           </Link>
 
-          {/* Desktop nav (xl only) */}
-          <div className="hidden xl:flex items-center gap-1 flex-1 justify-center" ref={dropdownRef}>
+          {/* Desktop nav (lg and up) */}
+          <div className="hidden lg:flex items-center gap-1 flex-1 justify-center" ref={dropdownRef}>
             {menuSections.map((section) => {
               if (section.items.length === 1) {
                 const item = section.items[0];
@@ -234,7 +234,7 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
           </div>
 
           {/* Right cluster (desktop) */}
-          <div className="hidden xl:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             <LanguageSwitcher />
             {user && !hideLogout && (
               <div className="relative" ref={userMenuRef}>
@@ -284,7 +284,7 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
           </div>
 
           {/* Mobile: language + menu trigger */}
-          <div className="flex xl:hidden items-center gap-1.5">
+          <div className="flex lg:hidden items-center gap-1.5">
             <LanguageSwitcher />
             {user && !hideLogout && (
               <div className="w-8 h-8 rounded-full bg-leaf-700 text-white flex items-center justify-center text-sm font-medium sm:flex hidden">
@@ -304,61 +304,68 @@ const Navbar: React.FC<NavbarProps> = ({ hideLogout = false }) => {
         </div>
       </div>
 
-      {/* Mobile menu — slide-down sheet */}
+      {/* Mobile menu — dropdown below navbar with backdrop */}
       {mobileOpen && (
-        <div className="xl:hidden fixed inset-x-0 top-14 md:top-16 bottom-0 z-40 bg-canvas overflow-y-auto animate-fade-in">
-          <div className="container-app py-4 pb-24">
-            {/* User card on mobile */}
-            {user && !hideLogout && (
-              <div className="card card-padded mb-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-leaf-700 text-white flex items-center justify-center font-medium">
-                  {initials}
+        <>
+          {/* Semi-transparent backdrop so hero/content is partially visible */}
+          <div
+            className="lg:hidden fixed inset-0 z-30 bg-black/40"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="lg:hidden absolute left-0 right-0 top-full z-40 bg-white/95 dark:bg-[#1f1d18]/95 backdrop-blur-xl border-b border-subtle shadow-lg animate-fade-in max-h-[calc(100dvh-3.5rem)] overflow-y-auto">
+            <div className="container-app py-4 pb-6">
+              {/* User card on mobile */}
+              {user && !hideLogout && (
+                <div className="card card-padded mb-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-leaf-700 text-white flex items-center justify-center font-medium">
+                    {initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-strong truncate">{displayName}</p>
+                    <p className="text-xs text-muted truncate">{user.email}</p>
+                    {location_str && <p className="text-xs text-leaf mt-0.5 truncate">📍 {location_str}</p>}
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-strong truncate">{displayName}</p>
-                  <p className="text-xs text-muted truncate">{user.email}</p>
-                  {location_str && <p className="text-xs text-leaf mt-0.5 truncate">📍 {location_str}</p>}
-                </div>
-              </div>
-            )}
+              )}
 
-            {menuSections.map((section) => (
-              <div key={section.title} className="mb-4">
-                <div className="text-xs font-semibold text-muted uppercase tracking-wider px-2 mb-1.5">
-                  {t(section.titleKey)}
+              {menuSections.map((section) => (
+                <div key={section.title} className="mb-4">
+                  <div className="text-xs font-semibold text-muted uppercase tracking-wider px-2 mb-1.5">
+                    {t(section.titleKey)}
+                  </div>
+                  <div className="card p-1.5">
+                    {section.items.map((item) => {
+                      const active = isActive(item.path);
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className={`flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm ${
+                            active ? 'bg-leaf-50 text-leaf-700 font-medium' : 'text-ink-800 hover:bg-sunken'
+                          }`}
+                        >
+                          <item.icon className="w-4 h-4 flex-shrink-0" />
+                          <span className="flex-1">{t(item.nameKey)}</span>
+                          {item.badge && <Badge tone={item.badge === 'ADMIN' ? 'soil' : item.badge === 'AI' ? 'sky' : 'leaf'}>{item.badge}</Badge>}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="card p-1.5">
-                  {section.items.map((item) => {
-                    const active = isActive(item.path);
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm ${
-                          active ? 'bg-leaf-50 text-leaf-700 font-medium' : 'text-ink-800 hover:bg-sunken'
-                        }`}
-                      >
-                        <item.icon className="w-4 h-4 flex-shrink-0" />
-                        <span className="flex-1">{t(item.nameKey)}</span>
-                        {item.badge && <Badge tone={item.badge === 'ADMIN' ? 'soil' : item.badge === 'AI' ? 'sky' : 'leaf'}>{item.badge}</Badge>}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+              ))}
 
-            {user && !hideLogout && (
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm text-danger bg-surface border border-subtle hover:bg-sunken"
-              >
-                <LogOut className="w-4 h-4" /> लॉग आउट
-              </button>
-            )}
+              {user && !hideLogout && (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm text-danger bg-surface border border-subtle hover:bg-sunken"
+                >
+                  <LogOut className="w-4 h-4" /> लॉग आउट
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </nav>
   );

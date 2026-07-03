@@ -1,0 +1,110 @@
+name: Mobile App - Build & Distribute
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'KrishiSahayakMobile/**'
+      - '.github/workflows/mobile-distribute.yml'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  JAVA_VERSION: '17'
+  ANDROID_FIREBASE_APP_ID: '1:859693246419:android:b590d06d049d08b4617126'
+
+jobs:
+  build-and-distribute:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Setup ──────────────────────────────────────────────────
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: KrishiSahayakMobile/package.json
+
+      - name: Setup Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # ── Cache ──────────────────────────────────────────────────
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-cache
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: KrishiSahayakMobile/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('KrishiSahayakMobile/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      # ── Build ──────────────────────────────────────────────────
+      - name: Install dependencies
+        run: npm install
+        working-directory: KrishiSahayakMobile
+
+      - name: Create .env file
+        run: |
+          echo "EXPO_PUBLIC_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}" >> .env
+          echo "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}" >> .env
+          echo "EXPO_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}" >> .env
+          echo "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}" >> .env
+          echo "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" >> .env
+          echo "EXPO_PUBLIC_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
+        working-directory: KrishiSahayakMobile
+
+      - name: Generate Android native project
+        run: npx expo prebuild --platform android --clean
+        working-directory: KrishiSahayakMobile
+
+      - name: Copy google-services.json into Android project
+        run: cp google-services.json android/app/google-services.json
+        working-directory: KrishiSahayakMobile
+
+      - name: Decode release keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+        working-directory: KrishiSahayakMobile
+
+      - name: Build release APK
+        run: cd android && ./gradlew assembleRelease --no-daemon
+        working-directory: KrishiSahayakMobile
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: krishi_sahayak_key
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      # ── Distribute ─────────────────────────────────────────────
+      - name: Upload APK to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ env.ANDROID_FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          groups: testers
+          file: KrishiSahayakMobile/android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload APK as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: KrishiSahayakMobile/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30

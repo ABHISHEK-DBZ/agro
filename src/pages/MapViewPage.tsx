@@ -125,10 +125,13 @@ const MapViewPage: React.FC = () => {
 
   // Wire my location
   useEffect(() => {
-    if (userProfile?.location?.coordinates) {
-      const c = userProfile.location.coordinates as any;
-      if (typeof c.latitude === 'number' && typeof c.longitude === 'number') {
-        setMyLocation({ lat: c.latitude, lng: c.longitude });
+    // AuthContext location has { state, district, village } - not coordinates
+    // For map, we use browser geolocation or fall back to defaults
+    if (userProfile?.location) {
+      // If location has coordinates (from some user profiles), use them
+      const loc = userProfile.location as any;
+      if (loc.coordinates && typeof loc.coordinates.latitude === 'number' && typeof loc.coordinates.longitude === 'number') {
+        setMyLocation({ lat: loc.coordinates.latitude, lng: loc.coordinates.longitude });
       }
     }
   }, [userProfile]);

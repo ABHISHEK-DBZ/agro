@@ -9,7 +9,12 @@ import 'dotenv/config';
 
 const app = express();
 const PORT = 5000;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-that-should-be-in-an-env-file';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('FATAL: JWT_SECRET environment variable is not set. Exiting.');
+  process.exit(1);
+}
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 
 // --- Simple In-Memory Cache ---

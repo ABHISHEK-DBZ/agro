@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import profileService from '../services/profileService';
-import type { UserProfile, UserSettings } from '../services/profileService';
+import type { UserSettings } from '../services/profileService';
 import { PageHeader, Tabs, Button, Badge, Kpi, SectionTitle, Alert, Skeleton, FormField, Input, Select, Textarea, Modal } from '../components/ui';
 import toast from 'react-hot-toast';
 
@@ -31,8 +31,8 @@ const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { user, userProfile, logout, refreshUserProfile } = useAuth();
 
-  const [profile, setProfile] = useState<UserProfile | null>(userProfile || null);
-  const [editedProfile, setEditedProfile] = useState<Partial<UserProfile>>({});
+  const [profile, setProfile] = useState<any>(userProfile || null);
+  const [editedProfile, setEditedProfile] = useState<any>({});
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!userProfile);

@@ -10,7 +10,12 @@ app.use(bodyParser.json());
 app.use(cors());
 
 const users = [];
-const JWT_SECRET = 'smartkrishi_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('FATAL: JWT_SECRET environment variable is not set. Exiting.');
+  process.exit(1);
+}
 
 // Register endpoint
 app.post('/api/register', async (req, res) => {

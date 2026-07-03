@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "859693246419",
+    "project_id": "smart-krishi-sahayak-6871c",
+    "storage_bucket": "smart-krishi-sahayak-6871c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:859693246419:android:b590d06d049d08b4617126",
+        "android_client_info": {
+          "package_name": "com.abhishekdbz.krishisahayak"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "859693246419-og9qgba0t2rv6g7ba8i69ivp75fpb5m4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJawdVPh0hwoak0Yv_BZuFQmFZaxOE1G4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "859693246419-og9qgba0t2rv6g7ba8i69ivp75fpb5m4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

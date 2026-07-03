@@ -448,8 +448,17 @@ export const initializeCapacitor = async () => {
     // Initialize keyboard listeners
     initKeyboardListeners();
     
-    // Initialize push notifications
-    await initPushNotifications();
+    // Initialize push notifications (safely check configuration to prevent startup crashes)
+    try {
+      const enablePush = localStorage.getItem('enable_push_notifications') === 'true';
+      if (enablePush) {
+        await initPushNotifications();
+      } else {
+        console.log('[Capacitor] Push notifications are disabled for testing. Enable by setting localStorage "enable_push_notifications" to "true" if google-services.json is configured.');
+      }
+    } catch (pushError) {
+      console.warn('[Capacitor] Failed to initialize push notifications:', pushError);
+    }
     
     // Initialize network listener
     initNetworkListener((connected) => {

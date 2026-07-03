@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
   Eye,
@@ -17,6 +18,7 @@ import { Button, Input, FormField, Alert } from '../components/ui';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { login, loginWithGoogle, loginWithGitHub, loading } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -29,14 +31,14 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError('');
     if (!email || !password) {
-      setError('कृपया सभी फ़ील्ड भरें');
+      setError(t('auth.fillAllFields', 'कृपया सभी फ़ील्ड भरें'));
       return;
     }
     try {
       await login(email, password);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'लॉगिन में त्रुटि हुई');
+      setError(err.message || t('auth.loginError', 'लॉगिन में त्रुटि हुई'));
     }
   };
 
@@ -46,7 +48,7 @@ const Login: React.FC = () => {
       await login('demo@example.com', 'password123');
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'डेमो लॉगिन में त्रुटि हुई');
+      setError(err.message || t('auth.demoLoginError', 'डेमो लॉगिन में त्रुटि हुई'));
     }
   };
 
@@ -56,16 +58,16 @@ const Login: React.FC = () => {
       const isDev = import.meta.env.MODE === 'development';
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       if ((isDev || isLocal) && provider === 'google') {
-        toast('Development mode: Google login will redirect...', { duration: 3000, icon: 'ℹ️' });
+        toast(t('auth.devRedirect', 'Development mode: Google login will redirect...'), { duration: 3000, icon: 'ℹ️' });
       }
       if (provider === 'google') await loginWithGoogle();
       else await loginWithGitHub();
       navigate('/dashboard');
     } catch (err: any) {
-      let msg = `${provider === 'google' ? 'Google' : 'GitHub'} साइन-इन में त्रुटि हुई।`;
-      if (err.code === 'auth/popup-closed-by-user') msg = 'साइन-इन रद्द किया गया।';
-      else if (err.code === 'auth/operation-not-allowed') msg = `${provider === 'google' ? 'Google' : 'GitHub'} साइन-इन सक्षम नहीं है।`;
-      else if (err.code === 'auth/unauthorized-domain') msg = 'यह डोमेन साइन-इन के लिए अधिकृत नहीं है।';
+      let msg = t('auth.socialError', `${provider === 'google' ? 'Google' : 'GitHub'} साइन-इन में त्रुटि हुई।`);
+      if (err.code === 'auth/popup-closed-by-user') msg = t('auth.popupClosed', 'साइन-इन रद्द किया गया।');
+      else if (err.code === 'auth/operation-not-allowed') msg = t('auth.notEnabled', `${provider === 'google' ? 'Google' : 'GitHub'} साइन-इन सक्षम नहीं है।`);
+      else if (err.code === 'auth/unauthorized-domain') msg = t('auth.unauthorizedDomain', 'यह डोमेन साइन-इन के लिए अधिकृत नहीं है।');
       else if (err.message) msg = err.message;
       setError(msg);
     }
@@ -98,20 +100,19 @@ const Login: React.FC = () => {
         </Link>
 
         <div className="relative z-10 max-w-md">
-          <h1 className="text-3xl xl:text-4xl font-semibold leading-tight tracking-tight mb-3">
-            आधुनिक कृषि के लिए<br />एक स्मार्ट सहायक
-          </h1>
+          <h1 className="text-3xl xl:text-4xl font-semibold leading-tight tracking-tight mb-3"
+            dangerouslySetInnerHTML={{ __html: t('auth.brandTitle', 'आधुनिक कृषि के लिए<br />एक स्मार्ट सहायक') }}
+          />
           <p className="text-leaf-200/70 text-sm leading-relaxed mb-8">
-            मौसम, मंडी भाव, फसल रोग पहचान, और किसान समुदाय — सब एक ही जगह।
-            अपनी खेती को डेटा-संचालित निर्णयों से बेहतर बनाएं।
+            {t('auth.brandDesc', 'मौसम, मंडी भाव, फसल रोग पहचान, और किसान समुदाय — सब एक ही जगह। अपनी खेती को डेटा-संचालित निर्णयों से बेहतर बनाएं।')}
           </p>
 
           <ul className="space-y-2.5 text-sm text-leaf-100/90">
             {[
-              'रियल-टाइम मौसम और कृषि सलाह',
-              'लाइव मंडी भाव — 500+ बाज़ार',
-              'AI से तुरंत फसल रोग पहचान',
-              'सरकारी योजनाओं की पूरी जानकारी',
+              t('auth.feature1', 'रियल-टाइम मौसम और कृषि सलाह'),
+              t('auth.feature2', 'लाइव मंडी भाव — 500+ बाज़ार'),
+              t('auth.feature3', 'AI से तुरंत फसल रोग पहचान'),
+              t('auth.feature4', 'सरकारी योजनाओं की पूरी जानकारी'),
             ].map((line) => (
               <li key={line} className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-leaf-300 flex-shrink-0 mt-0.5" />
@@ -122,7 +123,7 @@ const Login: React.FC = () => {
         </div>
 
         <div className="relative z-10 text-xs text-leaf-200/50">
-          © {new Date().getFullYear()} Smart Krishi Sahayak · भारत सरकार के किसानों के लिए
+          © {new Date().getFullYear()} Smart Krishi Sahayak · {t('auth.footerFor', 'भारत सरकार के किसानों के लिए')}
         </div>
       </aside>
 
@@ -136,14 +137,14 @@ const Login: React.FC = () => {
                 <Sprout className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-base font-semibold text-strong">Smart Krishi Sahayak</div>
-                <div className="text-xs text-muted">किसान सहायक</div>
+                <div className="text-base font-semibold text-strong">{t('app.title')}</div>
+                <div className="text-xs text-muted">{t('app.subtitle')}</div>
               </div>
             </Link>
 
             <div className="mb-7">
-              <h2 className="text-2xl font-semibold text-strong tracking-tight">वापस स्वागत है</h2>
-              <p className="text-sm text-muted mt-1.5">अपने खाते में लॉगिन करें और खेती जारी रखें।</p>
+              <h2 className="text-2xl font-semibold text-strong tracking-tight">{t('auth.welcomeBack', 'वापस स्वागत है')}</h2>
+              <p className="text-sm text-muted mt-1.5">{t('auth.continuePrompt', 'अपने खाते में लॉगिन करें और खेती जारी रखें।')}</p>
             </div>
 
             {error && (
@@ -154,14 +155,14 @@ const Login: React.FC = () => {
 
             <div className="space-y-2.5 mb-5">
               <Button type="button" variant="primary" block onClick={handleDemoLogin} loading={loading}>
-                🔐 त्वरित डेमो लॉगिन
+                🔐 {t('auth.demoLogin', 'त्वरित डेमो लॉगिन')}
               </Button>
               <div className="grid grid-cols-2 gap-2.5">
                 <Button type="button" variant="secondary" onClick={() => handleSocialLogin('google')} disabled={loading}>
-                  <FcGoogle className="w-4 h-4" /> Google
+                  <FcGoogle className="w-4 h-4" /> {t('auth.google', 'Google')}
                 </Button>
                 <Button type="button" variant="secondary" onClick={() => handleSocialLogin('github')} disabled={loading}>
-                  <FaGithub className="w-4 h-4" /> GitHub
+                  <FaGithub className="w-4 h-4" /> {t('auth.github', 'GitHub')}
                 </Button>
               </div>
             </div>
@@ -171,12 +172,12 @@ const Login: React.FC = () => {
                 <div className="w-full border-t border-subtle" />
               </div>
               <div className="relative flex justify-center">
-                <span className="px-3 bg-canvas text-xs text-muted uppercase tracking-wider">या ईमेल से</span>
+                <span className="px-3 bg-canvas text-xs text-muted uppercase tracking-wider">{t('auth.orEmail', 'या ईमेल से')}</span>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              <FormField label="ईमेल पता" htmlFor="email">
+              <FormField label={t('auth.email', 'ईमेल पता')} htmlFor="email">
                 <Input
                   id="email"
                   name="email"
@@ -186,11 +187,11 @@ const Login: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   leftIcon={<Mail className="w-4 h-4" />}
-                  placeholder="आपका ईमेल पता"
+                  placeholder={t('auth.emailPlaceholder', 'आपका ईमेल पता')}
                 />
               </FormField>
 
-              <FormField label="पासवर्ड" htmlFor="password">
+              <FormField label={t('auth.password', 'पासवर्ड')} htmlFor="password">
                 <Input
                   id="password"
                   name="password"
@@ -200,7 +201,7 @@ const Login: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   leftIcon={<Lock className="w-4 h-4" />}
-                  placeholder="आपका पासवर्ड"
+                  placeholder={t('auth.passwordPlaceholder', 'आपका पासवर्ड')}
                   rightSlot={
                     <button
                       type="button"
@@ -222,22 +223,22 @@ const Login: React.FC = () => {
                     onChange={(e) => setRemember(e.target.checked)}
                     className="rounded"
                   />
-                  मुझे याद रखें
+                  {t('auth.rememberMe', 'मुझे याद रखें')}
                 </label>
                 <Link to="/forgot-password" className="text-sm text-leaf hover:underline">
-                  पासवर्ड भूल गए?
+                  {t('auth.forgotPassword', 'पासवर्ड भूल गए?')}
                 </Link>
               </div>
 
               <Button type="submit" variant="primary" block size="lg" loading={loading}>
-                लॉगिन करें
+                {t('auth.login', 'लॉगिन करें')}
               </Button>
             </form>
 
             <p className="text-center text-sm text-muted mt-6">
-              कोई खाता नहीं है?{' '}
+              {t('auth.noAccount', 'कोई खाता नहीं है?')}{' '}
               <Link to="/register" className="text-leaf font-medium hover:underline">
-                अभी रजिस्टर करें
+                {t('auth.registerHere', 'अभी रजिस्टर करें')}
               </Link>
             </p>
           </div>

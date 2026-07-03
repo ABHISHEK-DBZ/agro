@@ -178,7 +178,7 @@ const AiAgent: React.FC = () => {
   const isSpeechSupported = 'speechSynthesis' in window;
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-[#f8f7f5] dark:bg-[#14130f]">
+    <div className="h-[calc(100dvh-3.5rem)] sm:h-[calc(100vh-4rem)] flex flex-col bg-[#f8f7f5] dark:bg-[#14130f]">
       {/* Header */}
       <div className="shrink-0 bg-white dark:bg-[#1f1d18] border-b border-[rgba(38,36,31,0.08)] dark:border-[rgba(255,255,255,0.06)]" style={{ boxShadow: '0 1px 2px rgba(38,36,31,0.04)' }}>
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -248,7 +248,7 @@ const AiAgent: React.FC = () => {
               <p className="text-xs font-medium text-[#7a7364] dark:text-[#9b9482] uppercase tracking-wider mb-3 px-1">
                 Quick Questions
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                 {suggestions.map((group, i) => {
                   const Icon = group.icon;
                   return (
@@ -377,7 +377,7 @@ const AiAgent: React.FC = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder={i18n.language === 'hi' ? "फसल, कीट, मौसम के बारे में पूछें..." : "Ask about crops, pests, weather..."}
-              className="flex-1 bg-transparent text-sm text-[#26241f] dark:text-[#eeece7] placeholder-[#9b9482] dark:placeholder-[#615b4f] outline-none py-2"
+              className="flex-1 bg-transparent text-sm text-[#26241f] dark:text-[#eeece7] placeholder-[#9b9482] dark:placeholder-[#615b4f] outline-none py-2 min-w-0"
               disabled={isLoading}
             />
             {isVoiceSupported && (

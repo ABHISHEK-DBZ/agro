@@ -399,9 +399,9 @@ const Analytics: React.FC = () => {
         {/* Weather Analytics */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
-            <SectionTitle icon={<Cloud className="h-4 w-4 text-sky-600" />}>
-              Weather Analytics
-            </SectionTitle>
+            <SectionTitle
+              title={<><Cloud className="h-4 w-4 text-sky-600 inline-block mr-2" />Weather Analytics</>}
+            />
 
             {!data.dataAvailable.weather ? (
               <EmptyState
@@ -449,9 +449,9 @@ const Analytics: React.FC = () => {
           </Card>
 
           <Card>
-            <SectionTitle icon={<Users className="h-4 w-4 text-leaf-600" />}>
-              Community Engagement
-            </SectionTitle>
+            <SectionTitle
+              title={<><Users className="h-4 w-4 text-leaf-600 inline-block mr-2" />Community Engagement</>}
+            />
 
             {!data.dataAvailable.community ? (
               <EmptyState
@@ -503,9 +503,9 @@ const Analytics: React.FC = () => {
 
         {/* Market Insights */}
         <Card>
-          <SectionTitle icon={<DollarSign className="h-4 w-4 text-leaf-600" />}>
-            Market Insights &amp; Profitability
-          </SectionTitle>
+          <SectionTitle
+            title={<><DollarSign className="h-4 w-4 text-leaf-600 inline-block mr-2" />Market Insights &amp; Profitability</>}
+          />
 
           {!data.dataAvailable.market ? (
             <EmptyState

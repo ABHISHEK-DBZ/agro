@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Bell, Check, CheckCheck, MessageCircle, Heart, Users, AlertCircle, ArrowLeft, Filter, Settings as Cog } from 'lucide-react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import communityService, { Notification } from '../services/communityService';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,6 +11,7 @@ const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const currentUserId = user?.uid || '';
 
@@ -51,14 +53,14 @@ const NotificationsPage: React.FC = () => {
     if (!currentUserId) return;
     try {
       await communityService.markAllNotificationsRead(currentUserId);
-      toast.success('All marked as read');
+      toast.success(t('notifications.markedAllRead', 'All marked as read'));
     } catch (error) {
       console.error('Error marking all as read:', error);
-      toast.error('Failed to mark all as read');
+      toast.error(t('notifications.failedMarkAll', 'Failed to mark all as read'));
     }
   };
 
-  const handleNotificationClick = (n: Notification) => {
+  const handleNotificationClick = (n: Notification & { link?: string }) => {
     if (!n.read) handleMarkAsRead(n.id);
     // Deep-link to the related resource
     if (n.link) navigate(n.link);
@@ -101,17 +103,17 @@ const NotificationsPage: React.FC = () => {
           onClick={() => navigate(-1)}
           className="md:hidden inline-flex items-center gap-1 text-sm text-ink-600 mb-2"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4" /> {t('common.back', 'Back')}
         </button>
 
         <PageHeader
-          eyebrow="Inbox"
-          title="Notifications"
-          description={`${unreadCount} unread ${unreadCount === 1 ? 'notification' : 'notifications'}`}
+          eyebrow={t('notifications.inbox', 'Inbox')}
+          title={t('notifications.title', 'Notifications')}
+          description={`${unreadCount} ${t('notifications.unread', 'unread')} ${unreadCount === 1 ? t('notifications.notification', 'notification') : t('notifications.notifications', 'notifications')}`}
           actions={
             unreadCount > 0 && (
               <Button variant="secondary" size="sm" leftIcon={<CheckCheck className="w-4 h-4" />} onClick={handleMarkAllAsRead}>
-                Mark all as read
+                {t('notifications.markAllRead', 'Mark all as read')}
               </Button>
             )
           }
@@ -121,9 +123,9 @@ const NotificationsPage: React.FC = () => {
           <Tabs
             variant="underline"
             tabs={[
-              { id: 'all', label: `All (${notifications.length})` },
-              { id: 'unread', label: `Unread (${unreadCount})` },
-              { id: 'read', label: `Read (${notifications.length - unreadCount})` },
+              { id: 'all', label: `${t('common.all', 'All')} (${notifications.length})` },
+              { id: 'unread', label: `${t('notifications.unread', 'Unread')} (${unreadCount})` },
+              { id: 'read', label: `${t('notifications.read', 'Read')} (${notifications.length - unreadCount})` },
             ]}
             active={filter}
             onChange={(id) => setFilterAndUrl(id as any)}
@@ -146,8 +148,8 @@ const NotificationsPage: React.FC = () => {
           ) : filtered.length === 0 ? (
             <EmptyState
               icon={<Bell className="w-12 h-12 text-ink-300" />}
-              title="You're all caught up"
-              description={filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
+              title={t('notifications.caughtUp', "You're all caught up")}
+              description={filter === 'unread' ? t('notifications.noUnread', 'No unread notifications') : t('notifications.noneYet', 'No notifications yet')}
             />
           ) : (
             filtered.map((n) => (
@@ -171,7 +173,7 @@ const NotificationsPage: React.FC = () => {
                     {!n.read && <span className="w-2 h-2 bg-leaf-500 rounded-full flex-shrink-0 mt-1.5" />}
                   </div>
                   <div className="flex items-center gap-2 mt-1.5 text-xs text-ink-500">
-                    <span>{new Date(n.createdAt).toLocaleString()}</span>
+                    <span>{new Date((n as any).createdAt || n.timestamp).toLocaleString()}</span>
                     {n.type && (
                       <Badge tone="default" className="text-[10px]">{n.type}</Badge>
                     )}

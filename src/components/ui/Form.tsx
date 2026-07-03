@@ -26,7 +26,7 @@ export const FormField: React.FC<FormFieldProps> = ({
   </div>
 );
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   invalid?: boolean;
   leftIcon?: React.ReactNode;
   rightSlot?: React.ReactNode;

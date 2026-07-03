@@ -3,7 +3,7 @@ import { AlertCircle, CheckCircle2, Info, AlertTriangle, Inbox } from 'lucide-re
 
 type AlertTone = 'info' | 'success' | 'warn' | 'danger';
 
-interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
+interface AlertProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   tone?: AlertTone;
   title?: React.ReactNode;
   children?: React.ReactNode;

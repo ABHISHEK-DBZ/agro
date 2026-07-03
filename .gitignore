@@ -71,6 +71,11 @@ serviceAccountKey.json
 smart-krishi-sahayak-6871c-firebase-adminsdk-fbsvc-27a187a8fa.json
 .firebase/
 
+# Credentials & secrets
+credentials.json
+*.cred
+*.credential
+
 # Local Netlify folder
 .netlify
 
